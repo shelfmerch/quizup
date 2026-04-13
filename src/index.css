@@ -1,0 +1,135 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap');
+
+@layer base {
+  :root {
+    --background: 220 20% 10%;
+    --foreground: 0 0% 100%;
+
+    --card: 220 18% 14%;
+    --card-foreground: 0 0% 100%;
+
+    --popover: 220 18% 14%;
+    --popover-foreground: 0 0% 100%;
+
+    --primary: 160 84% 44%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 220 16% 20%;
+    --secondary-foreground: 0 0% 90%;
+
+    --muted: 220 14% 16%;
+    --muted-foreground: 0 0% 55%;
+
+    --accent: 38 92% 55%;
+    --accent-foreground: 0 0% 10%;
+
+    --destructive: 0 72% 55%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 220 14% 20%;
+    --input: 220 14% 20%;
+    --ring: 160 84% 44%;
+
+    --radius: 0.75rem;
+
+    /* QuizUp-style colors */
+    --quizup-red: 4 78% 55%;
+    --quizup-green: 152 69% 42%;
+    --quizup-teal: 174 72% 40%;
+    --quizup-gold: 45 100% 51%;
+    --quizup-purple: 270 60% 50%;
+    --quizup-blue: 210 80% 55%;
+    --quizup-orange: 25 90% 55%;
+    --quizup-dark: 220 20% 8%;
+    --quizup-card: 220 18% 12%;
+    --quizup-surface: 220 16% 15%;
+
+    --sidebar-background: 220 20% 10%;
+    --sidebar-foreground: 0 0% 100%;
+    --sidebar-primary: 160 84% 44%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 220 16% 22%;
+    --sidebar-accent-foreground: 0 0% 90%;
+    --sidebar-border: 220 14% 22%;
+    --sidebar-ring: 160 84% 44%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground font-body antialiased;
+    -webkit-tap-highlight-color: transparent;
+  }
+}
+
+@layer utilities {
+  .quizup-header-red {
+    background-color: hsl(var(--quizup-red));
+  }
+  .quizup-header-green {
+    background-color: hsl(var(--quizup-green));
+  }
+  .quizup-header-teal {
+    background-color: hsl(var(--quizup-teal));
+  }
+  .quizup-header-purple {
+    background-color: hsl(var(--quizup-purple));
+  }
+  .quizup-header-blue {
+    background-color: hsl(var(--quizup-blue));
+  }
+  .quizup-header-orange {
+    background-color: hsl(var(--quizup-orange));
+  }
+
+  .quizup-answer-green {
+    background-color: hsl(var(--quizup-green));
+  }
+  .quizup-answer-red {
+    background-color: hsl(var(--quizup-red));
+  }
+
+  .text-quizup-green {
+    color: hsl(var(--quizup-green));
+  }
+  .text-quizup-red {
+    color: hsl(var(--quizup-red));
+  }
+  .text-quizup-gold {
+    color: hsl(var(--quizup-gold));
+  }
+
+  .bg-quizup-dark {
+    background-color: hsl(var(--quizup-dark));
+  }
+  .bg-quizup-card {
+    background-color: hsl(var(--quizup-card));
+  }
+  .bg-quizup-surface {
+    background-color: hsl(var(--quizup-surface));
+  }
+
+  .game-gradient {
+    background: linear-gradient(135deg, hsl(var(--primary)) 0%, hsl(var(--quizup-teal)) 100%);
+  }
+
+  .safe-bottom {
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+
+  /* QuizUp-style pattern background */
+  .quizup-pattern {
+    background-image: 
+      radial-gradient(circle at 20% 50%, hsl(var(--quizup-surface)) 1px, transparent 1px),
+      radial-gradient(circle at 80% 30%, hsl(var(--quizup-surface)) 1px, transparent 1px);
+    background-size: 30px 30px;
+  }
+}

@@ -1,0 +1,220 @@
+const Question = require("../models/Question");
+const Match = require("../models/Match");
+const User = require("../models/User");
+const Category = require("../models/Category");
+const MatchQueue = require("../models/MatchQueue");
+
+/** Each 1v1 match uses at most this many questions, sampled uniformly at random from the full topic pool. */
+const QUESTIONS_PER_MATCH = 7;
+
+function shuffleInPlace(arr) {
+  for (let i = arr.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+  }
+  return arr;
+}
+
+/**
+ * Pick up to QUESTIONS_PER_MATCH distinct questions from the pool (no repeats in one match).
+ */
+function selectQuestionsForMatch(allQuestions) {
+  const pool = [...allQuestions];
+  shuffleInPlace(pool);
+  const n = Math.min(QUESTIONS_PER_MATCH, pool.length);
+  return pool.slice(0, n);
+}
+
+const joinQueue = async (userId, categoryId, socketId) => {
+  userId = userId.toString();
+
+  // Prevent duplicate queue joins
+  const existingDoc = await MatchQueue.findOne({ userId });
+  if (existingDoc) {
+    return { matched: false, alreadyQueued: true };
+  }
+
+  // Find longest waiting opponent 
+  const opponent = await MatchQueue.findOneAndDelete({ categoryId, userId: { $ne: userId } }, { sort: { createdAt: 1 } });
+  
+  if (!opponent) {
+    // No opponent, create my own queue
+    await MatchQueue.create({ userId, categoryId, socketId });
+    return { matched: false };
+  }
+
+  // Fetch questions
+  const allQuestions = await Question.find({ categoryId, isActive: true }).lean();
+  if (allQuestions.length === 0) {
+    // Fallback if no questions, put them both back
+    await MatchQueue.create([{ userId, categoryId, socketId }, { userId: opponent.userId, categoryId, socketId: opponent.socketId }]);
+    return { matched: false };
+  }
+
+  const shuffled = selectQuestionsForMatch(allQuestions);
+
+  const category = await Category.findOne({ slug: categoryId }).lean();
+  const categoryName = category ? category.name : categoryId;
+
+  const [p1User, p2User] = await Promise.all([
+    User.findById(userId).lean(),
+    User.findById(opponent.userId).lean(),
+  ]);
+
+  if (!p1User || !p2User) {
+    return { matched: false };
+  }
+
+  const questionsMapped = shuffled.map((q) => ({
+    id: q._id.toString(),
+    categoryId: q.categoryId,
+    text: q.text,
+    imageUrl: q.imageUrl || null,
+    options: q.options,
+    correctIndex: q.correctIndex, // server-side only
+    timeLimit: q.timeLimit,
+  }));
+
+  const match = await Match.create({
+    categoryId,
+    categoryName,
+    player1: {
+      userId: p1User._id,
+      username: p1User.username,
+      avatarUrl: p1User.avatarUrl,
+      socketId: socketId,
+      score: 0,
+      answers: [],
+      level: p1User.level,
+    },
+    player2: {
+      userId: p2User._id,
+      username: p2User.username,
+      avatarUrl: p2User.avatarUrl,
+      socketId: opponent.socketId,
+      score: 0,
+      answers: [],
+      level: p2User.level,
+    },
+    status: "waiting",
+    totalRounds: shuffled.length,
+    startedAt: new Date(),
+    questions: questionsMapped,
+    currentQuestionIndex: -1,
+    connectedPlayers: [],
+    roundAnswers: {},
+    timerEndsAt: null,
+  });
+
+  const matchId = match._id.toString();
+  const activeState = match.toObject();
+  
+  // Make state compatible with older logic that expected players explicitly mapped
+  activeState.matchId = matchId;
+  activeState.player1.userId = activeState.player1.userId.toString();
+  activeState.player2.userId = activeState.player2.userId.toString();
+
+  return {
+    matched: true,
+    matchId,
+    match: activeState,
+    player1SocketId: socketId,
+    player2SocketId: opponent.socketId,
+  };
+};
+
+const leaveQueue = async (userId, categoryId) => {
+  if (categoryId) {
+    await MatchQueue.findOneAndDelete({ userId, categoryId });
+  } else {
+    await MatchQueue.findOneAndDelete({ userId });
+  }
+};
+
+const leaveAllQueues = async (userId) => {
+  await MatchQueue.deleteMany({ userId });
+};
+
+const getActiveMatch = async (matchId) => {
+  const match = await Match.findById(matchId).lean();
+  if (!match) return null;
+  match.matchId = match._id.toString();
+  match.player1.userId = match.player1.userId.toString();
+  match.player2.userId = match.player2.userId.toString();
+  return match;
+};
+
+const updateActiveMatch = async (matchId, updates) => {
+  const current = await Match.findById(matchId).lean();
+  if (!current) return null;
+
+  // The engine usually passes a function `(s) => newS`
+  const next = typeof updates === "function" ? updates(current) : { ...current, ...updates };
+
+  // Make sure to clean fields that shouldn't crash MongoDB writes
+  delete next._id;
+  delete next.matchId; // Don't persist this back to root!
+  delete next.__v;
+  
+  const updatedMatch = await Match.findByIdAndUpdate(matchId, next, { new: true }).lean();
+  if (!updatedMatch) return null;
+  
+  updatedMatch.matchId = updatedMatch._id.toString();
+  updatedMatch.player1.userId = updatedMatch.player1.userId.toString();
+  updatedMatch.player2.userId = updatedMatch.player2.userId.toString();
+
+  return updatedMatch;
+};
+
+const removeActiveMatch = async (matchId) => {
+  // Optional cleanup of ultra-large transient fields to save space
+  await Match.findByIdAndUpdate(matchId, { $unset: { questions: "", roundAnswers: "" }});
+};
+
+const getUserCurrentMatch = async (userId) => {
+  const activeMatch = await Match.findOne({
+    $or: [{ "player1.userId": userId }, { "player2.userId": userId }],
+    status: { $in: ["waiting", "in_progress", "finalizing"] }
+  }).sort({ createdAt: -1 });
+
+  return activeMatch ? activeMatch._id.toString() : null;
+};
+
+const clearUserMatch = async (userId) => {
+  // Not needed: deduced automatically by match status in Mongo
+};
+
+/**
+ * Atomically record a player entering the Socket.io match room.
+ * Uses $addToSet so concurrent joins cannot overwrite each other's connectedPlayers entry
+ * (read-modify-write on the full document used to drop one player and block startMatch).
+ */
+const recordPlayerJoinedRoom = async (matchId, userId, isP1, socketId) => {
+  const socketField = isP1 ? "player1.socketId" : "player2.socketId";
+  const updated = await Match.findByIdAndUpdate(
+    matchId,
+    {
+      $set: { [socketField]: socketId },
+      $addToSet: { connectedPlayers: userId },
+    },
+    { new: true }
+  ).lean();
+
+  if (!updated) return null;
+  updated.matchId = updated._id.toString();
+  updated.player1.userId = updated.player1.userId.toString();
+  updated.player2.userId = updated.player2.userId.toString();
+  return updated;
+};
+
+module.exports = {
+  joinQueue,
+  leaveQueue,
+  leaveAllQueues,
+  getActiveMatch,
+  updateActiveMatch,
+  removeActiveMatch,
+  getUserCurrentMatch,
+  clearUserMatch,
+  recordPlayerJoinedRoom,
+};
