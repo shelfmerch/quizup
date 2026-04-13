@@ -21,7 +21,7 @@ const CATEGORIES = [
   { slug: "nature",     name: "Nature",       icon: "🌿", color: "140 70% 40%", description: "Animals, plants, ecosystems",              questionCount: 7 },
   { slug: "art",        name: "Art & Design", icon: "🎨", color: "320 70% 55%", description: "Painting, sculpture, design",              questionCount: 7 },
   { slug: "k-pop",      name: "K-Pop",        icon: "🎤", color: "330 80% 58%", description: "Korean pop, groups, and idols",            questionCount: 7 },
-  { slug: "squid-game", name: "Squid Game",   icon: "🦑", color: "142 65% 42%", description: "The Netflix series — trivia and lore",   questionCount: 7 },
+  { slug: "squid-game", name: "Squid Game",   icon: "🦑", color: "142 65% 42%", description: "The Netflix series — trivia and lore",   questionCount: 50 },
 ];
 
 const QUESTIONS = {
@@ -143,13 +143,57 @@ const QUESTIONS = {
     { text: "What is a 'comeback' in K-Pop?", options: ["A tour only", "A new album or single release cycle", "A disbandment", "A TV drama role"], correctIndex: 1 },
   ],
   "squid-game": [
-    { text: "What is the prize money goal (in won) that drives most players?", options: ["10 billion", "45.6 billion", "100 million", "1 trillion"], correctIndex: 1 },
-    { text: "What is the first game played in Squid Game (season 1)?", options: ["Tug of war", "Red Light, Green Light", "Marbles", "Glass bridge"], correctIndex: 1 },
-    { text: "What shape is NOT one of the dalgona cookie cut-outs?", options: ["Circle", "Star", "Triangle", "Heart"], correctIndex: 3 },
-    { text: "Who is the Front Man to detective Hwang Jun-ho?", options: ["His father", "His brother", "His boss", "Unrelated"], correctIndex: 1 },
-    { text: "What color do guards wear who supervise the games?", options: ["Blue", "Red", "Pink", "Green"], correctIndex: 2 },
-    { text: "What childhood game shares its name with the show's title?", options: ["Hopscotch", "Squid", "Tag", "Hide and seek"], correctIndex: 1 },
-    { text: "Players are identified by numbers on their…", options: ["Arms", "Jackets", "Masks", "Shoes"], correctIndex: 1 },
+    // First 21: 15 text + 6 image questions at slots 1,5,8,12,15,19 (0-based). Tail omits text dupes of image topics.
+    { text: "Who cheats Ali?", options: ["Gi-hun", "Deok-su", "Sang-woo", "Front Man"], correctIndex: 2 },
+    { text: "What is the number of the main character in this scene?", options: ["218", "456", "067", "101"], correctIndex: 1, timeLimit: 5, imageUrl: "/uploads/squid-seed/player-456.png" },
+    { text: "What is the final game?", options: ["Tug of War", "Squid Game", "Marbles", "Glass Bridge"], correctIndex: 1 },
+    { text: "What color are the guards' uniforms?", options: ["Blue", "Green", "Pink/Red", "Black"], correctIndex: 2 },
+    { text: "What color are players' tracksuits?", options: ["Red", "Blue", "Green", "Yellow"], correctIndex: 2 },
+    { text: "What game is being played in this scene?", options: ["Tug of War", "Red Light, Green Light", "Marbles", "Glass Bridge"], correctIndex: 1, timeLimit: 6, imageUrl: "/uploads/squid-seed/red-light-doll.png" },
+    { text: "Who is the Front Man?", options: ["Gi-hun", "Jun-ho's brother", "Sang-woo", "Ali"], correctIndex: 1 },
+    { text: "What is the third game?", options: ["Tug of War", "Marbles", "Honeycomb", "Glass Bridge"], correctIndex: 0 },
+    { text: "Which player number does this character have?", options: ["218", "067", "101", "456"], correctIndex: 1, timeLimit: 5, imageUrl: "/uploads/squid-seed/player-067.png" },
+    { text: "Who falls during Tug of War?", options: ["Sae-byeok", "Deok-su's team", "Gi-hun", "Ali"], correctIndex: 1 },
+    { text: "What happens if you lose a game?", options: ["You retry", "You leave", "You are eliminated (killed)", "You get points"], correctIndex: 2 },
+    { text: "Who is Abdul Ali?", options: ["Player 101", "Player 199", "Player 456", "Player 001"], correctIndex: 1 },
+    { text: "What shape must the player carve out in this scene?", options: ["Star", "Circle", "Triangle", "Depends on assigned shape"], correctIndex: 3, timeLimit: 7, imageUrl: "/uploads/squid-seed/dalgona-players.png" },
+    { text: "What game uses marbles?", options: ["4th game", "1st game", "Final game", "2nd game"], correctIndex: 0 },
+    { text: "Who tricks Player 001?", options: ["Sang-woo", "Gi-hun", "Deok-su", "Ali"], correctIndex: 1 },
+    { text: "What is the VIPs' role?", options: ["Players", "Guards", "Spectators betting on games", "Workers"], correctIndex: 2 },
+    { text: "What do these symbols represent in the series?", options: ["Player ranks", "Guard hierarchy", "Game levels", "Team divisions"], correctIndex: 1, timeLimit: 7, imageUrl: "/uploads/squid-seed/invitation-symbols.png" },
+    { text: "What shape has highest rank among guards?", options: ["Circle", "Triangle", "Square", "Star"], correctIndex: 2 },
+    { text: "What weapon do triangle guards carry?", options: ["Knife", "Gun", "Stick", "Rope"], correctIndex: 1 },
+    { text: "What is the purpose of this structure in the game?", options: ["Living quarters", "Game arena", "Player movement between games", "Control center"], correctIndex: 2, timeLimit: 6, imageUrl: "/uploads/squid-seed/maze-stairs.png" },
+    { text: "Who is Hwang Jun-ho?", options: ["Player", "Police officer undercover", "VIP", "Guard"], correctIndex: 1 },
+    { text: "What shape is on the guards' masks?", options: ["Star", "Square / Triangle / Circle", "Diamond", "Cross"], correctIndex: 1 },
+    { text: "Who is Player 001?", options: ["The Front Man", "Oh Il-nam", "Ali", "Sang-woo"], correctIndex: 1 },
+    { text: "What is the prize money?", options: ["10 billion won", "45.6 billion won", "100 billion won", "1 billion won"], correctIndex: 1 },
+    { text: "Where are the games held?", options: ["City", "Island facility", "School", "Prison"], correctIndex: 1 },
+    { text: "What is the glass bridge game about?", options: ["Jumping randomly", "Choosing strong glass panels", "Swimming", "Running"], correctIndex: 1 },
+    { text: "Who pushes others in glass bridge?", options: ["Gi-hun", "Deok-su", "Ali", "Il-nam"], correctIndex: 1 },
+    { text: "What happens to Deok-su?", options: ["Wins", "Escapes", "Falls from bridge with Mi-nyeo", "Joins guards"], correctIndex: 2 },
+    { text: "Who is Han Mi-nyeo?", options: ["Player 101's partner", "Guard", "VIP", "Doctor"], correctIndex: 0 },
+    { text: "What do players vote for?", options: ["Prize", "Continue or stop games", "Food", "Teams"], correctIndex: 1 },
+    { text: "What happens if majority votes to stop?", options: ["Game continues", "Everyone dies", "Players go home with money split", "Restart"], correctIndex: 2 },
+    { text: "What is Gi-hun's personality?", options: ["Ruthless", "Kind-hearted but flawed", "Evil", "Silent"], correctIndex: 1 },
+    { text: "What does Gi-hun promise Sae-byeok?", options: ["Money", "Help her family", "Escape", "Food"], correctIndex: 1 },
+    { text: "Who dies before final game?", options: ["Sae-byeok", "Gi-hun", "Front Man", "VIP"], correctIndex: 0 },
+    { text: "How does Sang-woo die?", options: ["Shot", "Falls", "Suicide during final game", "Poison"], correctIndex: 2 },
+    { text: "What symbol is on invitation card?", options: ["Triangle, circle, square", "Star", "Heart", "Arrow"], correctIndex: 0 },
+    { text: "What number is Sang-woo?", options: ["001", "067", "218", "456"], correctIndex: 2 },
+    { text: "What does the doll detect?", options: ["Heat", "Sound", "Movement", "Light"], correctIndex: 2 },
+    { text: "What language do VIPs speak?", options: ["Korean", "English mostly", "Chinese", "Japanese"], correctIndex: 1 },
+    { text: "What is inside the piggy bank?", options: ["Food", "Prize money accumulating", "Weapons", "Masks"], correctIndex: 1 },
+    { text: "Who organizes the game?", options: ["Government", "Rich elites (VIPs)", "Police", "Players"], correctIndex: 1 },
+    { text: "What is the shape of the arena in final game?", options: ["Circle", "Triangle", "Squid shape", "Square"], correctIndex: 2 },
+    { text: "What does Front Man do to Jun-ho?", options: ["Saves him", "Arrests him", "Shoots him", "Ignores him"], correctIndex: 2 },
+    { text: "What motivates most players?", options: ["Fame", "Debt and money problems", "Revenge", "Fun"], correctIndex: 1 },
+    { text: "What happens after Gi-hun wins?", options: ["Spends money", "Becomes rich instantly", "Lives in guilt and doesn't use money", "Leaves country"], correctIndex: 2 },
+    { text: "What color is the invitation card?", options: ["Black", "Pink/Red", "Blue", "Green"], correctIndex: 1 },
+    { text: "What food is given often?", options: ["Steak", "Eggs and soda", "Rice only", "Bread"], correctIndex: 1 },
+    { text: "What do workers harvest from bodies?", options: ["Blood", "Organs illegally", "Clothes", "Weapons"], correctIndex: 1 },
+    { text: "What does Gi-hun dye his hair at the end?", options: ["Black", "Blonde", "Red", "Blue"], correctIndex: 2 },
+    { text: "What does Gi-hun decide at the end?", options: ["Leave country", "Rejoin games", "Turn back to confront organizers", "Quit life"], correctIndex: 2 },
   ],
 };
 
@@ -173,10 +217,13 @@ const seed = async () => {
   // 2. Questions
   let qCount = 0;
   for (const [categoryId, questions] of Object.entries(QUESTIONS)) {
+    if (categoryId === "squid-game") {
+      await Question.deleteMany({ categoryId: "squid-game" });
+    }
     for (const q of questions) {
       await Question.findOneAndUpdate(
         { categoryId, text: q.text },
-        { ...q, categoryId, timeLimit: 10, isActive: true },
+        { ...q, categoryId, timeLimit: q.timeLimit != null ? q.timeLimit : 10, isActive: true },
         { upsert: true, new: true }
       );
       qCount++;

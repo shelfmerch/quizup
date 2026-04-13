@@ -14,7 +14,7 @@ export const MOCK_CATEGORIES: Category[] = [
   { id: "nature", name: "Nature", icon: "🌿", color: "140 70% 40%", questionCount: 330, description: "Animals, plants, ecosystems" },
   { id: "art", name: "Art & Design", icon: "🎨", color: "320 70% 55%", questionCount: 200, description: "Painting, sculpture, design" },
   { id: "k-pop", name: "K-Pop", icon: "🎤", color: "330 80% 58%", questionCount: 120, description: "Korean pop, groups, and idols" },
-  { id: "squid-game", name: "Squid Game", icon: "🦑", color: "142 65% 42%", questionCount: 85, description: "The Netflix series — trivia and lore" },
+  { id: "squid-game", name: "Squid Game", icon: "🦑", color: "142 65% 42%", questionCount: 50, description: "The Netflix series — trivia and lore" },
 ];
 
 export const MOCK_QUESTIONS: Record<string, Question[]> = {
