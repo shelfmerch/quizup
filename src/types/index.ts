@@ -22,9 +22,20 @@ export interface Profile extends User {
   bestWinStreak: number;
   followers: number;
   following: number;
+  isFollowing?: boolean; // true when the logged-in user already follows this profile
   achievements: Achievement[];
   favoriteCategory: string;
   lastActive: string;
+}
+
+export interface ChatMessage {
+  id: string;
+  roomId: string;
+  senderId: string;
+  senderName: string;
+  senderAvatar: string;
+  text: string;
+  createdAt: string; // ISO
 }
 
 export interface Category {

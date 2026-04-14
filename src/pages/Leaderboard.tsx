@@ -2,8 +2,10 @@ import React, { useEffect, useState } from "react";
 import { leaderboardService } from "@/services/leaderboardService";
 import { LeaderboardEntry } from "@/types";
 import { Search } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
 const Leaderboard: React.FC = () => {
+  const navigate = useNavigate();
   const [entries, setEntries] = useState<LeaderboardEntry[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -39,36 +41,36 @@ const Leaderboard: React.FC = () => {
         <div className="flex items-end justify-center gap-4 h-32">
           {/* 2nd place */}
           {entries[1] && (
-            <div className="flex flex-col items-center">
+            <button onClick={() => navigate(`/profile/${entries[1].userId}`)} className="flex flex-col items-center">
               <img src={entries[1].avatarUrl} alt="" className="w-12 h-12 rounded-full border-2 mb-1" style={{borderColor: 'silver'}} />
               <p className="text-[10px] text-foreground font-semibold truncate max-w-[60px]">{entries[1].username}</p>
               <p className="text-xs text-muted-foreground">{entries[1].score}</p>
               <div className="w-16 h-16 quizup-header-teal rounded-t-lg mt-1 flex items-center justify-center">
                 <span className="text-xl">{medals[1]}</span>
               </div>
-            </div>
+            </button>
           )}
           {/* 1st place */}
           {entries[0] && (
-            <div className="flex flex-col items-center">
+            <button onClick={() => navigate(`/profile/${entries[0].userId}`)} className="flex flex-col items-center">
               <img src={entries[0].avatarUrl} alt="" className="w-14 h-14 rounded-full border-2 mb-1" style={{borderColor: 'gold'}} />
               <p className="text-[10px] text-foreground font-semibold truncate max-w-[60px]">{entries[0].username}</p>
               <p className="text-xs text-muted-foreground">{entries[0].score}</p>
               <div className="w-16 h-24 rounded-t-lg mt-1 flex items-center justify-center" style={{backgroundColor: 'hsl(45 100% 51%)'}}>
                 <span className="text-2xl">{medals[0]}</span>
               </div>
-            </div>
+            </button>
           )}
           {/* 3rd place */}
           {entries[2] && (
-            <div className="flex flex-col items-center">
+            <button onClick={() => navigate(`/profile/${entries[2].userId}`)} className="flex flex-col items-center">
               <img src={entries[2].avatarUrl} alt="" className="w-12 h-12 rounded-full border-2 mb-1" style={{borderColor: '#cd7f32'}} />
               <p className="text-[10px] text-foreground font-semibold truncate max-w-[60px]">{entries[2].username}</p>
               <p className="text-xs text-muted-foreground">{entries[2].score}</p>
               <div className="w-16 h-12 quizup-header-orange rounded-t-lg mt-1 flex items-center justify-center">
                 <span className="text-xl">{medals[2]}</span>
               </div>
-            </div>
+            </button>
           )}
         </div>
       </div>
@@ -76,7 +78,11 @@ const Leaderboard: React.FC = () => {
       {/* Rest of the leaderboard */}
       <div className="px-4 py-3 space-y-2">
         {entries.slice(3).map((entry) => (
-          <div key={entry.userId} className="flex items-center gap-3 bg-quizup-card rounded-lg px-4 py-3">
+          <button
+            key={entry.userId}
+            onClick={() => navigate(`/profile/${entry.userId}`)}
+            className="w-full flex items-center gap-3 bg-quizup-card rounded-lg px-4 py-3 text-left active:opacity-70 transition-opacity"
+          >
             <span className="text-sm font-display font-extrabold text-muted-foreground w-6 text-center">{entry.rank}</span>
             <img src={entry.avatarUrl} alt="" className="w-10 h-10 rounded-full" />
             <div className="flex-1 min-w-0">
@@ -84,7 +90,7 @@ const Leaderboard: React.FC = () => {
               <p className="text-[10px] text-muted-foreground">Lvl {entry.level} · {entry.country}</p>
             </div>
             <p className="font-display font-extrabold text-sm text-quizup-gold">{entry.score}</p>
-          </div>
+          </button>
         ))}
       </div>
     </div>

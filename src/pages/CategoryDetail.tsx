@@ -81,7 +81,7 @@ const CategoryDetail: React.FC = () => {
 
   const theme = CATEGORY_THEMES[themeKey] ?? CATEGORY_THEMES["quizup-header-teal"];
 
-  // Fetch top 3 leaderboard for this category
+  // Fetch top 5 leaderboard for this category
   useEffect(() => {
     if (!categoryId) return;
     let cancelled = false;
@@ -89,7 +89,7 @@ const CategoryDetail: React.FC = () => {
     leaderboardService
       .getCategoryLeaderboard(categoryId)
       .then((entries) => {
-        if (!cancelled) setTopPlayers(entries.slice(0, 3));
+        if (!cancelled) setTopPlayers(entries.slice(0, 5));
       })
       .catch(() => {
         if (!cancelled) setTopPlayers([]);
