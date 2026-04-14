@@ -1,10 +1,11 @@
-import React, { useEffect, useMemo } from "react";
+import React, { useEffect, useMemo, useRef } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useBattle } from "@/hooks/useBattle";
 import { useOnlineBattle, type OnlineBattleInit } from "@/hooks/useOnlineBattle";
 import { Match, MatchPlayer } from "@/types";
 import { motion, AnimatePresence } from "framer-motion";
 import { resolveQuestionImageUrl } from "@/lib/mediaUrl";
+import { playDefeatSfx, playVictorySfx, startMatchMusic, stopMatchMusic } from "@/lib/battleAudio";
 
 function parseBattleNav(state: unknown): { online: OnlineBattleInit | null; localMatch: Match | null } {
   if (
@@ -142,6 +143,8 @@ const BattlePage: React.FC = () => {
   const isOnline = !!onlineInit;
   const { state, startNextRound, submitAnswer, proceedToNext, getWinner } = isOnline ? onlineBattle : localBattle;
 
+  const endSfxPlayedRef = useRef(false);
+
   useEffect(() => {
     if (isOnline) return;
     if (!localMatch) {
@@ -155,6 +158,29 @@ const BattlePage: React.FC = () => {
   const match = state?.match;
 
   if (!state || !match) return null;
+
+  // ─── Battle audio: loop music during match; play victory/defeat once ───────
+  useEffect(() => {
+    if (!state) return;
+
+    if (state.phase === "match_end") {
+      stopMatchMusic();
+      if (!endSfxPlayedRef.current) {
+        const winner = getWinner();
+        if (winner === "player") playVictorySfx();
+        else if (winner === "opponent") playDefeatSfx();
+        endSfxPlayedRef.current = true;
+      }
+      return;
+    }
+
+    // Match is ongoing (intro/question/answer_reveal/round_result): ensure music is playing.
+    endSfxPlayedRef.current = false;
+    startMatchMusic();
+
+    // Stop music if user navigates away mid-match.
+    return () => stopMatchMusic();
+  }, [state.phase, getWinner]);
 
   const showManualNext = !isOnline;
 
