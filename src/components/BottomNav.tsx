@@ -16,7 +16,7 @@ const BottomNav: React.FC = () => {
 
   return (
     <nav className="fixed bottom-0 left-0 right-0 z-50 bg-white/95 backdrop-blur border-t border-zinc-200 safe-bottom">
-      <div className="flex items-center justify-around h-16 max-w-[420px] mx-auto">
+      <div className="flex items-center justify-around h-16 max-w-md mx-auto">
         {tabs.map(({ path, icon: Icon, label, isCenter }) => {
           const active = location.pathname === path;
           
@@ -27,8 +27,10 @@ const BottomNav: React.FC = () => {
                 onClick={() => navigate(path)}
                 className="flex items-center justify-center -mt-4"
               >
-                <div className="w-14 h-14 rounded-full flex items-center justify-center quizup-header-red shadow-[0_10px_24px_rgba(0,0,0,0.25)]">
-                  <Zap className="w-7 h-7 text-white" fill="currentColor" />
+                <div className={`w-14 h-14 rounded-full flex items-center justify-center ${
+                  active ? "quizup-header-red" : "quizup-header-red"
+                } shadow-[0_10px_24px_rgba(0,0,0,0.25)]`}>
+                  <Zap className="w-7 h-7 text-foreground" fill="currentColor" />
                 </div>
               </button>
             );
