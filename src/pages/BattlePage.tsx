@@ -145,6 +145,7 @@ const BattlePage: React.FC = () => {
 
   const endSfxPlayedRef = useRef(false);
   const countdownTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const matchMusicStartedRef = useRef(false);
 
   useEffect(() => {
     if (isOnline) return;
@@ -160,7 +161,15 @@ const BattlePage: React.FC = () => {
 
   if (!state || !match) return null;
 
-  // ─── Battle audio: loop music during match; play victory/defeat once ───────
+  // ─── Battle audio: start once per match; stop at end; victory/defeat once ──
+  useEffect(() => {
+    if (!state) return;
+    if (state.phase === "match_end") return;
+    if (matchMusicStartedRef.current) return;
+    matchMusicStartedRef.current = true;
+    startMatchMusic();
+  }, [state?.phase]);
+
   useEffect(() => {
     if (!state) return;
 
@@ -175,13 +184,16 @@ const BattlePage: React.FC = () => {
       return;
     }
 
-    // Match is ongoing (intro/question/answer_reveal/round_result): ensure music is playing.
     endSfxPlayedRef.current = false;
-    startMatchMusic();
+  }, [state?.phase, getWinner]);
 
-    // Stop music if user navigates away mid-match.
-    return () => stopMatchMusic();
-  }, [state.phase, getWinner]);
+  // Stop music if user navigates away mid-match.
+  useEffect(() => {
+    return () => {
+      matchMusicStartedRef.current = false;
+      stopMatchMusic();
+    };
+  }, []);
 
   // ─── Countdown SFX: play 6s after each question appears ────────────────────
   useEffect(() => {
