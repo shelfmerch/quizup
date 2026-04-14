@@ -18,4 +18,12 @@ export const EXTRA_HOME_TOPICS: Category[] = [
     questionCount: 0,
     description: "The Netflix series — trivia and lore",
   },
+  {
+    id: "pak-dramas",
+    name: "Pak Dramas",
+    icon: "🎬",
+    color: "24 90% 55%",
+    questionCount: 0,
+    description: "Pakistani dramas — iconic stories & characters",
+  },
 ];
