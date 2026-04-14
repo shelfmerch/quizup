@@ -5,7 +5,6 @@ import { Profile } from "@/types";
 import { MOCK_ACHIEVEMENTS } from "@/data/mock-data";
 import { Settings, LogOut, Search, ArrowLeft, UserPlus, UserCheck, MessageCircle, Loader2, Camera } from "lucide-react";
 import { useNavigate, useParams } from "react-router-dom";
-import ChatDrawer from "@/components/ChatDrawer";
 
 const ProfilePage: React.FC = () => {
   const { user, logout } = useAuth();
@@ -19,7 +18,6 @@ const ProfilePage: React.FC = () => {
   const [profile, setProfile] = useState<Profile | null>(null);
   const [isFollowing, setIsFollowing] = useState(false);
   const [followLoading, setFollowLoading] = useState(false);
-  const [chatOpen, setChatOpen] = useState(false);
   const fileInputRef = React.useRef<HTMLInputElement>(null);
   const [uploadingAvatar, setUploadingAvatar] = React.useState(false);
 
@@ -247,7 +245,7 @@ const ProfilePage: React.FC = () => {
 
             {/* Chat */}
             <button
-              onClick={() => setChatOpen(true)}
+              onClick={() => navigate(`/chat/${p.id}`)}
               className="flex-1 h-11 rounded-lg bg-quizup-surface text-foreground font-semibold text-sm border border-border flex items-center justify-center gap-2"
             >
               <MessageCircle className="w-4 h-4" />
@@ -290,15 +288,7 @@ const ProfilePage: React.FC = () => {
         </div>
       )}
 
-      {/* Chat drawer (other player only) */}
-      {chatOpen && !isOwnProfile && (
-        <ChatDrawer
-          peerId={p.id}
-          peerName={p.displayName || p.username}
-          peerAvatar={p.avatarUrl}
-          onClose={() => setChatOpen(false)}
-        />
-      )}
+      {/* Chat is a dedicated page now: /chat/:peerId */}
     </div>
   );
 };

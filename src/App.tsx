@@ -16,6 +16,7 @@ import BattlePage from "./pages/BattlePage";
 import Leaderboard from "./pages/Leaderboard";
 import MatchHistory from "./pages/MatchHistory";
 import ProfilePage from "./pages/ProfilePage";
+import ChatPage from "./pages/ChatPage";
 import SettingsPage from "./pages/SettingsPage";
 import Notifications from "./pages/Notifications";
 import NotFound from "./pages/NotFound";
@@ -45,6 +46,7 @@ const App = () => (
               <Route path="/history" element={<MatchHistory />} />
               <Route path="/profile" element={<ProfilePage />} />
               <Route path="/profile/:userId" element={<ProfilePage />} />
+              <Route path="/chat/:peerId" element={<ChatPage />} />
               <Route path="/settings" element={<SettingsPage />} />
               <Route path="/notifications" element={<Notifications />} />
               <Route path="/category/:categoryId" element={<CategoryDetail />} />

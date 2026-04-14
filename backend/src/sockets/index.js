@@ -3,6 +3,7 @@ const { verifyToken } = require("../utils/jwt");
 const User = require("../models/User");
 const registerMatchmaking = require("./matchmaking");
 const registerBattle = require("./battle");
+const registerChat = require("./chat");
 
 /**
  * Initialize Socket.io on the HTTP server.
@@ -62,6 +63,7 @@ const initSockets = (httpServer) => {
     // Register feature-specific handlers
     registerMatchmaking(socket, io);
     registerBattle(socket, io);
+    registerChat(socket, io);
 
     socket.on("disconnect", (reason) => {
       console.log(`[Socket] Disconnected: ${socket.username} — ${reason}`);

@@ -21,9 +21,9 @@ export const profileService = {
     });
     if (!response.ok) throw new Error("Failed to fetch profile");
     
-    // Some backend APIs might return { data: profile } or just the profile. Adjusting for common format.
     const data = await response.json();
-    return data.profile || data; 
+    // Backend returns `{ user: profile }`
+    return data.user || data.profile || data;
   },
 
   async getMatchHistory(userId: string, limit = 20): Promise<MatchHistoryEntry[]> {
@@ -37,14 +37,14 @@ export const profileService = {
   },
 
   async updateProfile(updates: Partial<Profile>): Promise<Profile> {
-    const response = await fetch(`${API_URL}/profile/me`, {
-      method: "PUT",
+    const response = await fetch(`${API_URL}/profile`, {
+      method: "PATCH",
       headers: getAuthHeaders(),
       body: JSON.stringify(updates),
     });
     if (!response.ok) throw new Error("Failed to update profile");
     const data = await response.json();
-    return data.profile || data;
+    return data.user || data.profile || data;
   },
 
   async followUser(userId: string): Promise<void> {
@@ -84,7 +84,7 @@ export const profileService = {
     
     if (!response.ok) throw new Error("Failed to upload avatar");
     const data = await response.json();
-    return data.profile || data;
+    return data.user || data.profile || data;
   },
 };
 
