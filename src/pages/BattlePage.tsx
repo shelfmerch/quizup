@@ -5,7 +5,7 @@ import { useOnlineBattle, type OnlineBattleInit } from "@/hooks/useOnlineBattle"
 import { Match, MatchPlayer } from "@/types";
 import { motion, AnimatePresence } from "framer-motion";
 import { resolveQuestionImageUrl } from "@/lib/mediaUrl";
-import { playDefeatSfx, playVictorySfx, startMatchMusic, stopMatchMusic } from "@/lib/battleAudio";
+import { playCountdownSfx, playDefeatSfx, playVictorySfx, startMatchMusic, stopCountdownSfx, stopMatchMusic } from "@/lib/battleAudio";
 
 function parseBattleNav(state: unknown): { online: OnlineBattleInit | null; localMatch: Match | null } {
   if (
@@ -144,6 +144,7 @@ const BattlePage: React.FC = () => {
   const { state, startNextRound, submitAnswer, proceedToNext, getWinner } = isOnline ? onlineBattle : localBattle;
 
   const endSfxPlayedRef = useRef(false);
+  const countdownTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     if (isOnline) return;
@@ -181,6 +182,30 @@ const BattlePage: React.FC = () => {
     // Stop music if user navigates away mid-match.
     return () => stopMatchMusic();
   }, [state.phase, getWinner]);
+
+  // ─── Countdown SFX: play 6s after each question appears ────────────────────
+  useEffect(() => {
+    if (!state || state.phase !== "question") {
+      if (countdownTimeoutRef.current) clearTimeout(countdownTimeoutRef.current);
+      countdownTimeoutRef.current = null;
+      stopCountdownSfx();
+      return;
+    }
+
+    // New question (or re-render) — schedule fresh and stop any previous audio.
+    stopCountdownSfx();
+    if (countdownTimeoutRef.current) clearTimeout(countdownTimeoutRef.current);
+    countdownTimeoutRef.current = setTimeout(() => {
+      // Only play if we are still on a live question.
+      playCountdownSfx();
+    }, 6000);
+
+    return () => {
+      if (countdownTimeoutRef.current) clearTimeout(countdownTimeoutRef.current);
+      countdownTimeoutRef.current = null;
+      stopCountdownSfx();
+    };
+  }, [state?.phase, state?.currentQuestion?.id]);
 
   const showManualNext = !isOnline;
 

@@ -2,12 +2,14 @@ type AudioState = {
   matchMusic: HTMLAudioElement | null;
   victory: HTMLAudioElement | null;
   defeat: HTMLAudioElement | null;
+  countdown: HTMLAudioElement | null;
 };
 
 const state: AudioState = {
   matchMusic: null,
   victory: null,
   defeat: null,
+  countdown: null,
 };
 
 function safePlay(a: HTMLAudioElement) {
@@ -54,5 +56,20 @@ export function playDefeatSfx() {
   }
   state.defeat.currentTime = 0;
   safePlay(state.defeat);
+}
+
+export function playCountdownSfx() {
+  if (!state.countdown) {
+    state.countdown = create("/audio/timer.mp3", { loop: false, volume: 0.9 });
+  }
+  state.countdown.currentTime = 0;
+  safePlay(state.countdown);
+}
+
+export function stopCountdownSfx() {
+  const a = state.countdown;
+  if (!a) return;
+  a.pause();
+  a.currentTime = 0;
 }
 
