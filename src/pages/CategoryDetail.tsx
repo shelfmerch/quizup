@@ -255,7 +255,7 @@ const CategoryDetail: React.FC = () => {
         </div>
       </div>
 
-      {/* ── Top 3 Players ─────────────────────────────────────────────────────── */}
+      {/* ── Top 5 Players ─────────────────────────────────────────────────────── */}
       <div className="flex-1 px-4 pt-5 pb-28">
         <div className="flex items-center gap-2 mb-3">
           <Trophy className="w-4 h-4 text-yellow-400" />
@@ -293,12 +293,14 @@ const CategoryDetail: React.FC = () => {
         ) : (
           <div className="space-y-2">
             {topPlayers.map((player, idx) => (
-              <motion.div
+              <motion.button
                 key={player.userId}
                 initial={{ opacity: 0, y: 12 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: idx * 0.07 }}
-                className="relative flex items-center gap-3 bg-zinc-900 border border-zinc-800 rounded-2xl px-4 py-3 overflow-hidden"
+                type="button"
+                onClick={() => navigate(`/profile/${player.userId}`)}
+                className="relative w-full text-left flex items-center gap-3 bg-zinc-900 border border-zinc-800 rounded-2xl px-4 py-3 overflow-hidden hover:bg-zinc-800/60 active:scale-[0.99] transition"
               >
                 {/* subtle rank glow strip on left */}
                 <div
@@ -312,7 +314,7 @@ const CategoryDetail: React.FC = () => {
                         : "linear-gradient(180deg,#CD7F32,#A0522D)",
                   }}
                 />
-                <span className="text-xl shrink-0 ml-1">{MEDAL[idx]}</span>
+                <span className="text-xl shrink-0 ml-1">{idx < 3 ? MEDAL[idx] : `#${idx + 1}`}</span>
                 <img
                   src={
                     player.avatarUrl ||
@@ -338,7 +340,7 @@ const CategoryDetail: React.FC = () => {
                   </p>
                   <p className="text-[9px] text-zinc-600 uppercase tracking-wide">pts</p>
                 </div>
-              </motion.div>
+              </motion.button>
             ))}
           </div>
         )}
