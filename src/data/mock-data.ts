@@ -16,6 +16,7 @@ export const MOCK_CATEGORIES: Category[] = [
   { id: "k-pop", name: "K-Pop", icon: "🎤", color: "330 80% 58%", questionCount: 120, description: "Korean pop, groups, and idols" },
   { id: "squid-game", name: "Squid Game", icon: "🦑", color: "142 65% 42%", questionCount: 55, description: "The Netflix series — trivia and lore" },
   { id: "pak-dramas", name: "Pak Dramas", icon: "🎬", color: "24 90% 55%", questionCount: 49, description: "Pakistani dramas — iconic stories & characters" },
+  { id: "english", name: "English", icon: "📘", color: "210 85% 55%", questionCount: 49, description: "Vocabulary, meanings, and usage" },
 ];
 
 export const MOCK_QUESTIONS: Record<string, Question[]> = {

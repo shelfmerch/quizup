@@ -26,4 +26,12 @@ export const EXTRA_HOME_TOPICS: Category[] = [
     questionCount: 0,
     description: "Pakistani dramas — iconic stories & characters",
   },
+  {
+    id: "english",
+    name: "English",
+    icon: "📘",
+    color: "210 85% 55%",
+    questionCount: 0,
+    description: "Vocabulary, meanings, and usage",
+  },
 ];

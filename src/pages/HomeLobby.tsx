@@ -243,7 +243,8 @@ const HomeLobby: React.FC = () => {
               <div className="mt-4">
                 <button
                   type="button"
-                  onClick={() => setExploreOpen((o) => !o)}
+                  // onClick={() => setExploreOpen((o) => !o)}
+                  onClick={() => navigate("/categories")}
                   className="flex items-center justify-center gap-1 w-full py-3 text-sm font-semibold text-quizup-green"
                 >
                   Explore more topics

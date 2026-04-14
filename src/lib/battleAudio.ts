@@ -74,3 +74,16 @@ export function stopCountdownSfx() {
   a.currentTime = 0;
 }
 
+export function stopVictorySfx() {
+  const a = state.victory;
+  if (!a) return;
+  a.pause();
+  a.currentTime = 0;
+}
+
+export function stopDefeatSfx() {
+  const a = state.defeat;
+  if (!a) return;
+  a.pause();
+  a.currentTime = 0;
+}

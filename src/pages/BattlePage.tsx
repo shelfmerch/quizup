@@ -5,7 +5,7 @@ import { useOnlineBattle, type OnlineBattleInit } from "@/hooks/useOnlineBattle"
 import { Match, MatchPlayer } from "@/types";
 import { motion, AnimatePresence } from "framer-motion";
 import { resolveQuestionImageUrl } from "@/lib/mediaUrl";
-import { playCountdownSfx, playDefeatSfx, playVictorySfx, startMatchMusic, stopCountdownSfx, stopMatchMusic } from "@/lib/battleAudio";
+import { playCountdownSfx, playDefeatSfx, playVictorySfx, startMatchMusic, stopCountdownSfx, stopMatchMusic, stopVictorySfx, stopDefeatSfx } from "@/lib/battleAudio";
 
 function parseBattleNav(state: unknown): { online: OnlineBattleInit | null; localMatch: Match | null } {
   if (
@@ -192,6 +192,8 @@ const BattlePage: React.FC = () => {
     return () => {
       matchMusicStartedRef.current = false;
       stopMatchMusic();
+      stopVictorySfx();
+      stopDefeatSfx();
     };
   }, []);
 
@@ -210,7 +212,7 @@ const BattlePage: React.FC = () => {
     countdownTimeoutRef.current = setTimeout(() => {
       // Only play if we are still on a live question.
       playCountdownSfx();
-    }, 6000);
+    }, 5000);
 
     return () => {
       if (countdownTimeoutRef.current) clearTimeout(countdownTimeoutRef.current);
@@ -253,14 +255,22 @@ const BattlePage: React.FC = () => {
         <div className="flex-1 flex flex-col justify-end p-4 gap-3 pb-8">
           <button
             type="button"
-            onClick={() => navigate(`/find-match/${match.categoryId}`)}
+            onClick={() => {
+              stopVictorySfx();
+              stopDefeatSfx();
+              navigate(`/find-match/${match.categoryId}`);
+            }}
             className="w-full h-14 rounded-xl bg-emerald-600 text-white font-semibold text-base active:scale-[0.98] transition-transform"
           >
             Rematch
           </button>
           <button
             type="button"
-            onClick={() => navigate("/home")}
+            onClick={() => {
+              stopVictorySfx();
+              stopDefeatSfx();
+              navigate("/home");
+            }}
             className="w-full h-14 rounded-xl bg-zinc-800 text-white font-semibold text-base border border-zinc-700"
           >
             Back to lobby
