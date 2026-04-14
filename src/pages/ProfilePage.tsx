@@ -3,7 +3,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { profileService } from "@/services/profileService";
 import { Profile } from "@/types";
 import { MOCK_ACHIEVEMENTS } from "@/data/mock-data";
-import { Settings, LogOut, Search, ArrowLeft, UserPlus, UserCheck, MessageCircle, Loader2 } from "lucide-react";
+import { Settings, LogOut, Search, ArrowLeft, UserPlus, UserCheck, MessageCircle, Loader2, Camera } from "lucide-react";
 import { useNavigate, useParams } from "react-router-dom";
 import ChatDrawer from "@/components/ChatDrawer";
 
@@ -20,6 +20,35 @@ const ProfilePage: React.FC = () => {
   const [isFollowing, setIsFollowing] = useState(false);
   const [followLoading, setFollowLoading] = useState(false);
   const [chatOpen, setChatOpen] = useState(false);
+  const fileInputRef = React.useRef<HTMLInputElement>(null);
+  const [uploadingAvatar, setUploadingAvatar] = React.useState(false);
+
+  const handleAvatarSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !isOwnProfile) return;
+
+    setUploadingAvatar(true);
+    try {
+      await profileService.uploadAvatar(file);
+      if (typeof (useAuth as any)().refreshUser === 'function') {
+        const authHook = (useAuth as any)();
+        await authHook.refreshUser();
+      }
+      
+      // Optionally update local profile state to show image immediately
+      if (profile) {
+          const reader = new FileReader();
+          reader.onloadend = () => {
+             setProfile({...profile, avatarUrl: reader.result as string});
+          };
+          reader.readAsDataURL(file);
+      }
+    } catch (err) {
+      console.error("Failed to upload avatar", err);
+    } finally {
+      setUploadingAvatar(false);
+    }
+  };
 
   const loadProfile = useCallback(async () => {
     try {
@@ -102,13 +131,30 @@ const ProfilePage: React.FC = () => {
 
       {/* Avatar + info */}
       <div className="bg-quizup-card p-6 text-center">
-        <div className="relative inline-block mb-3">
-          <img
-            src={p.avatarUrl}
-            alt=""
-            className="w-24 h-24 rounded-full border-4 border-quizup-dark object-cover"
-            style={{ borderColor: "hsl(270 60% 50%)" }}
-          />
+        <div className="relative inline-block mb-3 group">
+          <div 
+             className={`relative w-24 h-24 rounded-full border-4 border-quizup-dark overflow-hidden ${isOwnProfile ? 'cursor-pointer' : ''}`}
+             style={{ borderColor: "hsl(270 60% 50%)" }}
+             onClick={() => isOwnProfile && fileInputRef.current?.click()}
+          >
+            <img
+              src={p.avatarUrl}
+              alt=""
+              className={`w-full h-full object-cover transition-opacity ${uploadingAvatar ? 'opacity-50' : 'opacity-100'}`}
+            />
+            {isOwnProfile && (
+                <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                    {uploadingAvatar ? (
+                       <Loader2 className="w-6 h-6 text-white animate-spin" />
+                    ) : (
+                       <Camera className="w-6 h-6 text-white" />
+                    )}
+                </div>
+            )}
+          </div>
+          {isOwnProfile && (
+             <input type="file" ref={fileInputRef} onChange={handleAvatarSelect} accept="image/*" className="hidden" />
+          )}
           <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 bg-quizup-dark rounded-full px-3 py-0.5">
             <span className="text-[10px] font-bold text-quizup-gold">LVL {p.level}</span>
           </div>

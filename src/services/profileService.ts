@@ -9,6 +9,11 @@ const getAuthHeaders = () => {
   };
 };
 
+const getAuthToken = (): Record<string, string> => {
+  const token = localStorage.getItem("quizup_token");
+  return token ? { Authorization: `Bearer ${token}` } : {};
+};
+
 export const profileService = {
   async getProfile(userId: string): Promise<Profile> {
     const response = await fetch(`${API_URL}/profile/${userId}`, {
@@ -66,4 +71,20 @@ export const profileService = {
     const data = await response.json();
     return !!data.isFollowing;
   },
+
+  async uploadAvatar(file: File): Promise<Profile> {
+    const formData = new FormData();
+    formData.append("avatar", file);
+
+    const response = await fetch(`${API_URL}/profile/avatar`, {
+      method: "PUT",
+      headers: getAuthToken(), // Using getAuthToken instead of getAuthHeaders to let browser set Content-Type with boundary
+      body: formData,
+    });
+    
+    if (!response.ok) throw new Error("Failed to upload avatar");
+    const data = await response.json();
+    return data.profile || data;
+  },
 };
+
