@@ -19,6 +19,7 @@ import ProfilePage from "./pages/ProfilePage";
 import SettingsPage from "./pages/SettingsPage";
 import Notifications from "./pages/Notifications";
 import NotFound from "./pages/NotFound";
+import CategoryDetail from "./pages/CategoryDetail";
 import AdminRoute from "@/components/AdminRoute";
 import AdminPage from "./pages/AdminPage";
 
@@ -45,6 +46,7 @@ const App = () => (
               <Route path="/profile" element={<ProfilePage />} />
               <Route path="/settings" element={<SettingsPage />} />
               <Route path="/notifications" element={<Notifications />} />
+              <Route path="/category/:categoryId" element={<CategoryDetail />} />
             </Route>
 
             {/* Full-screen routes (no bottom nav) */}

@@ -63,7 +63,7 @@ const Categories: React.FC = () => {
               animate={{ opacity: 1, x: 0 }}
               transition={{ delay: i * 0.03 }}
               whileTap={{ scale: 0.97 }}
-              onClick={() => navigate(`/find-match/${cat.id}`)}
+              onClick={() => navigate(`/category/${cat.id}`)}
               className={`w-full ${CATEGORY_COLORS[i % CATEGORY_COLORS.length]} rounded-lg p-4 flex items-center gap-4 text-left`}
             >
               <span className="text-3xl">{cat.icon}</span>

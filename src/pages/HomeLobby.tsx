@@ -10,13 +10,14 @@ import { Category } from "@/types";
 import { Search, Settings, ChevronRight, ChevronDown } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
-const CATEGORY_COLORS = [
-  "quizup-header-red",
-  "quizup-header-green",
-  "quizup-header-teal",
-  "quizup-header-blue",
-  "quizup-header-purple",
-  "quizup-header-orange",
+const CATEGORY_THEMES = [
+  { bg: "quizup-header-red", text: "text-foreground", textMuted: "text-foreground/60", icon: "text-foreground/40" },
+  { bg: "quizup-header-green", text: "text-foreground", textMuted: "text-foreground/60", icon: "text-foreground/40" },
+  { bg: "quizup-header-teal", text: "text-foreground", textMuted: "text-foreground/60", icon: "text-foreground/40" },
+  { bg: "quizup-header-blue", text: "text-foreground", textMuted: "text-foreground/60", icon: "text-foreground/40" },
+  { bg: "quizup-header-purple", text: "text-foreground", textMuted: "text-foreground/60", icon: "text-foreground/40" },
+  { bg: "quizup-header-orange", text: "text-foreground", textMuted: "text-foreground/60", icon: "text-foreground/40" },
+  { bg: "bg-white", text: "text-black", textMuted: "text-black/60", icon: "text-black/40" },
 ];
 
 const POPULAR_COUNT = 5;
@@ -103,22 +104,25 @@ const HomeLobby: React.FC = () => {
     return allTopics.filter((c) => !ids.has(c.id)).sort((a, b) => a.name.localeCompare(b.name));
   }, [allTopics, popularTopics]);
 
-  const renderTopicRow = (cat: Category, colorIndex: number) => (
-    <motion.button
-      key={cat.id}
-      type="button"
-      whileTap={{ scale: 0.98 }}
-      onClick={() => navigate(`/find-match/${cat.id}`)}
-      className={`w-full ${CATEGORY_COLORS[colorIndex % CATEGORY_COLORS.length]} rounded-xl p-4 flex items-center gap-3 text-left`}
-    >
-      <span className="text-3xl shrink-0">{cat.icon}</span>
-      <div className="flex-1 min-w-0">
-        <p className="font-display font-bold text-foreground text-sm">{cat.name}</p>
-        <p className="text-foreground/60 text-[10px]">{cat.questionCount} questions</p>
-      </div>
-      <ChevronRight className="w-5 h-5 text-foreground/40 shrink-0" />
-    </motion.button>
-  );
+  const renderTopicRow = (cat: Category, colorIndex: number) => {
+    const theme = CATEGORY_THEMES[colorIndex % CATEGORY_THEMES.length];
+    return (
+      <motion.button
+        key={cat.id}
+        type="button"
+        whileTap={{ scale: 0.98 }}
+        onClick={() => navigate(`/category/${cat.id}`)}
+        className={`w-full ${theme.bg} rounded-xl p-4 flex items-center gap-3 text-left`}
+      >
+        <span className="text-3xl shrink-0">{cat.icon}</span>
+        <div className="flex-1 min-w-0">
+          <p className={`font-display font-bold ${theme.text} text-sm`}>{cat.name}</p>
+          <p className={`${theme.textMuted} text-[10px]`}>{cat.questionCount} questions</p>
+        </div>
+        <ChevronRight className={`w-5 h-5 ${theme.icon} shrink-0`} />
+      </motion.button>
+    );
+  };
 
   return (
     <div className="min-h-screen bg-[#121212]">
