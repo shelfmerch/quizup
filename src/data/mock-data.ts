@@ -5,7 +5,7 @@ export const MOCK_CATEGORIES: Category[] = [
   { id: "geography", name: "Geography", icon: "🌍", color: "210 90% 55%", questionCount: 420, description: "Countries, capitals, landmarks" },
   { id: "history", name: "History", icon: "📜", color: "38 92% 55%", questionCount: 380, description: "Ancient to modern world history" },
   { id: "movies", name: "Movies", icon: "🎬", color: "0 72% 55%", questionCount: 600, description: "Hollywood, Bollywood, and beyond" },
-  { id: "sports", name: "Sports", icon: "⚽", color: "120 60% 45%", questionCount: 450, description: "Football, cricket, olympics" },
+  { id: "sports", name: "Sports", icon: "⚽", color: "120 60% 45%", questionCount: 49, description: "Football, cricket, olympics" },
   { id: "music", name: "Music", icon: "🎵", color: "270 70% 60%", questionCount: 350, description: "Artists, albums, genres" },
   { id: "technology", name: "Technology", icon: "💻", color: "200 80% 50%", questionCount: 290, description: "Gadgets, coding, innovation" },
   { id: "literature", name: "Literature", icon: "📚", color: "30 70% 50%", questionCount: 310, description: "Books, authors, poetry" },
