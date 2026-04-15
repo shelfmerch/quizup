@@ -1,11 +1,13 @@
 import React from "react";
-import { Home, Users, Zap, Grid3X3, Activity } from "lucide-react";
+import { Home, Users, Grid3X3, Activity } from "lucide-react";
 import { useNavigate, useLocation } from "react-router-dom";
+
+const LOGO_SRC = "/branding/quizup-icon.png";
 
 const tabs = [
   { path: "/home", icon: Home, label: "HOME" },
   { path: "/leaderboard", icon: Users, label: "PEOPLE" },
-  { path: "/categories", icon: Zap, label: "", isCenter: true },
+  { path: "/categories", icon: Home, label: "", isCenter: true },
   { path: "/", icon: Grid3X3, label: "TOPICS" },
   { path: "/profile", icon: Activity, label: "ACTIVITY" },
 ];
@@ -27,10 +29,17 @@ const BottomNav: React.FC = () => {
                 onClick={() => navigate(path)}
                 className="flex items-center justify-center -mt-4"
               >
-                <div className={`w-14 h-14 rounded-full flex items-center justify-center ${
+                <div className={`w-14 h-14 rounded-full flex items-center justify-center overflow-hidden ${
                   active ? "quizup-header-red" : "quizup-header-red"
                 } shadow-[0_10px_24px_rgba(0,0,0,0.25)]`}>
-                  <Zap className="w-7 h-7 text-foreground" fill="currentColor" />
+                  <img
+                    src={LOGO_SRC}
+                    alt=""
+                    className="w-10 h-10 object-cover rounded-2xl"
+                    width={40}
+                    height={40}
+                    draggable={false}
+                  />
                 </div>
               </button>
             );

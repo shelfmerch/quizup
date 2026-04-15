@@ -1,7 +1,8 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { Zap } from "lucide-react";
+
+const LOGO_SRC = "/branding/quizup-icon.png";
 
 const Landing: React.FC = () => {
   const navigate = useNavigate();
@@ -14,9 +15,14 @@ const Landing: React.FC = () => {
         transition={{ type: "spring", stiffness: 200, damping: 15 }}
         className="mb-6"
       >
-        <div className="w-24 h-24 rounded-3xl quizup-header-red flex items-center justify-center shadow-lg">
-          <Zap className="w-12 h-12 text-foreground" fill="currentColor" />
-        </div>
+        <img
+          src={LOGO_SRC}
+          alt="QuizUp"
+          className="w-24 h-24 rounded-3xl shadow-lg object-cover select-none"
+          width={96}
+          height={96}
+          draggable={false}
+        />
       </motion.div>
 
       <motion.h1
@@ -25,7 +31,7 @@ const Landing: React.FC = () => {
         transition={{ delay: 0.2 }}
         className="text-4xl font-display font-extrabold text-foreground text-center mb-1"
       >
-        Trivia
+        QuizUp
       </motion.h1>
 
       <motion.p
@@ -34,7 +40,7 @@ const Landing: React.FC = () => {
         transition={{ delay: 0.3 }}
         className="text-muted-foreground text-center mb-10 text-sm"
       >
-        Real-time 1v1 trivia battles
+        Real-time 1v1 quiz battles with friends
       </motion.p>
 
       <motion.div

@@ -3,6 +3,7 @@ const User = require("../models/User");
 const Match = require("../models/Match");
 const Achievement = require("../models/Achievement");
 const mongoose = require("mongoose");
+const { verifyToken } = require("../utils/jwt");
 
 // GET /api/profile/:userId
 const getProfile = async (req, res) => {
@@ -26,6 +27,17 @@ const getProfile = async (req, res) => {
       isUnlocked: true,
       unlockedAt: a.unlockedAt,
     }));
+
+    const auth = req.headers.authorization;
+    if (auth && auth.startsWith("Bearer ")) {
+      const payload = verifyToken(auth.slice(7));
+      if (payload && payload.sub && payload.sub !== userId) {
+        const viewer = await User.findById(payload.sub).select("following").lean();
+        if (viewer) {
+          profile.isFollowing = (viewer.following || []).some((id) => id.toString() === userId);
+        }
+      }
+    }
 
     return res.json({ user: profile });
   } catch (err) {

@@ -9,6 +9,7 @@ const categoryRoutes = require("./routes/categories");
 const leaderboardRoutes = require("./routes/leaderboard");
 const matchRoutes = require("./routes/matches");
 const adminRoutes = require("./routes/admin");
+const followRoutes = require("./routes/follow");
 
 const app = express();
 
@@ -36,6 +37,7 @@ app.use("/api/categories", categoryRoutes);
 app.use("/api/leaderboard", leaderboardRoutes);
 app.use("/api/matches", matchRoutes);
 app.use("/api/admin", adminRoutes);
+app.use("/api/follow", followRoutes);
 
 // ─── 404 catch-all ────────────────────────────────────────────────────────────
 app.use((_req, res) => res.status(404).json({ error: "Route not found" }));
