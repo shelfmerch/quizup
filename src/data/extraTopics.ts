@@ -42,4 +42,12 @@ export const EXTRA_HOME_TOPICS: Category[] = [
     questionCount: 0,
     description: "Urdu vocabulary — meanings and usage",
   },
+  {
+    id: "logos",
+    name: "Logos",
+    icon: "🧠",
+    color: "4 78% 55%",
+    questionCount: 0,
+    description: "Logo quiz — identify brands from their logos",
+  },
 ];

@@ -25,6 +25,7 @@ const CATEGORIES = [
   { slug: "pak-dramas", name: "Pak Dramas",   icon: "🎬", color: "24 90% 55%",  description: "Pakistani dramas — iconic stories & characters", questionCount: 49 },
   { slug: "english",    name: "English",      icon: "📘", color: "210 85% 55%", description: "Vocabulary, meanings, and usage",         questionCount: 49 },
   { slug: "urdu",       name: "Urdu",         icon: "📗", color: "152 69% 42%", description: "Urdu vocabulary — meanings and usage",     questionCount: 49 },
+  { slug: "logos",      name: "Logos",        icon: "🧠", color: "4 78% 55%",   description: "Logo quiz — identify brands from their logos", questionCount: 9 },
 ];
 
 const QUESTIONS = {
@@ -355,6 +356,62 @@ const QUESTIONS = {
     { text: "What does “خوش” mean?", options: ["Angry", "Happy", "Weak", "Silent"], correctIndex: 1 },
     { text: "What does “تیز” mean?", options: ["Slow", "Fast / sharp", "Weak", "Calm"], correctIndex: 1 },
     { text: "What does “نرم” mean?", options: ["Hard", "Soft", "Loud", "Fast"], correctIndex: 1 },
+  ],
+  logos: [
+    {
+      text: "This global beverage brand is known for its rivalry with Coca-Cola. Which logo is this?",
+      options: ["Coca-Cola", "Pepsi", "Sprite", "Fanta"],
+      correctIndex: 1,
+      imageUrl: "/uploads/logos-seed/logo-01-pepsi.png",
+    },
+    {
+      text: "This brand is famous for coffee and its green mermaid logo. Which company is it?",
+      options: ["Costa", "Starbucks", "Nescafé", "Dunkin"],
+      correctIndex: 1,
+      imageUrl: "/uploads/logos-seed/logo-02-starbucks.png",
+    },
+    {
+      text: "This company manufactures airplanes and is a major competitor to Airbus. Identify the logo.",
+      options: ["NASA", "Boeing", "SpaceX", "Lockheed Martin"],
+      correctIndex: 1,
+      imageUrl: "/uploads/logos-seed/logo-03-boeing.png",
+    },
+    {
+      text: "This luxury fashion brand is known for double “C” initials. Which brand is this?",
+      options: ["Gucci", "Chanel", "Prada", "Dior"],
+      correctIndex: 1,
+      imageUrl: "/uploads/logos-seed/logo-04-chanel.png",
+    },
+    {
+      text: "This pizza chain uses a domino tile in its logo. Which brand is it?",
+      options: ["Pizza Hut", "Domino’s", "Papa John’s", "Subway"],
+      correctIndex: 1,
+      imageUrl: "/uploads/logos-seed/logo-05-dominos.png",
+    },
+    {
+      text: "This personal care brand is known for soap and a bird symbol. Identify it.",
+      options: ["Lux", "Dove", "Nivea", "Pears"],
+      correctIndex: 1,
+      imageUrl: "/uploads/logos-seed/logo-06-dove.png",
+    },
+    {
+      text: "This luxury Italian brand features interlocking “G” letters. Which brand is it?",
+      options: ["Louis Vuitton", "Gucci", "Versace", "Armani"],
+      correctIndex: 1,
+      imageUrl: "/uploads/logos-seed/logo-07-gucci.png",
+    },
+    {
+      text: "This clothing brand is famous for a crocodile logo. Which brand is this?",
+      options: ["Puma", "Nike", "Lacoste", "Adidas"],
+      correctIndex: 2,
+      imageUrl: "/uploads/logos-seed/logo-08-lacoste.png",
+    },
+    {
+      text: "This fast-food chain is known for golden arches and burgers worldwide. Identify it.",
+      options: ["KFC", "Burger King", "McDonald’s", "Subway"],
+      correctIndex: 2,
+      imageUrl: "/uploads/logos-seed/logo-09-mcdonalds.png",
+    },
   ],
 };
 
