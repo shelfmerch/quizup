@@ -3,6 +3,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import { ArrowLeft, Send } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { chatRoomId, chatService } from "@/services/chatService";
+import { markChatRead } from "@/services/chatApi";
 import { profileService } from "@/services/profileService";
 import { ChatMessage, Profile } from "@/types";
 
@@ -30,9 +31,20 @@ const ChatPage: React.FC = () => {
       .catch(() => setPeer(null));
   }, [peerId]);
 
-  const handleMessage = useCallback((msg: ChatMessage) => {
-    setMessages((prev) => [...prev, msg]);
-  }, []);
+  useEffect(() => {
+    if (!peerId || !user?.id) return;
+    markChatRead(peerId).catch(() => {});
+  }, [peerId, user?.id]);
+
+  const handleMessage = useCallback(
+    (msg: ChatMessage) => {
+      setMessages((prev) => [...prev, msg]);
+      if (peerId && msg.senderId !== user?.id) {
+        markChatRead(peerId).catch(() => {});
+      }
+    },
+    [peerId, user?.id]
+  );
 
   const handleHistory = useCallback((rows: ChatMessage[]) => {
     setMessages(rows);

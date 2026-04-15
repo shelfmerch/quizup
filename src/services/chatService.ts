@@ -1,6 +1,19 @@
 import { getSocket } from "./socketService";
 import { ChatMessage } from "@/types";
 
+/** Notify when someone messages you (for inbox badge). */
+export function subscribeChatInbox(onInbox: () => void): () => void {
+  try {
+    const socket = getSocket();
+    socket.on("chat:inbox", onInbox);
+    return () => {
+      socket.off("chat:inbox", onInbox);
+    };
+  } catch {
+    return () => {};
+  }
+}
+
 /** Deterministic room id — same regardless of who initiates */
 export function chatRoomId(uid1: string, uid2: string): string {
   return [uid1, uid2].sort().join(":");

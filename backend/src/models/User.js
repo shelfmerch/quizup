@@ -20,8 +20,15 @@ const userSchema = new mongoose.Schema(
     },
     passwordHash: {
       type: String,
-      required: true,
+      required: function () {
+        return !this.googleId;
+      },
       select: false, // never returned in queries by default
+    },
+    googleId: {
+      type: String,
+      index: true,
+      default: null,
     },
 
     // Profile

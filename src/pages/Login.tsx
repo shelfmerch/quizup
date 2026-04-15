@@ -3,10 +3,11 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { Input } from "@/components/ui/input";
 import { ArrowLeft } from "lucide-react";
+import { GoogleLogin } from "@react-oauth/google";
 
 const Login: React.FC = () => {
   const navigate = useNavigate();
-  const { login } = useAuth();
+  const { login, googleLogin } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
@@ -64,6 +65,27 @@ const Login: React.FC = () => {
             {loading ? "Signing in..." : "SIGN IN"}
           </button>
         </form>
+
+        {import.meta.env.VITE_GOOGLE_CLIENT_ID ? (
+          <div className="mt-4 flex justify-center">
+            <GoogleLogin
+              onSuccess={async (res) => {
+                if (!res.credential) return;
+                setLoading(true);
+                try {
+                  const user = await googleLogin(res.credential);
+                  navigate(user.role === "admin" ? "/admin" : "/home");
+                } finally {
+                  setLoading(false);
+                }
+              }}
+              onError={() => {
+                // noop (UI already has minimal error handling elsewhere)
+              }}
+              useOneTap={false}
+            />
+          </div>
+        ) : null}
 
         <p className="text-center text-sm text-muted-foreground mt-6">
           Don't have an account?{" "}

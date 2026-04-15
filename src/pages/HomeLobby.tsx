@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { MOCK_CATEGORIES } from "@/data/mock-data";
@@ -7,7 +7,10 @@ import { MatchHistoryEntry } from "@/types";
 import { EXTRA_HOME_TOPICS } from "@/data/extraTopics";
 import { fetchPublicCategories } from "@/services/categoryService";
 import { Category } from "@/types";
-import { Search, Settings, ChevronRight, ChevronDown } from "lucide-react";
+import { fetchChatUnreadSummary, type ChatUnreadItem } from "@/services/chatApi";
+import { subscribeChatInbox } from "@/services/chatService";
+import { resolveMediaUrl } from "@/config/env";
+import { Search, Settings, ChevronRight, ChevronDown, Bell } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
 const CATEGORY_THEMES = [
@@ -44,9 +47,65 @@ const HomeLobby: React.FC = () => {
   const [historyLoading, setHistoryLoading] = useState(true);
   const [historyError, setHistoryError] = useState(false);
 
+  const [chatUnreadOpen, setChatUnreadOpen] = useState(false);
+  const [chatUnreadItems, setChatUnreadItems] = useState<ChatUnreadItem[]>([]);
+  const [chatTotalUnread, setChatTotalUnread] = useState(0);
+  const chatDropdownRef = useRef<HTMLDivElement>(null);
+
+  const loadChatUnread = useCallback(async () => {
+    try {
+      const data = await fetchChatUnreadSummary();
+      setChatUnreadItems(data.items);
+      setChatTotalUnread(data.totalUnread);
+    } catch {
+      setChatUnreadItems([]);
+      setChatTotalUnread(0);
+    }
+  }, []);
+
   useEffect(() => {
     refreshUser();
   }, [refreshUser]);
+
+  useEffect(() => {
+    if (!user?.id) return;
+    loadChatUnread();
+  }, [user?.id, loadChatUnread]);
+
+  useEffect(() => {
+    if (!user?.id) return;
+    return subscribeChatInbox(() => {
+      loadChatUnread();
+    });
+  }, [user?.id, loadChatUnread]);
+
+  useEffect(() => {
+    if (!chatUnreadOpen) return;
+    const onPointerDown = (e: MouseEvent | TouchEvent) => {
+      const el = chatDropdownRef.current;
+      if (el && !el.contains(e.target as Node)) setChatUnreadOpen(false);
+    };
+    document.addEventListener("mousedown", onPointerDown);
+    document.addEventListener("touchstart", onPointerDown);
+    return () => {
+      document.removeEventListener("mousedown", onPointerDown);
+      document.removeEventListener("touchstart", onPointerDown);
+    };
+  }, [chatUnreadOpen]);
+
+  useEffect(() => {
+    if (!user?.id) return;
+    const refresh = () => loadChatUnread();
+    const onVis = () => {
+      if (document.visibilityState === "visible") refresh();
+    };
+    window.addEventListener("focus", refresh);
+    document.addEventListener("visibilitychange", onVis);
+    return () => {
+      window.removeEventListener("focus", refresh);
+      document.removeEventListener("visibilitychange", onVis);
+    };
+  }, [user?.id, loadChatUnread]);
 
   useEffect(() => {
     if (!user?.id) {
@@ -129,9 +188,12 @@ const HomeLobby: React.FC = () => {
       <div className="quizup-header-teal px-4 py-3 flex items-center justify-between">
         <div className="flex items-center gap-2">
           <img
-            src={user?.avatarUrl}
+            src={resolveMediaUrl(
+              user?.avatarUrl,
+              `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(user?.username || "user")}`
+            )}
             alt="avatar"
-            className="w-8 h-8 rounded-full border-2 border-foreground/30"
+            className="w-8 h-8 rounded-full border-2 border-foreground/30 object-cover"
           />
           <span className="font-display font-bold text-foreground text-sm">{user?.username || "Player"}</span>
         </div>
@@ -139,6 +201,61 @@ const HomeLobby: React.FC = () => {
           <button type="button">
             <Search className="w-5 h-5 text-foreground/80" />
           </button>
+          <div className="relative" ref={chatDropdownRef}>
+            <button
+              type="button"
+              onClick={() => {
+                setChatUnreadOpen((o) => !o);
+                loadChatUnread();
+              }}
+              className="relative p-0.5 rounded-lg hover:bg-white/10 transition-colors"
+              aria-label="Chat notifications"
+            >
+              <Bell className="w-5 h-5 text-foreground/80" />
+              {chatTotalUnread > 0 && (
+                <span className="absolute -top-0.5 -right-1 min-w-[18px] h-[18px] px-1 rounded-full bg-red-500 text-white text-[10px] font-bold flex items-center justify-center leading-none border border-[#121212]">
+                  {chatTotalUnread > 99 ? "99+" : chatTotalUnread}
+                </span>
+              )}
+            </button>
+            {chatUnreadOpen && (
+              <div className="absolute right-0 top-full mt-2 w-[min(100vw-2rem,18rem)] max-h-80 overflow-y-auto rounded-xl border border-zinc-700/90 bg-zinc-900 shadow-2xl z-[100] py-1">
+                {chatUnreadItems.length === 0 ? (
+                  <p className="text-xs text-zinc-500 px-4 py-8 text-center">No unread messages</p>
+                ) : (
+                  chatUnreadItems.map((item) => (
+                    <button
+                      key={item.peerId}
+                      type="button"
+                      onClick={() => {
+                        navigate(`/chat/${item.peerId}`);
+                        setChatUnreadOpen(false);
+                      }}
+                      className="w-full flex items-center gap-3 px-3 py-2.5 hover:bg-white/5 text-left transition-colors"
+                    >
+                      <img
+                        src={resolveMediaUrl(
+                          item.avatarUrl,
+                          `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(item.username)}`
+                        )}
+                        alt=""
+                        className="w-10 h-10 rounded-full object-cover border border-zinc-600 shrink-0"
+                      />
+                      <div className="min-w-0 flex-1">
+                        <p className="text-sm font-semibold text-white truncate">
+                          {item.displayName || item.username}
+                        </p>
+                        <p className="text-[10px] text-zinc-500">Direct message</p>
+                      </div>
+                      <span className="shrink-0 min-w-[22px] h-[22px] px-1.5 rounded-full bg-red-500 text-white text-xs font-bold flex items-center justify-center">
+                        {item.unreadCount > 99 ? "99+" : item.unreadCount}
+                      </span>
+                    </button>
+                  ))
+                )}
+              </div>
+            )}
+          </div>
           <button type="button" onClick={() => navigate("/settings")}>
             <Settings className="w-5 h-5 text-foreground/80" />
           </button>

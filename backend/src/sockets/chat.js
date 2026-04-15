@@ -1,22 +1,4 @@
-const mongoose = require("mongoose");
-
-// Simple chat message model (created lazily to avoid circular deps)
-let ChatMessage;
-function getChatMessageModel() {
-  if (ChatMessage) return ChatMessage;
-  const schema = new mongoose.Schema(
-    {
-      roomId: { type: String, index: true, required: true },
-      senderId: { type: String, required: true },
-      senderName: { type: String, required: true },
-      senderAvatar: { type: String, default: "" },
-      text: { type: String, required: true, maxlength: 1000 },
-    },
-    { timestamps: { createdAt: "createdAt", updatedAt: false } }
-  );
-  ChatMessage = mongoose.models.ChatMessage || mongoose.model("ChatMessage", schema);
-  return ChatMessage;
-}
+const ChatMessage = require("../models/ChatMessage");
 
 module.exports = function registerChat(socket, io) {
   socket.on("chat:join", async ({ roomId }) => {
@@ -24,8 +6,7 @@ module.exports = function registerChat(socket, io) {
     socket.join(roomId);
 
     try {
-      const Model = getChatMessageModel();
-      const rows = await Model.find({ roomId }).sort({ createdAt: -1 }).limit(50).lean();
+      const rows = await ChatMessage.find({ roomId }).sort({ createdAt: -1 }).limit(50).lean();
       const history = rows
         .reverse()
         .map((m) => ({
@@ -39,7 +20,6 @@ module.exports = function registerChat(socket, io) {
         }));
       socket.emit("chat:history", { roomId, messages: history });
     } catch (err) {
-      // If history fails, still allow live chat.
       console.error("[Chat] history error:", err);
     }
   });
@@ -55,8 +35,7 @@ module.exports = function registerChat(socket, io) {
     if (!t) return;
 
     try {
-      const Model = getChatMessageModel();
-      const doc = await Model.create({
+      const doc = await ChatMessage.create({
         roomId,
         senderId: socket.userId,
         senderName: socket.username,
@@ -75,10 +54,18 @@ module.exports = function registerChat(socket, io) {
       };
 
       io.to(roomId).emit("chat:message", msg);
+
+      const parts = roomId.split(":");
+      if (parts.length === 2) {
+        const recipientId = parts[0] === socket.userId ? parts[1] : parts[0];
+        io.to(`user:${recipientId}`).emit("chat:inbox", {
+          roomId,
+          fromUserId: socket.userId,
+        });
+      }
     } catch (err) {
       console.error("[Chat] send error:", err);
       socket.emit("chat:error", { message: "Failed to send message" });
     }
   });
 };
-

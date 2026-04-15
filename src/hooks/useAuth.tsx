@@ -7,6 +7,7 @@ interface AuthContextType {
   isAuthenticated: boolean;
   isLoading: boolean;
   login: (email: string, password: string) => Promise<Profile>;
+  googleLogin: (credential: string) => Promise<Profile>;
   signup: (username: string, email: string, password: string) => Promise<Profile>;
   logout: () => Promise<void>;
   /** Re-fetch session from `/api/auth/me` (stats, level, etc.). */
@@ -37,6 +38,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return user;
   }, []);
 
+  const googleLogin = useCallback(async (credential: string) => {
+    setIsLoading(true);
+    const { user } = await authService.googleLogin(credential);
+    setUser(user);
+    setIsAuthenticated(true);
+    setIsLoading(false);
+    return user;
+  }, []);
+
   const signup = useCallback(async (username: string, email: string, password: string) => {
     setIsLoading(true);
     const { user } = await authService.signup(username, email, password);
@@ -59,7 +69,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, []);
 
   return (
-    <AuthContext.Provider value={{ user, isAuthenticated, isLoading, login, signup, logout, refreshUser }}>
+    <AuthContext.Provider value={{ user, isAuthenticated, isLoading, login, googleLogin, signup, logout, refreshUser }}>
       {children}
     </AuthContext.Provider>
   );

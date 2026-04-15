@@ -60,6 +60,8 @@ const initSockets = (httpServer) => {
   io.on("connection", (socket) => {
     console.log(`[Socket] Connected: ${socket.username} (${socket.id})`);
 
+    socket.join(`user:${socket.userId}`);
+
     // Register feature-specific handlers
     registerMatchmaking(socket, io);
     registerBattle(socket, io);

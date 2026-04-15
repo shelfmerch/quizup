@@ -33,6 +33,25 @@ export const authService = {
     return { user: currentUser! };
   },
 
+  async googleLogin(credential: string): Promise<{ user: Profile }> {
+    const response = await fetch(`${API_URL}/auth/google`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ credential }),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.error || "Google login failed");
+    }
+
+    const data = await response.json();
+    localStorage.setItem("quizup_token", data.token);
+    isAuthenticated = true;
+    currentUser = data.user;
+    return { user: currentUser! };
+  },
+
   async signup(username: string, email: string, password: string): Promise<{ user: Profile }> {
     const response = await fetch(`${API_URL}/auth/signup`, {
       method: "POST",
