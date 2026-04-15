@@ -25,7 +25,7 @@ const CATEGORIES = [
   { slug: "pak-dramas", name: "Pak Dramas",   icon: "🎬", color: "24 90% 55%",  description: "Pakistani dramas — iconic stories & characters", questionCount: 49 },
   { slug: "english",    name: "English",      icon: "📘", color: "210 85% 55%", description: "Vocabulary, meanings, and usage",         questionCount: 49 },
   { slug: "urdu",       name: "Urdu",         icon: "📗", color: "152 69% 42%", description: "Urdu vocabulary — meanings and usage",     questionCount: 49 },
-  { slug: "logos",      name: "Logos",        icon: "🧠", color: "4 78% 55%",   description: "Logo quiz — identify brands from their logos", questionCount: 9 },
+  { slug: "logos",      name: "Logos",        icon: "🧠", color: "4 78% 55%",   description: "Logo quiz — identify brands from their logos", questionCount: 22 },
 ];
 
 const QUESTIONS = {
@@ -411,6 +411,84 @@ const QUESTIONS = {
       options: ["KFC", "Burger King", "McDonald’s", "Subway"],
       correctIndex: 2,
       imageUrl: "/uploads/logos-seed/logo-09-mcdonalds.png",
+    },
+    {
+      text: "This American bank is known for its red logo and stagecoach symbol. Which brand is it?",
+      options: ["Chase", "Bank of America", "Wells Fargo", "Citibank"],
+      correctIndex: 2,
+      imageUrl: "/uploads/logos-seed/logo-10-wellsfargo.png",
+    },
+    {
+      text: "This snack brand features a mustached mascot and is known for chips in a tube. Which is it?",
+      options: ["Lays", "Doritos", "Pringles", "Cheetos"],
+      correctIndex: 2,
+      imageUrl: "/uploads/logos-seed/logo-11-pringles.png",
+    },
+    {
+      text: "This ice cream brand uses a heart-shaped swirl logo and is popular in India. Identify it.",
+      options: ["Baskin Robbins", "Kwality Walls", "Amul", "Cornetto"],
+      correctIndex: 1,
+      imageUrl: "/uploads/logos-seed/logo-12-kwality-walls.png",
+    },
+    {
+      text: "This luxury car brand uses a double “R” emblem and is known for premium vehicles. Which brand?",
+      options: ["Bentley", "Rolls-Royce", "Mercedes", "BMW"],
+      correctIndex: 1,
+      imageUrl: "/uploads/logos-seed/logo-13-rolls-royce.png",
+    },
+    {
+      text: "This luxury fashion brand uses “LV” initials and a monogram pattern. Identify it.",
+      options: ["Gucci", "Louis Vuitton", "Prada", "Dior"],
+      correctIndex: 1,
+      imageUrl: "/uploads/logos-seed/logo-14-louis-vuitton.png",
+    },
+    {
+      text: "This instant noodle brand is extremely popular in Asia and uses a red-yellow logo. Which is it?",
+      options: ["Top Ramen", "Maggi", "Knorr", "Yippee"],
+      correctIndex: 1,
+      imageUrl: "/uploads/logos-seed/logo-15-maggi.png",
+    },
+    {
+      text: "This premium ice cream brand uses a golden “M” in a circle. Which brand is this?",
+      options: ["Cornetto", "Magnum", "Walls", "Baskin Robbins"],
+      correctIndex: 1,
+      imageUrl: "/uploads/logos-seed/logo-16-magnum.png",
+    },
+    {
+      text: "This global food company uses a bird nest logo symbolizing care and nutrition. Identify it.",
+      options: ["Kellogg’s", "Nestlé", "Danone", "Amul"],
+      correctIndex: 1,
+      imageUrl: "/uploads/logos-seed/logo-17-nestle.png",
+    },
+    {
+      text: "This Indian fashion retail brand uses a stylish “W” as its logo. Which brand is it?",
+      options: ["Zara", "Westside", "H&M", "Pantaloons"],
+      correctIndex: 1,
+      imageUrl: "/uploads/logos-seed/logo-18-westside.png",
+    },
+    {
+      text: "This fast-food brand features the face of its founder, known for fried chicken. Identify it.",
+      options: ["McDonald’s", "Burger King", "KFC", "Subway"],
+      correctIndex: 2,
+      imageUrl: "/uploads/logos-seed/logo-19-kfc.png",
+    },
+    {
+      text: "This television network is one of Pakistan’s most popular entertainment channels. Which logo is this?",
+      options: ["ARY Digital", "Hum TV", "Geo TV", "PTV"],
+      correctIndex: 2,
+      imageUrl: "/uploads/logos-seed/logo-20-geo-tv.png",
+    },
+    {
+      text: "This brand is known for online jewelry shopping in India and uses a stylized “B” logo. Which brand?",
+      options: ["Tanishq", "Bluestone", "Kalyan Jewellers", "Malabar Gold"],
+      correctIndex: 1,
+      imageUrl: "/uploads/logos-seed/logo-21-bluestone.png",
+    },
+    {
+      text: "This brand focuses on skincare and haircare products and often uses green, nature-inspired branding. Identify it.",
+      options: ["L’Oréal", "Nivea", "Garnier", "Dove"],
+      correctIndex: 2,
+      imageUrl: "/uploads/logos-seed/logo-22-garnier.png",
     },
   ],
 };

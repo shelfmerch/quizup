@@ -18,7 +18,7 @@ export const MOCK_CATEGORIES: Category[] = [
   { id: "pak-dramas", name: "Pak Dramas", icon: "🎬", color: "24 90% 55%", questionCount: 49, description: "Pakistani dramas — iconic stories & characters" },
   { id: "english", name: "English", icon: "📘", color: "210 85% 55%", questionCount: 49, description: "Vocabulary, meanings, and usage" },
   { id: "urdu", name: "Urdu", icon: "📗", color: "152 69% 42%", questionCount: 49, description: "Urdu vocabulary — meanings and usage" },
-  { id: "logos", name: "Logos", icon: "🧠", color: "4 78% 55%", questionCount: 9, description: "Logo quiz — identify brands from their logos" },
+  { id: "logos", name: "Logos", icon: "🧠", color: "4 78% 55%", questionCount: 22, description: "Logo quiz — identify brands from their logos" },
 ];
 
 export const MOCK_QUESTIONS: Record<string, Question[]> = {
