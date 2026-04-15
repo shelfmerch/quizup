@@ -34,4 +34,12 @@ export const EXTRA_HOME_TOPICS: Category[] = [
     questionCount: 0,
     description: "Vocabulary, meanings, and usage",
   },
+  {
+    id: "urdu",
+    name: "Urdu",
+    icon: "📗",
+    color: "152 69% 42%",
+    questionCount: 0,
+    description: "Urdu vocabulary — meanings and usage",
+  },
 ];
