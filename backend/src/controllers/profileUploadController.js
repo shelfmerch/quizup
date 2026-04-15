@@ -2,7 +2,8 @@ const path = require("path");
 const multer = require("multer");
 const User = require("../models/User");
 
-const uploadDir = path.join(__dirname, "..", "uploads", "avatars");
+// Must match `app.use("/uploads", express.static(...))` in `app.js` (served from `backend/uploads`, not `backend/src/uploads`).
+const uploadDir = path.join(__dirname, "..", "..", "uploads", "avatars");
 
 const storage = multer.diskStorage({
   destination: (_req, _file, cb) => cb(null, uploadDir),

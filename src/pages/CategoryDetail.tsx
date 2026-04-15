@@ -254,7 +254,6 @@ const CategoryDetail: React.FC = () => {
           </div>
         </div>
       </div>
-
       {/* ── Top 5 Players ─────────────────────────────────────────────────────── */}
       <div className="flex-1 px-4 pt-5 pb-28">
         <div className="flex items-center gap-2 mb-3">

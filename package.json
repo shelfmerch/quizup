@@ -6,6 +6,9 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
+    "start:server": "npm run build && npm run --prefix backend start",
+    "pm2:deploy": "npm run build && pm2 startOrReload ecosystem.config.cjs --update-env",
+    "pm2:restart": "pm2 restart quizup",
     "build:dev": "vite build --mode development",
     "lint": "eslint .",
     "preview": "vite preview",

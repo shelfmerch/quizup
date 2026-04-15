@@ -29,7 +29,7 @@ function create(src: string, { loop, volume }: { loop: boolean; volume: number }
 
 export function startMatchMusic() {
   if (!state.matchMusic) {
-    state.matchMusic = create("/audio/quizup-match.mp3", { loop: true, volume: 0.35 });
+    state.matchMusic = create("/audio/quizup-match.mp3", { loop: true, volume: 0.9 });
   }
   // Don't restart the track on every render/question; only start/resume if paused/ended.
   if (state.matchMusic.ended) state.matchMusic.currentTime = 0;

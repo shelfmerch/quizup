@@ -10,9 +10,15 @@ const registerChat = require("./chat");
  * All sockets must authenticate via JWT in the handshake.
  */
 const initSockets = (httpServer) => {
+  const extraOrigins = (process.env.ALLOWED_ORIGINS || "")
+    .split(",")
+    .map((s) => s.trim())
+    .filter(Boolean);
+
   const allowedOrigins = [
     process.env.CLIENT_URL,
     process.env.FRONTEND_URL,
+    ...extraOrigins,
     "http://localhost:5173",
     "http://localhost:8080",
     "http://localhost:8081",

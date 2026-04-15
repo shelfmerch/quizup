@@ -1,4 +1,5 @@
 require("dotenv").config();
+const fs = require("fs");
 const path = require("path");
 const express = require("express");
 const cors = require("cors");
@@ -14,10 +15,22 @@ const chatRoutes = require("./routes/chat");
 
 const app = express();
 
+const extraOrigins = (process.env.ALLOWED_ORIGINS || "")
+  .split(",")
+  .map((s) => s.trim())
+  .filter(Boolean);
+
 // ─── CORS ────────────────────────────────────────────────────────────────────
 app.use(
   cors({
-    origin: [process.env.CLIENT_URL, process.env.FRONTEND_URL, "http://localhost:5173", "http://localhost:8080", "http://localhost:8081"].filter(Boolean),
+    origin: [
+      process.env.CLIENT_URL,
+      process.env.FRONTEND_URL,
+      ...extraOrigins,
+      "http://localhost:5173",
+      "http://localhost:8080",
+      "http://localhost:8081",
+    ].filter(Boolean),
     credentials: true,
   })
 );
@@ -40,6 +53,32 @@ app.use("/api/matches", matchRoutes);
 app.use("/api/admin", adminRoutes);
 app.use("/api/follow", followRoutes);
 app.use("/api/chat", chatRoutes);
+
+// ─── Production: serve Vite build (same port as API + Socket.io) ────────────
+// Repo structure: /root/quizup/backend/src/app.js → frontend build lives at /root/quizup/dist
+const distPath = path.join(__dirname, "..", "..", "dist");
+const distIndex = path.join(distPath, "index.html");
+
+if (fs.existsSync(distPath)) {
+  app.use(express.static(distPath, { fallthrough: true }));
+}
+
+// SPA fallback (do not swallow API routes)
+app.get("*", (req, res, next) => {
+  if (req.method !== "GET" || req.path.startsWith("/api") || req.path.startsWith("/uploads")) {
+    return next();
+  }
+
+  if (!fs.existsSync(distIndex)) {
+    return next();
+  }
+
+  res.sendFile(distIndex, (err) => {
+    // If the file disappeared between the existsSync check and sendFile's stat,
+    // fall through to the 404 handler instead of crashing the request.
+    if (err) return next();
+  });
+});
 
 // ─── 404 catch-all ────────────────────────────────────────────────────────────
 app.use((_req, res) => res.status(404).json({ error: "Route not found" }));

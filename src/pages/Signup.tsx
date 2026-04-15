@@ -4,10 +4,11 @@ import { useAuth } from "@/hooks/useAuth";
 import { profileService } from "@/services/profileService";
 import { Input } from "@/components/ui/input";
 import { ArrowLeft, Camera } from "lucide-react";
+import { GoogleLogin } from "@react-oauth/google";
 
 const Signup: React.FC = () => {
   const navigate = useNavigate();
-  const { signup, refreshUser } = useAuth();
+  const { signup, refreshUser, googleLogin } = useAuth();
   const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -120,6 +121,32 @@ const Signup: React.FC = () => {
             {loading ? "Creating..." : "CREATE ACCOUNT"}
           </button>
         </form>
+
+        {import.meta.env.VITE_GOOGLE_CLIENT_ID ? (
+          <>
+            <p className="text-center text-xs text-muted-foreground mt-5 mb-2 uppercase tracking-wider">or</p>
+            <div className="mt-1 flex justify-center">
+              <GoogleLogin
+                onSuccess={async (res) => {
+                  if (!res.credential) return;
+                  setLoading(true);
+                  try {
+                    const user = await googleLogin(res.credential);
+                    navigate(user.role === "admin" ? "/admin" : "/home");
+                  } finally {
+                    setLoading(false);
+                  }
+                }}
+                onError={() => {}}
+                useOneTap={false}
+                text="signup_with"
+                theme="filled_black"
+                size="large"
+                width="100%"
+              />
+            </div>
+          </>
+        ) : null}
 
         <p className="text-center text-sm text-muted-foreground mt-6">
           Already have an account?{" "}
