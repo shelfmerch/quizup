@@ -3,11 +3,12 @@ import { useAuth } from "@/hooks/useAuth";
 import { profileService } from "@/services/profileService";
 import { Profile } from "@/types";
 import { MOCK_ACHIEVEMENTS } from "@/data/mock-data";
+import { resolveMediaUrl } from "@/config/env";
 import { Settings, LogOut, Search, ArrowLeft, UserPlus, UserCheck, MessageCircle, Loader2, Camera } from "lucide-react";
 import { useNavigate, useParams } from "react-router-dom";
 
 const ProfilePage: React.FC = () => {
-  const { user, logout } = useAuth();
+  const { user, logout, refreshUser } = useAuth();
   const navigate = useNavigate();
   const { userId } = useParams<{ userId?: string }>();
 
@@ -24,27 +25,21 @@ const ProfilePage: React.FC = () => {
   const handleAvatarSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file || !isOwnProfile) return;
+    if (!file.type.startsWith("image/")) {
+      e.target.value = "";
+      return;
+    }
 
     setUploadingAvatar(true);
     try {
-      await profileService.uploadAvatar(file);
-      if (typeof (useAuth as any)().refreshUser === 'function') {
-        const authHook = (useAuth as any)();
-        await authHook.refreshUser();
-      }
-      
-      // Optionally update local profile state to show image immediately
-      if (profile) {
-          const reader = new FileReader();
-          reader.onloadend = () => {
-             setProfile({...profile, avatarUrl: reader.result as string});
-          };
-          reader.readAsDataURL(file);
-      }
+      const updated = await profileService.uploadAvatar(file);
+      setProfile(updated);
+      await refreshUser();
     } catch (err) {
       console.error("Failed to upload avatar", err);
     } finally {
       setUploadingAvatar(false);
+      e.target.value = "";
     }
   };
 
@@ -100,6 +95,10 @@ const ProfilePage: React.FC = () => {
   }
 
   const xpPercent = ((p.xp || 0) / (p.xpToNextLevel || 1)) * 100;
+  const avatarSrc = resolveMediaUrl(
+    p.avatarUrl,
+    `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(p.username)}`
+  );
 
   return (
     <div className="min-h-screen bg-quizup-dark">
@@ -134,9 +133,11 @@ const ProfilePage: React.FC = () => {
              className={`relative w-24 h-24 rounded-full border-4 border-quizup-dark overflow-hidden ${isOwnProfile ? 'cursor-pointer' : ''}`}
              style={{ borderColor: "hsl(270 60% 50%)" }}
              onClick={() => isOwnProfile && fileInputRef.current?.click()}
+             role={isOwnProfile ? "button" : undefined}
+             aria-label={isOwnProfile ? "Change profile photo" : undefined}
           >
             <img
-              src={p.avatarUrl}
+              src={avatarSrc}
               alt=""
               className={`w-full h-full object-cover transition-opacity ${uploadingAvatar ? 'opacity-50' : 'opacity-100'}`}
             />

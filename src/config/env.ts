@@ -15,3 +15,18 @@ export const API_URL = `${API_BASE}/api`;
  * Override if the WebSocket endpoint differs (e.g. separate ws subdomain).
  */
 export const SOCKET_URL = trimSlash(import.meta.env.VITE_SOCKET_URL ?? API_BASE);
+
+/**
+ * Turn stored avatar/media paths into a browser-loadable URL.
+ * The API stores paths like `/uploads/avatars/...` on the user document; the browser must request them from `API_BASE`.
+ */
+export function resolveMediaUrl(
+  url: string | undefined | null,
+  fallback = ""
+): string {
+  if (url == null || String(url).trim() === "") return fallback;
+  const u = String(url).trim();
+  if (u.startsWith("http://") || u.startsWith("https://") || u.startsWith("data:")) return u;
+  if (u.startsWith("/")) return `${API_BASE}${u}`;
+  return u;
+}
