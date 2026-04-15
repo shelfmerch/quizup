@@ -185,7 +185,7 @@ const HomeLobby: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-[#121212]">
-      <div className="quizup-header-teal px-4 py-3 flex items-center justify-between">
+      <div className="quizup-header-gray px-4 py-3 flex items-center justify-between">
         <div className="flex items-center gap-2">
           <img
             src={resolveMediaUrl(
@@ -193,7 +193,8 @@ const HomeLobby: React.FC = () => {
               `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(user?.username || "user")}`
             )}
             alt="avatar"
-            className="w-8 h-8 rounded-full border-2 border-foreground/30 object-cover"
+            onClick={()=>navigate('/profile')}
+            className="w-10 h-10 rounded-full border-2 border-foreground/30 object-cover"
           />
           <span className="font-display font-bold text-foreground text-sm">{user?.username || "Player"}</span>
         </div>
@@ -256,9 +257,9 @@ const HomeLobby: React.FC = () => {
               </div>
             )}
           </div>
-          <button type="button" onClick={() => navigate("/settings")}>
+          {/* <button type="button" onClick={() => navigate("/settings")}>
             <Settings className="w-5 h-5 text-foreground/80" />
-          </button>
+          </button> */}
         </div>
       </div>
 

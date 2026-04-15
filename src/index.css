@@ -37,6 +37,7 @@
     --radius: 0.75rem;
 
     /* QuizUp-style colors */
+    --quizup-gray: 220 20% 8%;
     --quizup-red: 4 78% 55%;
     --quizup-green: 152 69% 42%;
     --quizup-teal: 174 72% 40%;
@@ -71,6 +72,9 @@
 }
 
 @layer utilities {
+  .quizup-header-gray{
+    background-color: hsl(var(--quizup-gray));
+  }
   .quizup-header-red {
     background-color: hsl(var(--quizup-red));
   }

@@ -130,7 +130,7 @@ const ProfilePage: React.FC = () => {
       <div className="bg-quizup-card p-6 text-center">
         <div className="relative inline-block mb-3 group">
           <div 
-             className={`relative w-24 h-24 rounded-full border-4 border-quizup-dark overflow-hidden ${isOwnProfile ? 'cursor-pointer' : ''}`}
+             className={`relative w-36 h-36 rounded-full border-4 border-quizup-dark overflow-hidden ${isOwnProfile ? 'cursor-pointer' : ''}`}
              style={{ borderColor: "hsl(270 60% 50%)" }}
              onClick={() => isOwnProfile && fileInputRef.current?.click()}
              role={isOwnProfile ? "button" : undefined}
@@ -154,9 +154,9 @@ const ProfilePage: React.FC = () => {
           {isOwnProfile && (
              <input type="file" ref={fileInputRef} onChange={handleAvatarSelect} accept="image/*" className="hidden" />
           )}
-          <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 bg-quizup-dark rounded-full px-3 py-0.5">
+          {/* <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 bg-quizup-dark rounded-full px-3 py-0.5">
             <span className="text-[10px] font-bold text-quizup-gold">LVL {p.level}</span>
-          </div>
+          </div> */}
         </div>
         <h2 className="font-display font-extrabold text-xl text-foreground">
           {p.displayName || p.username}
