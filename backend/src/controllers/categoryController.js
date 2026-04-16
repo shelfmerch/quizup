@@ -62,7 +62,14 @@ const followCategory = async (req, res) => {
     const cat = await Category.findOne({ slug, isActive: true }).select("slug").lean();
     if (!cat) return res.status(404).json({ error: "Topic not found" });
 
-    await User.findByIdAndUpdate(req.user._id, { $addToSet: { followedCategories: slug } });
+    // Keep "most recent followed" ordering:
+    // remove if already present, then insert at the front.
+    await User.findByIdAndUpdate(req.user._id, {
+      $pull: { followedCategories: slug },
+    });
+    await User.findByIdAndUpdate(req.user._id, {
+      $push: { followedCategories: { $each: [slug], $position: 0 } },
+    });
     return res.json({ ok: true });
   } catch (err) {
     console.error("[Category] followCategory error:", err);

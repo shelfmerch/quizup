@@ -8,6 +8,7 @@ import { MOCK_CATEGORIES } from "@/data/mock-data";
 import { EXTRA_HOME_TOPICS } from "@/data/extraTopics";
 import { Category, LeaderboardEntry } from "@/types";
 import { useAuth } from "@/hooks/useAuth";
+import { fetchFollowedCategories, followCategory, unfollowCategory } from "@/services/categoryService";
 
 const CATEGORY_THEMES: Record<
   string,
@@ -45,10 +46,13 @@ const CategoryDetail: React.FC = () => {
   const { categoryId } = useParams<{ categoryId: string }>();
   const navigate = useNavigate();
   const { user } = useAuth();
+  const isAuthenticated = !!user?.id;
 
   const [apiCategories, setApiCategories] = useState<Category[]>([]);
   const [topPlayers, setTopPlayers] = useState<LeaderboardEntry[]>([]);
   const [playersLoading, setPlayersLoading] = useState(true);
+  const [isFollowed, setIsFollowed] = useState(false);
+  const [followBusy, setFollowBusy] = useState(false);
 
   // Fetch live categories from API
   useEffect(() => {
@@ -99,6 +103,30 @@ const CategoryDetail: React.FC = () => {
       });
     return () => { cancelled = true; };
   }, [categoryId]);
+
+  // Fetch follow state for this category (most recent follows persisted in backend)
+  useEffect(() => {
+    let cancelled = false;
+    if (!isAuthenticated || !categoryId) {
+      setIsFollowed(false);
+      return () => {
+        cancelled = true;
+      };
+    }
+
+    fetchFollowedCategories()
+      .then((list) => {
+        if (cancelled) return;
+        setIsFollowed(list.some((c) => c.id === categoryId));
+      })
+      .catch(() => {
+        if (!cancelled) setIsFollowed(false);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [isAuthenticated, categoryId]);
 
   // Mock stats for visual richness
   const mockFollowers = useMemo(() => {
@@ -176,10 +204,28 @@ const CategoryDetail: React.FC = () => {
               animate={{ opacity: 1, x: 0 }}
               transition={{ delay: 0.1 }}
               whileTap={{ scale: 0.96 }}
-              className="flex items-center gap-2 px-4 py-2.5 rounded-full text-sm font-semibold bg-zinc-800 text-white border border-zinc-700 active:bg-zinc-700"
+              disabled={!isAuthenticated || followBusy}
+              onClick={async () => {
+                if (!categoryId || !isAuthenticated) return;
+                setFollowBusy(true);
+                try {
+                  if (isFollowed) {
+                    await unfollowCategory(categoryId);
+                    setIsFollowed(false);
+                  } else {
+                    await followCategory(categoryId);
+                    setIsFollowed(true);
+                  }
+                } finally {
+                  setFollowBusy(false);
+                }
+              }}
+              className={`flex items-center gap-2 px-4 py-2.5 rounded-full text-sm font-semibold border active:bg-zinc-700 ${
+                isAuthenticated ? "bg-zinc-800 text-white border-zinc-700" : "bg-zinc-900 text-zinc-500 border-zinc-800"
+              } ${followBusy ? "opacity-60" : ""}`}
             >
-              <Star className="w-4 h-4 text-amber-400 fill-amber-400" />
-              Follow
+              <Star className={`w-4 h-4 ${isFollowed ? "text-amber-400 fill-amber-400" : "text-zinc-200"}`} />
+              {isFollowed ? "Following" : "Follow"}
             </motion.button>
 
             <motion.button
