@@ -69,9 +69,6 @@ const HomeLobby: React.FC = () => {
   const chatDropdownRef = useRef<HTMLDivElement>(null);
 
   const [incomingChallenges, setIncomingChallenges] = useState<ChallengeWire[]>([]);
-  const [outgoingChallenges, setOutgoingChallenges] = useState<ChallengeWire[]>([]);
-  const [challengeToUsername, setChallengeToUsername] = useState("");
-  const [challengeCategoryId, setChallengeCategoryId] = useState<string>("science");
   const [challengeError, setChallengeError] = useState<string | null>(null);
 
   const loadChatUnread = useCallback(async () => {
@@ -133,7 +130,6 @@ const HomeLobby: React.FC = () => {
   useEffect(() => {
     if (!user?.id) {
       setIncomingChallenges([]);
-      setOutgoingChallenges([]);
       setChallengeError(null);
       return;
     }
@@ -147,7 +143,6 @@ const HomeLobby: React.FC = () => {
 
     const onList = (payload: { incoming?: ChallengeWire[]; outgoing?: ChallengeWire[] }) => {
       setIncomingChallenges(payload?.incoming || []);
-      setOutgoingChallenges(payload?.outgoing || []);
     };
 
     const onReceived = (ch: ChallengeWire) => {
@@ -158,24 +153,20 @@ const HomeLobby: React.FC = () => {
     };
 
     const onSent = (ch: ChallengeWire) => {
-      setOutgoingChallenges((prev) => {
-        if (prev.some((x) => x.id === ch.id)) return prev;
-        return [ch, ...prev];
-      });
+      // Lobby does not render outgoing challenges, but keep list fresh for future sections if needed.
+      void ch;
     };
 
     const onCancelled = (payload: { challengeId: string }) => {
       const id = payload?.challengeId;
       if (!id) return;
       setIncomingChallenges((prev) => prev.filter((x) => x.id !== id));
-      setOutgoingChallenges((prev) => prev.filter((x) => x.id !== id));
     };
 
     const onResult = (payload: { challengeId: string; status: "accepted" | "rejected"; matchId?: string }) => {
       const id = payload?.challengeId;
       if (!id) return;
       setIncomingChallenges((prev) => prev.filter((x) => x.id !== id));
-      setOutgoingChallenges((prev) => prev.filter((x) => x.id !== id));
     };
 
     const onChallengeError = (payload: { message?: string }) => {
@@ -326,12 +317,6 @@ const HomeLobby: React.FC = () => {
     return allTopics.filter((c) => !ids.has(c.id)).sort((a, b) => a.name.localeCompare(b.name));
   }, [allTopics, popularTopics]);
 
-  useEffect(() => {
-    if (!challengeCategoryId && popularTopics.length > 0) {
-      setChallengeCategoryId(popularTopics[0].id);
-    }
-  }, [challengeCategoryId, popularTopics]);
-
   const renderTopicRow = (cat: Category, colorIndex: number) => {
     const theme = CATEGORY_THEMES[colorIndex % CATEGORY_THEMES.length];
     return (
@@ -473,13 +458,13 @@ const HomeLobby: React.FC = () => {
 
 
       <div className="px-4 pb-24 ">
-        {(isAuthenticated || incomingChallenges.length > 0 || outgoingChallenges.length > 0) && (
+        {(isAuthenticated || incomingChallenges.length > 0) && (
           <div className="mt-4 mb-4 rounded-2xl border border-zinc-200 bg-white p-4 shadow-sm">
             <div className="flex items-center justify-between mb-2">
               <h2 className="font-display font-bold text-zinc-800 text-sm uppercase tracking-wider">Challenges</h2>
-              {(incomingChallenges.length + outgoingChallenges.length) > 0 && (
+              {incomingChallenges.length > 0 && (
                 <p className="text-[10px] text-zinc-500 uppercase tracking-wider">
-                  {incomingChallenges.length} incoming · {outgoingChallenges.length} outgoing
+                  {incomingChallenges.length} incoming
                 </p>
               )}
             </div>
@@ -534,76 +519,6 @@ const HomeLobby: React.FC = () => {
                     ))}
                   </div>
                 )}
-
-                {outgoingChallenges.length > 0 && (
-                  <div className="space-y-2 mb-3">
-                    {outgoingChallenges.map((ch) => (
-                      <div key={ch.id} className="rounded-xl border border-zinc-200 bg-white p-3 flex items-center gap-3">
-                        <div className="min-w-0 flex-1">
-                          <p className="text-sm font-semibold text-zinc-900 truncate">
-                            Waiting for {ch.to.username}
-                          </p>
-                          <p className="text-[10px] text-zinc-500 truncate">{ch.categoryName}</p>
-                        </div>
-                        <button
-                          type="button"
-                          onClick={() => {
-                            try {
-                              getSocket().emit("challenge:cancel", { challengeId: ch.id });
-                            } catch {}
-                          }}
-                          className="px-3 py-1.5 rounded-lg text-xs font-semibold border border-zinc-300 text-zinc-700 hover:bg-zinc-50"
-                        >
-                          Cancel
-                        </button>
-                      </div>
-                    ))}
-                  </div>
-                )}
-
-                <div className="rounded-xl border border-zinc-200 bg-white p-3">
-                  <p className="text-[10px] text-zinc-500 uppercase tracking-wider mb-2">Send a challenge</p>
-                  <div className="flex gap-2">
-                    <input
-                      value={challengeToUsername}
-                      onChange={(e) => setChallengeToUsername(e.target.value)}
-                      placeholder="Username"
-                      className="flex-1 h-10 px-3 rounded-lg border border-zinc-200 text-sm outline-none focus:ring-2 focus:ring-quizup-green/30"
-                    />
-                    <select
-                      value={challengeCategoryId}
-                      onChange={(e) => setChallengeCategoryId(e.target.value)}
-                      className="h-10 px-3 rounded-lg border border-zinc-200 text-sm bg-white"
-                    >
-                      {popularTopics.slice(0, 6).map((c) => (
-                        <option key={c.id} value={c.id}>
-                          {c.name}
-                        </option>
-                      ))}
-                      {popularTopics.length === 0 && <option value="science">Science</option>}
-                    </select>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setChallengeError(null);
-                        const name = challengeToUsername.trim();
-                        if (!name) {
-                          setChallengeError("Enter a username");
-                          return;
-                        }
-                        try {
-                          getSocket().emit("challenge:send", { toUsername: name, categoryId: challengeCategoryId });
-                          setChallengeToUsername("");
-                        } catch {
-                          setChallengeError("Not connected");
-                        }
-                      }}
-                      className="h-10 px-4 rounded-lg text-sm font-semibold quizup-header-red text-foreground"
-                    >
-                      Send
-                    </button>
-                  </div>
-                </div>
               </>
             )}
           </div>

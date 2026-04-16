@@ -1,7 +1,7 @@
 const crypto = require("crypto");
 const User = require("../models/User");
 const Category = require("../models/Category");
-const { createDirectMatch, getActiveMatch } = require("../services/matchmakingService");
+const { createDirectMatch, getActiveMatch, getUserCurrentMatch } = require("../services/matchmakingService");
 
 /**
  * In-memory pending challenges (clears on server restart).
@@ -10,6 +10,7 @@ const { createDirectMatch, getActiveMatch } = require("../services/matchmakingSe
 const challengesById = new Map();
 const incomingIdsByUser = new Map(); // userId -> Set(challengeId)
 const outgoingIdsByUser = new Map(); // userId -> Set(challengeId)
+const onlineCountByUser = new Map(); // userId -> number of active sockets
 
 function _getSet(map, key) {
   let s = map.get(key);
@@ -18,6 +19,20 @@ function _getSet(map, key) {
     map.set(key, s);
   }
   return s;
+}
+
+function _incrOnline(userId) {
+  onlineCountByUser.set(userId, (onlineCountByUser.get(userId) || 0) + 1);
+}
+
+function _decrOnline(userId) {
+  const next = (onlineCountByUser.get(userId) || 0) - 1;
+  if (next <= 0) onlineCountByUser.delete(userId);
+  else onlineCountByUser.set(userId, next);
+}
+
+function _isOnline(userId) {
+  return (onlineCountByUser.get(userId) || 0) > 0;
 }
 
 function _removeChallenge(challengeId) {
@@ -65,6 +80,12 @@ function _matchFoundPayload(matchId, state, myUserId) {
 }
 
 module.exports = function registerChallenge(socket, io) {
+  // Track online users (best-effort, in-memory)
+  _incrOnline(socket.userId);
+  socket.on("disconnect", () => {
+    _decrOnline(socket.userId);
+  });
+
   // List pending challenges for the logged-in user
   socket.on("challenge:list", async () => {
     const incomingIds = Array.from(_getSet(incomingIdsByUser, socket.userId));
@@ -151,15 +172,25 @@ module.exports = function registerChallenge(socket, io) {
     if (ch.toUserId !== socket.userId) return socket.emit("challenge:error", { message: "Not authorized" });
     if (act !== "accept" && act !== "reject") return socket.emit("challenge:error", { message: "Invalid action" });
 
-    _removeChallenge(id);
-
     if (act === "reject") {
+      _removeChallenge(id);
       io.to(`user:${ch.fromUserId}`).emit("challenge:result", { challengeId: id, status: "rejected" });
       io.to(`user:${ch.toUserId}`).emit("challenge:result", { challengeId: id, status: "rejected" });
       return;
     }
 
     try {
+      // Receiver can only accept if sender is online and not already in a match
+      if (!_isOnline(ch.fromUserId)) {
+        return socket.emit("challenge:error", { message: "Sender is offline. You can't accept right now." });
+      }
+
+      const senderMatchId = await getUserCurrentMatch(ch.fromUserId);
+      if (senderMatchId) {
+        return socket.emit("challenge:error", { message: "Sender is already in a match. You can't accept right now." });
+      }
+
+      _removeChallenge(id);
       const { matchId } = await createDirectMatch(ch.fromUserId, ch.toUserId, ch.categoryId);
       const stateMatch = await getActiveMatch(matchId);
       if (!stateMatch) throw new Error("Match missing after creation");

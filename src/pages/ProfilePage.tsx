@@ -4,8 +4,9 @@ import { profileService } from "@/services/profileService";
 import { Profile } from "@/types";
 import { MOCK_ACHIEVEMENTS } from "@/data/mock-data";
 import { resolveMediaUrl } from "@/config/env";
-import { Settings, LogOut, Search, ArrowLeft, UserPlus, UserCheck, MessageCircle, Loader2, Camera } from "lucide-react";
+import { Settings, LogOut, Search, ArrowLeft, UserPlus, UserCheck, MessageCircle, Loader2, Camera, Swords } from "lucide-react";
 import { useNavigate, useParams } from "react-router-dom";
+import { getSocket } from "@/services/socketService";
 
 const ProfilePage: React.FC = () => {
   const { user, logout, refreshUser } = useAuth();
@@ -21,6 +22,8 @@ const ProfilePage: React.FC = () => {
   const [followLoading, setFollowLoading] = useState(false);
   const fileInputRef = React.useRef<HTMLInputElement>(null);
   const [uploadingAvatar, setUploadingAvatar] = React.useState(false);
+  const [challengeSending, setChallengeSending] = useState(false);
+  const [challengeStatus, setChallengeStatus] = useState<string | null>(null);
 
   const handleAvatarSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -82,6 +85,26 @@ const ProfilePage: React.FC = () => {
       // silently ignore — no toast library assumed
     } finally {
       setFollowLoading(false);
+    }
+  };
+
+  const handleChallenge = async () => {
+    if (!p || isOwnProfile) return;
+    if (!user?.id) {
+      navigate("/login");
+      return;
+    }
+
+    setChallengeStatus(null);
+    setChallengeSending(true);
+    try {
+      const categoryId = (p.favoriteCategory || "science").toString().trim() || "science";
+      getSocket().emit("challenge:send", { toUserId: p.id, categoryId });
+      setChallengeStatus("Challenge sent");
+    } catch (err) {
+      setChallengeStatus(err instanceof Error ? err.message : "Could not send challenge");
+    } finally {
+      setChallengeSending(false);
     }
   };
 
@@ -252,9 +275,25 @@ const ProfilePage: React.FC = () => {
               <MessageCircle className="w-4 h-4" />
               Chat
             </button>
+
+            {/* Challenge */}
+            <button
+              onClick={handleChallenge}
+              disabled={challengeSending}
+              className="flex-1 h-11 rounded-lg quizup-header-red text-foreground font-semibold text-sm flex items-center justify-center gap-2 disabled:opacity-60"
+            >
+              {challengeSending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Swords className="w-4 h-4" />}
+              Challenge
+            </button>
           </>
         )}
       </div>
+
+      {!isOwnProfile && challengeStatus && (
+        <div className="px-4 -mt-1 pb-2">
+          <p className="text-xs text-muted-foreground">{challengeStatus}</p>
+        </div>
+      )}
 
       {/* Achievements */}
       <div className="px-4 pb-4">
