@@ -4,6 +4,7 @@ const User = require("../models/User");
 const registerMatchmaking = require("./matchmaking");
 const registerBattle = require("./battle");
 const registerChat = require("./chat");
+const registerChallenge = require("./challenge");
 
 /**
  * Initialize Socket.io on the HTTP server.
@@ -72,6 +73,7 @@ const initSockets = (httpServer) => {
     registerMatchmaking(socket, io);
     registerBattle(socket, io);
     registerChat(socket, io);
+    registerChallenge(socket, io);
 
     socket.on("disconnect", (reason) => {
       console.log(`[Socket] Disconnected: ${socket.username} — ${reason}`);

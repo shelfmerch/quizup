@@ -123,6 +123,78 @@ const joinQueue = async (userId, categoryId, socketId) => {
   };
 };
 
+/**
+ * Create a direct 1v1 match between two specific users (no queue).
+ * Socket ids are optional; they will be refreshed when players join the match room.
+ */
+const createDirectMatch = async (challengerId, opponentId, categoryId, challengerSocketId = null, opponentSocketId = null) => {
+  const p1Id = challengerId.toString();
+  const p2Id = opponentId.toString();
+  if (!categoryId) throw new Error("categoryId is required");
+  if (p1Id === p2Id) throw new Error("Cannot create match against self");
+
+  const allQuestions = await Question.find({ categoryId, isActive: true }).lean();
+  if (allQuestions.length === 0) {
+    throw new Error("No questions available for this category");
+  }
+  const shuffled = selectQuestionsForMatch(allQuestions);
+
+  const category = await Category.findOne({ slug: categoryId }).lean();
+  const categoryName = category ? category.name : categoryId;
+
+  const [p1User, p2User] = await Promise.all([User.findById(p1Id).lean(), User.findById(p2Id).lean()]);
+  if (!p1User || !p2User) throw new Error("User not found");
+
+  const questionsMapped = shuffled.map((q) => ({
+    id: q._id.toString(),
+    categoryId: q.categoryId,
+    text: q.text,
+    imageUrl: q.imageUrl || null,
+    options: q.options,
+    correctIndex: q.correctIndex, // server-side only
+    timeLimit: q.timeLimit,
+  }));
+
+  const match = await Match.create({
+    categoryId,
+    categoryName,
+    player1: {
+      userId: p1User._id,
+      username: p1User.username,
+      avatarUrl: p1User.avatarUrl,
+      socketId: challengerSocketId,
+      score: 0,
+      answers: [],
+      level: p1User.level,
+    },
+    player2: {
+      userId: p2User._id,
+      username: p2User.username,
+      avatarUrl: p2User.avatarUrl,
+      socketId: opponentSocketId,
+      score: 0,
+      answers: [],
+      level: p2User.level,
+    },
+    status: "waiting",
+    totalRounds: shuffled.length,
+    startedAt: new Date(),
+    questions: questionsMapped,
+    currentQuestionIndex: -1,
+    connectedPlayers: [],
+    roundAnswers: {},
+    timerEndsAt: null,
+  });
+
+  const matchId = match._id.toString();
+  const activeState = match.toObject();
+  activeState.matchId = matchId;
+  activeState.player1.userId = activeState.player1.userId.toString();
+  activeState.player2.userId = activeState.player2.userId.toString();
+
+  return { matchId, match: activeState };
+};
+
 const leaveQueue = async (userId, categoryId) => {
   if (categoryId) {
     await MatchQueue.findOneAndDelete({ userId, categoryId });
@@ -209,6 +281,7 @@ const recordPlayerJoinedRoom = async (matchId, userId, isP1, socketId) => {
 
 module.exports = {
   joinQueue,
+  createDirectMatch,
   leaveQueue,
   leaveAllQueues,
   getActiveMatch,

@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { MOCK_CATEGORIES } from "@/data/mock-data";
 import { profileService } from "@/services/profileService";
-import { MatchHistoryEntry } from "@/types";
+import { MatchFoundPayload, MatchHistoryEntry } from "@/types";
 import { EXTRA_HOME_TOPICS } from "@/data/extraTopics";
 import {
   fetchFollowedCategories,
@@ -15,6 +15,7 @@ import { subscribeChatInbox } from "@/services/chatService";
 import { resolveMediaUrl } from "@/config/env";
 import { Search, Settings, ChevronRight, ChevronDown, Bell } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import { getSocket } from "@/services/socketService";
 
 const CATEGORY_THEMES = [
   { bg: "quizup-header-red", text: "text-foreground", textMuted: "text-foreground/60", icon: "text-foreground/40" },
@@ -27,6 +28,15 @@ const CATEGORY_THEMES = [
 ];
 
 const POPULAR_COUNT = 9;
+
+type ChallengeWire = {
+  id: string;
+  from: { userId: string; username: string; avatarUrl?: string };
+  to: { userId: string; username: string };
+  categoryId: string;
+  categoryName: string;
+  createdAt: string;
+};
 
 function mergeAllTopics(apiList: Category[]): Category[] {
   const byId = new Map<string, Category>();
@@ -58,6 +68,12 @@ const HomeLobby: React.FC = () => {
   const [chatTotalUnread, setChatTotalUnread] = useState(0);
   const chatDropdownRef = useRef<HTMLDivElement>(null);
 
+  const [incomingChallenges, setIncomingChallenges] = useState<ChallengeWire[]>([]);
+  const [outgoingChallenges, setOutgoingChallenges] = useState<ChallengeWire[]>([]);
+  const [challengeToUsername, setChallengeToUsername] = useState("");
+  const [challengeCategoryId, setChallengeCategoryId] = useState<string>("science");
+  const [challengeError, setChallengeError] = useState<string | null>(null);
+
   const loadChatUnread = useCallback(async () => {
     try {
       const data = await fetchChatUnreadSummary();
@@ -73,10 +89,124 @@ const HomeLobby: React.FC = () => {
     refreshUser();
   }, [refreshUser]);
 
+  const goToBattleFromMatchFound = useCallback(
+    (p: MatchFoundPayload) => {
+      if (!user?.id) return;
+      navigate("/battle", {
+        state: {
+          mode: "online" as const,
+          matchId: p.matchId,
+          mySeat: p.mySeat,
+          myUserId: p.myUserId,
+          opponentUserId: p.opponent.userId,
+          categoryId: p.categoryId,
+          categoryName: p.categoryName,
+          totalRounds: p.totalRounds,
+          me: {
+            userId: user.id,
+            username: user.username,
+            avatarUrl: user.avatarUrl,
+            score: 0,
+            answers: [],
+            level: user.level,
+          },
+          opponent: {
+            userId: p.opponent.userId,
+            username: p.opponent.username,
+            avatarUrl: p.opponent.avatarUrl,
+            score: 0,
+            answers: [],
+            level: p.opponent.level,
+          },
+        },
+      });
+    },
+    [navigate, user?.avatarUrl, user?.id, user?.level, user?.username]
+  );
+
   useEffect(() => {
     if (!user?.id) return;
     loadChatUnread();
   }, [user?.id, loadChatUnread]);
+
+  // ─── Challenges (Socket.io) ────────────────────────────────────────────────
+  useEffect(() => {
+    if (!user?.id) {
+      setIncomingChallenges([]);
+      setOutgoingChallenges([]);
+      setChallengeError(null);
+      return;
+    }
+
+    let socket: ReturnType<typeof getSocket> | null = null;
+    try {
+      socket = getSocket();
+    } catch {
+      return;
+    }
+
+    const onList = (payload: { incoming?: ChallengeWire[]; outgoing?: ChallengeWire[] }) => {
+      setIncomingChallenges(payload?.incoming || []);
+      setOutgoingChallenges(payload?.outgoing || []);
+    };
+
+    const onReceived = (ch: ChallengeWire) => {
+      setIncomingChallenges((prev) => {
+        if (prev.some((x) => x.id === ch.id)) return prev;
+        return [ch, ...prev];
+      });
+    };
+
+    const onSent = (ch: ChallengeWire) => {
+      setOutgoingChallenges((prev) => {
+        if (prev.some((x) => x.id === ch.id)) return prev;
+        return [ch, ...prev];
+      });
+    };
+
+    const onCancelled = (payload: { challengeId: string }) => {
+      const id = payload?.challengeId;
+      if (!id) return;
+      setIncomingChallenges((prev) => prev.filter((x) => x.id !== id));
+      setOutgoingChallenges((prev) => prev.filter((x) => x.id !== id));
+    };
+
+    const onResult = (payload: { challengeId: string; status: "accepted" | "rejected"; matchId?: string }) => {
+      const id = payload?.challengeId;
+      if (!id) return;
+      setIncomingChallenges((prev) => prev.filter((x) => x.id !== id));
+      setOutgoingChallenges((prev) => prev.filter((x) => x.id !== id));
+    };
+
+    const onChallengeError = (payload: { message?: string }) => {
+      setChallengeError(payload?.message || "Challenge error");
+    };
+
+    const onMatchFound = (p: MatchFoundPayload) => {
+      goToBattleFromMatchFound(p);
+    };
+
+    socket.on("challenge:list", onList);
+    socket.on("challenge:received", onReceived);
+    socket.on("challenge:sent", onSent);
+    socket.on("challenge:cancelled", onCancelled);
+    socket.on("challenge:result", onResult);
+    socket.on("challenge:error", onChallengeError);
+    socket.on("match_found", onMatchFound);
+
+    socket.emit("challenge:list");
+
+    return () => {
+      if (!socket) return;
+      socket.off("challenge:list", onList);
+      socket.off("challenge:received", onReceived);
+      socket.off("challenge:sent", onSent);
+      socket.off("challenge:cancelled", onCancelled);
+      socket.off("challenge:result", onResult);
+      socket.off("challenge:error", onChallengeError);
+      socket.off("match_found", onMatchFound);
+    };
+  }, [goToBattleFromMatchFound, user?.id]);
 
   useEffect(() => {
     if (!user?.id) return;
@@ -195,6 +325,12 @@ const HomeLobby: React.FC = () => {
     const ids = new Set(popularTopics.map((c) => c.id));
     return allTopics.filter((c) => !ids.has(c.id)).sort((a, b) => a.name.localeCompare(b.name));
   }, [allTopics, popularTopics]);
+
+  useEffect(() => {
+    if (!challengeCategoryId && popularTopics.length > 0) {
+      setChallengeCategoryId(popularTopics[0].id);
+    }
+  }, [challengeCategoryId, popularTopics]);
 
   const renderTopicRow = (cat: Category, colorIndex: number) => {
     const theme = CATEGORY_THEMES[colorIndex % CATEGORY_THEMES.length];
@@ -337,6 +473,142 @@ const HomeLobby: React.FC = () => {
 
 
       <div className="px-4 pb-24 ">
+        {(isAuthenticated || incomingChallenges.length > 0 || outgoingChallenges.length > 0) && (
+          <div className="mt-4 mb-4 rounded-2xl border border-zinc-200 bg-white p-4 shadow-sm">
+            <div className="flex items-center justify-between mb-2">
+              <h2 className="font-display font-bold text-zinc-800 text-sm uppercase tracking-wider">Challenges</h2>
+              {(incomingChallenges.length + outgoingChallenges.length) > 0 && (
+                <p className="text-[10px] text-zinc-500 uppercase tracking-wider">
+                  {incomingChallenges.length} incoming · {outgoingChallenges.length} outgoing
+                </p>
+              )}
+            </div>
+
+            {!isAuthenticated ? (
+              <p className="text-zinc-500 text-sm">Sign in to send and receive challenges.</p>
+            ) : (
+              <>
+                {challengeError && <p className="text-xs text-quizup-red mb-2">{challengeError}</p>}
+
+                {incomingChallenges.length > 0 && (
+                  <div className="space-y-2 mb-3">
+                    {incomingChallenges.map((ch) => (
+                      <div key={ch.id} className="rounded-xl border border-zinc-200 bg-zinc-50 p-3 flex items-center gap-3">
+                        <img
+                          src={resolveMediaUrl(
+                            ch.from.avatarUrl,
+                            `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(ch.from.username)}`
+                          )}
+                          alt=""
+                          className="w-10 h-10 rounded-full border border-zinc-200 object-cover shrink-0"
+                        />
+                        <div className="min-w-0 flex-1">
+                          <p className="text-sm font-semibold text-zinc-900 truncate">{ch.from.username} challenged you</p>
+                          <p className="text-[10px] text-zinc-500 truncate">{ch.categoryName}</p>
+                        </div>
+                        <div className="flex items-center gap-2 shrink-0">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              try {
+                                getSocket().emit("challenge:respond", { challengeId: ch.id, action: "reject" });
+                              } catch {}
+                            }}
+                            className="px-3 py-1.5 rounded-lg text-xs font-semibold border border-zinc-300 text-zinc-700 hover:bg-white"
+                          >
+                            Reject
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              try {
+                                getSocket().emit("challenge:respond", { challengeId: ch.id, action: "accept" });
+                              } catch {}
+                            }}
+                            className="px-3 py-1.5 rounded-lg text-xs font-semibold quizup-header-green text-foreground"
+                          >
+                            Accept
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {outgoingChallenges.length > 0 && (
+                  <div className="space-y-2 mb-3">
+                    {outgoingChallenges.map((ch) => (
+                      <div key={ch.id} className="rounded-xl border border-zinc-200 bg-white p-3 flex items-center gap-3">
+                        <div className="min-w-0 flex-1">
+                          <p className="text-sm font-semibold text-zinc-900 truncate">
+                            Waiting for {ch.to.username}
+                          </p>
+                          <p className="text-[10px] text-zinc-500 truncate">{ch.categoryName}</p>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            try {
+                              getSocket().emit("challenge:cancel", { challengeId: ch.id });
+                            } catch {}
+                          }}
+                          className="px-3 py-1.5 rounded-lg text-xs font-semibold border border-zinc-300 text-zinc-700 hover:bg-zinc-50"
+                        >
+                          Cancel
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                <div className="rounded-xl border border-zinc-200 bg-white p-3">
+                  <p className="text-[10px] text-zinc-500 uppercase tracking-wider mb-2">Send a challenge</p>
+                  <div className="flex gap-2">
+                    <input
+                      value={challengeToUsername}
+                      onChange={(e) => setChallengeToUsername(e.target.value)}
+                      placeholder="Username"
+                      className="flex-1 h-10 px-3 rounded-lg border border-zinc-200 text-sm outline-none focus:ring-2 focus:ring-quizup-green/30"
+                    />
+                    <select
+                      value={challengeCategoryId}
+                      onChange={(e) => setChallengeCategoryId(e.target.value)}
+                      className="h-10 px-3 rounded-lg border border-zinc-200 text-sm bg-white"
+                    >
+                      {popularTopics.slice(0, 6).map((c) => (
+                        <option key={c.id} value={c.id}>
+                          {c.name}
+                        </option>
+                      ))}
+                      {popularTopics.length === 0 && <option value="science">Science</option>}
+                    </select>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setChallengeError(null);
+                        const name = challengeToUsername.trim();
+                        if (!name) {
+                          setChallengeError("Enter a username");
+                          return;
+                        }
+                        try {
+                          getSocket().emit("challenge:send", { toUsername: name, categoryId: challengeCategoryId });
+                          setChallengeToUsername("");
+                        } catch {
+                          setChallengeError("Not connected");
+                        }
+                      }}
+                      className="h-10 px-4 rounded-lg text-sm font-semibold quizup-header-red text-foreground"
+                    >
+                      Send
+                    </button>
+                  </div>
+                </div>
+              </>
+            )}
+          </div>
+        )}
+
         <h2 className="font-display font-bold text-zinc-800 text-sm uppercase tracking-wider mb-3 mt-3">Popular Topics</h2>
         {!topicsLoaded ? (
           <p className="text-zinc-500 text-sm py-4">Loading topics…</p>
