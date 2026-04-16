@@ -25,6 +25,7 @@ const ProfilePage: React.FC = () => {
   const [uploadingAvatar, setUploadingAvatar] = React.useState(false);
   const [challengeSending, setChallengeSending] = useState(false);
   const [challengeStatus, setChallengeStatus] = useState<string | null>(null);
+  const [challengeCategoryId, setChallengeCategoryId] = useState<string>("");
 
   const handleAvatarSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -146,7 +147,7 @@ const ProfilePage: React.FC = () => {
     setChallengeStatus(null);
     setChallengeSending(true);
     try {
-      const categoryId = (p.favoriteCategory || "science").toString().trim() || "science";
+      const categoryId = (challengeCategoryId || p.favoriteCategory || "science").toString().trim() || "science";
       getSocket().emit("challenge:send", { toUserId: p.id, categoryId });
       setChallengeStatus("Challenge sent");
       toast.success("Challenge sent");
@@ -279,8 +280,8 @@ const ProfilePage: React.FC = () => {
         </div>
       </div>
 
-      {/* Action buttons */}
-      <div className="px-4 py-3 flex gap-2">
+      {/* Action row: follow / chat / challenge */}
+      <div className="px-4 pt-3 pb-1 flex gap-2">
         {isOwnProfile ? (
           /* Own profile — just Play button */
           <button
@@ -338,9 +339,30 @@ const ProfilePage: React.FC = () => {
         )}
       </div>
 
-      {!isOwnProfile && challengeStatus && (
-        <div className="px-4 -mt-1 pb-2">
-          <p className="text-xs text-muted-foreground">{challengeStatus}</p>
+      {/* Challenge topic selector + status */}
+      {!isOwnProfile && (
+        <div className="px-4 pb-2 flex flex-col gap-1.5">
+          <div className="flex items-center gap-2">
+            <label className="text-[11px] text-muted-foreground uppercase tracking-wider">
+              Challenge topic
+            </label>
+            <select
+              value={challengeCategoryId || p.favoriteCategory || "science"}
+              onChange={(e) => setChallengeCategoryId(e.target.value)}
+              className="ml-auto h-8 px-2 rounded-md border border-border bg-quizup-card text-xs text-foreground"
+            >
+              {p.favoriteCategory && (
+                <option value={p.favoriteCategory}>{p.favoriteCategory}</option>
+              )}
+              <option value="science">Science</option>
+              <option value="general-knowledge">General Knowledge</option>
+              <option value="sports">Sports</option>
+              <option value="movies">Movies</option>
+            </select>
+          </div>
+          {challengeStatus && (
+            <p className="text-xs text-muted-foreground">{challengeStatus}</p>
+          )}
         </div>
       )}
 
