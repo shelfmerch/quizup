@@ -4,6 +4,7 @@ const {
   getUserCurrentMatch,
   recordPlayerJoinedRoom,
 } = require("../services/matchmakingService");
+const battlePresence = require("../state/battlePresence");
 const {
   startMatch,
   handleAnswer,
@@ -65,6 +66,7 @@ const registerBattle = (socket, io) => {
       // Join the Socket.io room
       socket.join(matchId);
       socket.currentMatchId = matchId;
+      battlePresence.setUserMatch(socket.userId, matchId);
 
       // Send current state back to the joining player (useful for reconnect)
       socket.emit("room_joined", {
@@ -149,6 +151,7 @@ const registerBattle = (socket, io) => {
 
   // ── disconnect ────────────────────────────────────────────────────────────
   socket.on("disconnect", async () => {
+    battlePresence.clearUser(socket.userId);
     const matchId = socket.currentMatchId;
     if (!matchId) return;
 

@@ -1,7 +1,8 @@
 const crypto = require("crypto");
 const User = require("../models/User");
 const Category = require("../models/Category");
-const { createDirectMatch, getActiveMatch, getUserBusyMatch } = require("../services/matchmakingService");
+const { createDirectMatch, getActiveMatch } = require("../services/matchmakingService");
+const battlePresence = require("../state/battlePresence");
 
 /**
  * In-memory pending challenges (clears on server restart).
@@ -185,9 +186,14 @@ module.exports = function registerChallenge(socket, io) {
         return socket.emit("challenge:error", { message: "Sender is offline. You can't accept right now." });
       }
 
-      const senderMatchId = await getUserBusyMatch(ch.fromUserId, { waitingMaxAgeMs: 2 * 60_000 });
-      if (senderMatchId) {
-        return socket.emit("challenge:error", { message: "Sender is already in a match. You can't accept right now." });
+      // Only block if sender is actually in a 1v1 room (BattlePage -> join_match_room),
+      // not merely "online" or because of a stale DB row.
+      const senderRoomMatchId = battlePresence.getUserMatch(ch.fromUserId);
+      if (senderRoomMatchId) {
+        const senderMatch = await getActiveMatch(senderRoomMatchId);
+        if (senderMatch && ["waiting", "in_progress", "finalizing"].includes(senderMatch.status)) {
+          return socket.emit("challenge:error", { message: "Sender is already in a match. You can't accept right now." });
+        }
       }
 
       _removeChallenge(id);
