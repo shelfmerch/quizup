@@ -25,7 +25,7 @@ const CATEGORIES = [
   { slug: "pak-dramas", name: "Pak Dramas",   icon: "🎬", color: "24 90% 55%",  description: "Pakistani dramas — iconic stories & characters", questionCount: 49 },
   { slug: "english",    name: "English",      icon: "📘", color: "210 85% 55%", description: "Vocabulary, meanings, and usage",         questionCount: 49 },
   { slug: "urdu",       name: "Urdu",         icon: "📗", color: "152 69% 42%", description: "Urdu vocabulary — meanings and usage",     questionCount: 49 },
-  { slug: "logos",      name: "Logos",        icon: "🧠", color: "4 78% 55%",   description: "Logo quiz — identify brands from their logos", questionCount: 22 },
+  { slug: "logos",      name: "Logos",        icon: "🧠", color: "4 78% 55%",   description: "Logo quiz — identify brands from their logos", questionCount: 32 },
 ];
 
 const QUESTIONS = {
@@ -579,6 +579,66 @@ const QUESTIONS = {
       options: ["L’Oréal", "Nivea", "Garnier", "Dove"],
       correctIndex: 2,
       imageUrl: "/uploads/logos-seed/logo-22-garnier.png",
+    },
+    {
+      text: "This luxury brand is best known for:",
+      options: ["Watches", "Handbags & fashion", "Shoes", "Perfumes only"],
+      correctIndex: 1,
+      imageUrl: "/uploads/logos-seed/logo-23-hermes.png",
+    },
+    {
+      text: "This logo belongs to which beauty brand?",
+      options: ["Sugar Cosmetics", "Sephora", "SUGAR POP", "Swiss Beauty", "SERY Cosmetics", "Smashbox"],
+      correctIndex: 0,
+      imageUrl: "/uploads/logos-seed/logo-24-sugar.png",
+    },
+    {
+      text: "This iconic logo represents which DJ?",
+      options: ["Alan Walker", "Marshmello", "DJ Snake", "Avicii"],
+      correctIndex: 1,
+      imageUrl: "/uploads/logos-seed/logo-25-marshmello.png",
+    },
+    {
+      text: "This logo belongs to which fantasy sports platform?",
+      options: ["MPL", "Dream11", "My11Circle", "FanFight"],
+      correctIndex: 1,
+      imageUrl: "/uploads/logos-seed/logo-26-dream11.png",
+    },
+    {
+      text: "This character is popularly known as:",
+      options: ["Doraemon", "Hello Kitty", "Pikachu", "Barbie"],
+      correctIndex: 1,
+      imageUrl: "/uploads/logos-seed/logo-27-hello-kitty.png",
+    },
+    {
+      text: "This logo belongs to which kids’ content brand?",
+      options: ["BabyBus", "ChuChu TV", "Cocomelon", "Pinkfong"],
+      correctIndex: 2,
+      imageUrl: "/uploads/logos-seed/logo-28-cocomelon.png",
+    },
+    {
+      text: "This telecom brand is:",
+      options: ["Jio", "Vodafone", "Airtel", "BSNL"],
+      correctIndex: 2,
+      imageUrl: "/uploads/logos-seed/logo-29-airtel.png",
+    },
+    {
+      text: "This luxury brand logo represents:",
+      options: ["Omega", "Titan", "Rolex", "Fossil"],
+      correctIndex: 2,
+      imageUrl: "/uploads/logos-seed/logo-30-rolex.png",
+    },
+    {
+      text: "This logo belongs to which fashion brand?",
+      options: ["Zara", "Gucci", "Balenciaga", "H&M"],
+      correctIndex: 2,
+      imageUrl: "/uploads/logos-seed/logo-31-balenciaga.png",
+    },
+    {
+      text: "This mascot is associated with:",
+      options: ["Nestle", "Amul", "Britannia", "Mother Dairy"],
+      correctIndex: 1,
+      imageUrl: "/uploads/logos-seed/logo-32-amul.png",
     },
   ],
 };

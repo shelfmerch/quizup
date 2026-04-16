@@ -26,7 +26,7 @@ const CATEGORY_THEMES = [
   { bg: "bg-white", text: "text-black", textMuted: "text-black/60", icon: "text-black/40" },
 ];
 
-const POPULAR_COUNT = 6;
+const POPULAR_COUNT = 9;
 
 function mergeAllTopics(apiList: Category[]): Category[] {
   const byId = new Map<string, Category>();
@@ -459,7 +459,7 @@ const HomeLobby: React.FC = () => {
           )}
         </div>
       </div>
-      
+
     </div>
   );
 };
