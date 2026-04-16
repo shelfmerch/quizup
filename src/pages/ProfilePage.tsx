@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useCallback } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { profileService } from "@/services/profileService";
+import { toast } from "@/components/ui/sonner";
 import { Profile } from "@/types";
 import { MOCK_ACHIEVEMENTS } from "@/data/mock-data";
 import { resolveMediaUrl } from "@/config/env";
@@ -101,6 +102,7 @@ const ProfilePage: React.FC = () => {
       const categoryId = (p.favoriteCategory || "science").toString().trim() || "science";
       getSocket().emit("challenge:send", { toUserId: p.id, categoryId });
       setChallengeStatus("Challenge sent");
+      toast.success("Challenge sent");
     } catch (err) {
       setChallengeStatus(err instanceof Error ? err.message : "Could not send challenge");
     } finally {

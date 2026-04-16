@@ -252,6 +252,29 @@ const getUserCurrentMatch = async (userId) => {
   return activeMatch ? activeMatch._id.toString() : null;
 };
 
+/**
+ * Return a match id only if the user is "busy" in a live match.
+ *
+ * - Always busy if status is in_progress or finalizing
+ * - Busy in waiting only if it is very recent (prevents stale "waiting" rows from blocking challenges)
+ */
+const getUserBusyMatch = async (userId, { waitingMaxAgeMs = 2 * 60_000 } = {}) => {
+  const now = Date.now();
+  const recentCutoff = new Date(now - waitingMaxAgeMs);
+
+  const match = await Match.findOne({
+    $or: [{ "player1.userId": userId }, { "player2.userId": userId }],
+    $or: [
+      { status: { $in: ["in_progress", "finalizing"] } },
+      { status: "waiting", createdAt: { $gte: recentCutoff } },
+    ],
+  })
+    .sort({ createdAt: -1 })
+    .lean();
+
+  return match ? match._id.toString() : null;
+};
+
 const clearUserMatch = async (userId) => {
   // Not needed: deduced automatically by match status in Mongo
 };
@@ -288,6 +311,7 @@ module.exports = {
   updateActiveMatch,
   removeActiveMatch,
   getUserCurrentMatch,
+  getUserBusyMatch,
   clearUserMatch,
   recordPlayerJoinedRoom,
 };

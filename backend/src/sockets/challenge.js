@@ -1,7 +1,7 @@
 const crypto = require("crypto");
 const User = require("../models/User");
 const Category = require("../models/Category");
-const { createDirectMatch, getActiveMatch, getUserCurrentMatch } = require("../services/matchmakingService");
+const { createDirectMatch, getActiveMatch, getUserBusyMatch } = require("../services/matchmakingService");
 
 /**
  * In-memory pending challenges (clears on server restart).
@@ -185,7 +185,7 @@ module.exports = function registerChallenge(socket, io) {
         return socket.emit("challenge:error", { message: "Sender is offline. You can't accept right now." });
       }
 
-      const senderMatchId = await getUserCurrentMatch(ch.fromUserId);
+      const senderMatchId = await getUserBusyMatch(ch.fromUserId, { waitingMaxAgeMs: 2 * 60_000 });
       if (senderMatchId) {
         return socket.emit("challenge:error", { message: "Sender is already in a match. You can't accept right now." });
       }
