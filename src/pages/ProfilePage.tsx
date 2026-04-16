@@ -2,7 +2,7 @@ import React, { useEffect, useState, useCallback } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { profileService } from "@/services/profileService";
 import { toast } from "@/components/ui/sonner";
-import { Profile } from "@/types";
+import { MatchFoundPayload, Profile } from "@/types";
 import { MOCK_ACHIEVEMENTS } from "@/data/mock-data";
 import { resolveMediaUrl } from "@/config/env";
 import { Settings, LogOut, Search, ArrowLeft, UserPlus, UserCheck, MessageCircle, Loader2, Camera, Swords } from "lucide-react";
@@ -68,6 +68,53 @@ const ProfilePage: React.FC = () => {
   useEffect(() => {
     loadProfile();
   }, [loadProfile]);
+
+  // If a challenge is accepted while I'm here, jump into the 1v1 battle.
+  useEffect(() => {
+    if (!user?.id) return;
+    let socket: ReturnType<typeof getSocket>;
+    try {
+      socket = getSocket();
+    } catch {
+      return;
+    }
+
+    const onMatchFound = (p: MatchFoundPayload) => {
+      navigate("/battle", {
+        state: {
+          mode: "online" as const,
+          matchId: p.matchId,
+          mySeat: p.mySeat,
+          myUserId: p.myUserId,
+          opponentUserId: p.opponent.userId,
+          categoryId: p.categoryId,
+          categoryName: p.categoryName,
+          totalRounds: p.totalRounds,
+          me: {
+            userId: user.id,
+            username: user.username,
+            avatarUrl: user.avatarUrl,
+            score: 0,
+            answers: [],
+            level: user.level,
+          },
+          opponent: {
+            userId: p.opponent.userId,
+            username: p.opponent.username,
+            avatarUrl: p.opponent.avatarUrl,
+            score: 0,
+            answers: [],
+            level: p.opponent.level,
+          },
+        },
+      });
+    };
+
+    socket.on("match_found", onMatchFound);
+    return () => {
+      socket.off("match_found", onMatchFound);
+    };
+  }, [navigate, user?.avatarUrl, user?.id, user?.level, user?.username]);
 
   const handleFollow = async () => {
     if (!profile) return;
