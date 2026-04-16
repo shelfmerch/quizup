@@ -55,6 +55,7 @@ export interface Question {
   imageUrl?: string;
   options: string[];
   correctIndex: number;
+  difficulty?: "easy" | "medium" | "hard";
   timeLimit: number; // seconds
 }
 
