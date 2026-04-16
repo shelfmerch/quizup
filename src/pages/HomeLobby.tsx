@@ -5,12 +5,17 @@ import { MOCK_CATEGORIES } from "@/data/mock-data";
 import { profileService } from "@/services/profileService";
 import { MatchHistoryEntry } from "@/types";
 import { EXTRA_HOME_TOPICS } from "@/data/extraTopics";
-import { fetchPublicCategories } from "@/services/categoryService";
+import {
+  fetchFollowedCategories,
+  fetchPublicCategories,
+  followCategory,
+  unfollowCategory,
+} from "@/services/categoryService";
 import { Category } from "@/types";
 import { fetchChatUnreadSummary, type ChatUnreadItem } from "@/services/chatApi";
 import { subscribeChatInbox } from "@/services/chatService";
 import { resolveMediaUrl } from "@/config/env";
-import { Search, Settings, ChevronRight, ChevronDown, Bell } from "lucide-react";
+import { Search, Settings, ChevronRight, ChevronDown, Bell, Star } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
 const CATEGORY_THEMES = [
@@ -40,8 +45,12 @@ function mergeAllTopics(apiList: Category[]): Category[] {
 const HomeLobby: React.FC = () => {
   const { user, refreshUser } = useAuth();
   const navigate = useNavigate();
+  const isAuthenticated = !!user?.id;
   const [apiCategories, setApiCategories] = useState<Category[]>([]);
   const [topicsLoaded, setTopicsLoaded] = useState(false);
+  const [followedTopics, setFollowedTopics] = useState<Category[]>([]);
+  const [followedLoaded, setFollowedLoaded] = useState(false);
+  const [followedBusy, setFollowedBusy] = useState<Record<string, boolean>>({});
   const [exploreOpen, setExploreOpen] = useState(false);
   const [recentMatches, setRecentMatches] = useState<MatchHistoryEntry[]>([]);
   const [historyLoading, setHistoryLoading] = useState(true);
@@ -152,6 +161,33 @@ const HomeLobby: React.FC = () => {
     };
   }, []);
 
+  useEffect(() => {
+    let cancelled = false;
+    if (!isAuthenticated) {
+      setFollowedTopics([]);
+      setFollowedLoaded(true);
+      return () => {
+        cancelled = true;
+      };
+    }
+
+    setFollowedLoaded(false);
+    fetchFollowedCategories()
+      .then((list) => {
+        if (!cancelled) setFollowedTopics(list);
+      })
+      .catch(() => {
+        if (!cancelled) setFollowedTopics([]);
+      })
+      .finally(() => {
+        if (!cancelled) setFollowedLoaded(true);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [isAuthenticated]);
+
   const allTopics = useMemo(() => mergeAllTopics(apiCategories), [apiCategories]);
 
   const popularTopics = useMemo(() => {
@@ -165,6 +201,8 @@ const HomeLobby: React.FC = () => {
 
   const renderTopicRow = (cat: Category, colorIndex: number) => {
     const theme = CATEGORY_THEMES[colorIndex % CATEGORY_THEMES.length];
+    const isFollowed = followedTopics.some((c) => c.id === cat.id);
+    const isBusy = !!followedBusy[cat.id];
     return (
       <div className="mx-4">
       <motion.button
@@ -172,9 +210,39 @@ const HomeLobby: React.FC = () => {
         type="button"
         whileTap={{ scale: 0.98 }}
         onClick={() => navigate(`/category/${cat.id}`)}
-        className={`${theme.bg} rounded-lg aspect-square w-full flex items-center justify-center p-2`}
+        className={`${theme.bg} rounded-lg aspect-square w-full relative flex items-center justify-center p-2`}
       >
         <span className="text-6xl leading-none">{cat.icon}</span>
+
+        {isAuthenticated ? (
+          <button
+            type="button"
+            disabled={isBusy}
+            onClick={async (e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              setFollowedBusy((m) => ({ ...m, [cat.id]: true }));
+              try {
+                if (isFollowed) {
+                  await unfollowCategory(cat.id);
+                  setFollowedTopics((prev) => prev.filter((c) => c.id !== cat.id));
+                } else {
+                  await followCategory(cat.id);
+                  setFollowedTopics((prev) => [{ ...cat }, ...prev]);
+                }
+              } finally {
+                setFollowedBusy((m) => ({ ...m, [cat.id]: false }));
+              }
+            }}
+            className={`absolute top-1 right-1 rounded-md p-1 transition-opacity ${
+              isBusy ? "opacity-50" : "opacity-90 hover:opacity-100"
+            } ${isFollowed ? "bg-black/20" : "bg-black/10"}`}
+            aria-label={isFollowed ? "Unfollow topic" : "Follow topic"}
+            title={isFollowed ? "Unfollow" : "Follow"}
+          >
+            <Star className={`w-4 h-4 ${isFollowed ? "text-yellow-300 fill-yellow-300" : "text-white/80"}`} />
+          </button>
+        ) : null}
         {/* <div className="flex-1 min-w-0">
           <p className={`font-display font-bold ${theme.text} text-sm`}>{cat.name}</p>
           <p className={`${theme.textMuted} text-[10px]`}>{cat.questionCount} questions</p>
@@ -366,6 +434,21 @@ const HomeLobby: React.FC = () => {
         ) : (
           <>
             <div className="grid grid-cols-3 gap-4">{popularTopics.map((cat, i) => renderTopicRow(cat, i))}</div>
+
+            <div className="mt-6">
+              <h3 className="font-display font-bold text-zinc-800 text-xs uppercase tracking-wider mb-3">
+                Followed Topics
+              </h3>
+              {!isAuthenticated ? (
+                <p className="text-zinc-500 text-sm">Sign in to follow topics.</p>
+              ) : !followedLoaded ? (
+                <p className="text-zinc-500 text-sm">Loading followed topics…</p>
+              ) : followedTopics.length === 0 ? (
+                <p className="text-zinc-500 text-sm">You haven't followed any topics yet.</p>
+              ) : (
+                <div className="grid grid-cols-3 gap-4">{followedTopics.map((cat, i) => renderTopicRow(cat, i))}</div>
+              )}
+            </div>
 
             {moreTopics.length > 0 && (
               <div className="mt-4">

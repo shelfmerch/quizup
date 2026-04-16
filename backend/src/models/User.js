@@ -56,6 +56,9 @@ const userSchema = new mongoose.Schema(
     followers: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
     following: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
 
+    // Followed quiz topics (Category.slug values)
+    followedCategories: [{ type: String, default: [] }],
+
     role: {
       type: String,
       enum: ["user", "admin"],
