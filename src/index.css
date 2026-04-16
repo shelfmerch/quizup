@@ -37,7 +37,7 @@
     --radius: 0.75rem;
 
     /* QuizUp-style colors */
-    --quizup-gray: 220 20% 8%;
+    --quizup-gray: 220 15% 40%
     --quizup-red: 4 78% 55%;
     --quizup-green: 152 69% 42%;
     --quizup-teal: 174 72% 40%;
@@ -123,6 +123,13 @@
 
   .game-gradient {
     background: linear-gradient(135deg, hsl(var(--primary)) 0%, hsl(var(--quizup-teal)) 100%);
+  }
+
+  /* Home lobby "Find a Match" CTA — fallback + legacy WebKit + standard gradient */
+  .find-match-cta-gradient {
+    background: #D70652;
+    background: -webkit-linear-gradient(to right, #FF025E, #D70652);
+    background: linear-gradient(to right, #FF025E, #D70652);
   }
 
   .safe-bottom {
