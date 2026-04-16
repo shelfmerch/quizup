@@ -335,62 +335,6 @@ const HomeLobby: React.FC = () => {
         </div>
       </div>
 
-      <div className="px-4 pt-4 bg-gray-300/50 p-3">
-        <div className="flex items-center justify-between mb-3">
-          <h2 className="font-display font-bold text-zinc-800 text-sm uppercase tracking-wider">Recent Matches</h2>
-          <button
-            type="button"
-            onClick={() => navigate("/history")}
-            className="text-xs text-quizup-green font-semibold flex items-center gap-0.5"
-          >
-            View All <ChevronRight className="w-3 h-3" />
-          </button>
-        </div>
-
-        <div className="space-y-2 mb-6">
-          {historyLoading ? (
-            <>
-              {[0, 1, 2].map((i) => (
-                <div key={i} className="bg-zinc-900 rounded-xl p-3 h-[72px] border border-zinc-800 animate-pulse" />
-              ))}
-            </>
-          ) : historyError ? (
-            <p className="text-zinc-500 text-sm py-2">Couldn&apos;t load recent matches.</p>
-          ) : recentMatches.length === 0 ? (
-            <p className="text-zinc-500 text-sm py-2">No completed matches yet. Play a battle to see history here.</p>
-          ) : (
-            recentMatches.map((match) => (
-              <div key={match.matchId} className="bg-zinc-900 rounded-xl p-3 flex items-center gap-3 border border-zinc-800">
-                <img
-                  src={match.opponentAvatar || "https://api.dicebear.com/7.x/avataaars/svg?seed=opponent"}
-                  alt=""
-                  className="w-10 h-10 rounded-full bg-zinc-800"
-                />
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-semibold text-white truncate">{match.opponentName}</p>
-                  <p className="text-[10px] text-zinc-500">{match.categoryName}</p>
-                </div>
-                <div className="text-right shrink-0">
-                  <p className="text-sm font-display font-bold text-white">
-                    {match.playerScore} - {match.opponentScore}
-                  </p>
-                  <p
-                    className={`text-[10px] font-bold uppercase ${
-                      match.result === "win"
-                        ? "text-quizup-green"
-                        : match.result === "loss"
-                          ? "text-quizup-red"
-                          : "text-quizup-gold"
-                    }`}
-                  >
-                    {match.result}
-                  </p>
-                </div>
-              </div>
-            ))
-          )}
-        </div>
-      </div>
 
       <div className="px-4 pb-24 ">
         <h2 className="font-display font-bold text-zinc-800 text-sm uppercase tracking-wider mb-3 mt-3">Popular Topics</h2>
@@ -458,6 +402,64 @@ const HomeLobby: React.FC = () => {
           </>
         )}
       </div>
+
+      <div className="px-4 pt-4 bg-gray-300/50 p-3">
+        <div className="flex items-center justify-between mb-3">
+          <h2 className="font-display font-bold text-zinc-800 text-sm uppercase tracking-wider">Recent Matches</h2>
+          <button
+            type="button"
+            onClick={() => navigate("/history")}
+            className="text-xs text-quizup-green font-semibold flex items-center gap-0.5"
+          >
+            View All <ChevronRight className="w-3 h-3" />
+          </button>
+        </div>
+
+        <div className="space-y-2 mb-6">
+          {historyLoading ? (
+            <>
+              {[0, 1, 2].map((i) => (
+                <div key={i} className="bg-zinc-900 rounded-xl p-3 h-[72px] border border-zinc-800 animate-pulse" />
+              ))}
+            </>
+          ) : historyError ? (
+            <p className="text-zinc-500 text-sm py-2">Couldn&apos;t load recent matches.</p>
+          ) : recentMatches.length === 0 ? (
+            <p className="text-zinc-500 text-sm py-2">No completed matches yet. Play a battle to see history here.</p>
+          ) : (
+            recentMatches.map((match) => (
+              <div key={match.matchId} className="bg-zinc-900 rounded-xl p-3 flex items-center gap-3 border border-zinc-800">
+                <img
+                  src={match.opponentAvatar || "https://api.dicebear.com/7.x/avataaars/svg?seed=opponent"}
+                  alt=""
+                  className="w-10 h-10 rounded-full bg-zinc-800"
+                />
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-semibold text-white truncate">{match.opponentName}</p>
+                  <p className="text-[10px] text-zinc-500">{match.categoryName}</p>
+                </div>
+                <div className="text-right shrink-0">
+                  <p className="text-sm font-display font-bold text-white">
+                    {match.playerScore} - {match.opponentScore}
+                  </p>
+                  <p
+                    className={`text-[10px] font-bold uppercase ${
+                      match.result === "win"
+                        ? "text-quizup-green"
+                        : match.result === "loss"
+                          ? "text-quizup-red"
+                          : "text-quizup-gold"
+                    }`}
+                  >
+                    {match.result}
+                  </p>
+                </div>
+              </div>
+            ))
+          )}
+        </div>
+      </div>
+      
     </div>
   );
 };
