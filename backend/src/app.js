@@ -3,6 +3,7 @@ const fs = require("fs");
 const path = require("path");
 const express = require("express");
 const cors = require("cors");
+const mongoose = require("mongoose");
 
 const authRoutes = require("./routes/auth");
 const profileRoutes = require("./routes/profile");
@@ -42,7 +43,12 @@ app.use(express.json({ limit: "1mb" }));
 app.use("/uploads", express.static(path.join(__dirname, "..", "uploads")));
 
 // ─── Health check ─────────────────────────────────────────────────────────────
-app.get("/health", (_req, res) => res.json({ status: "ok", ts: Date.now() }));
+app.get("/health", (_req, res) => {
+  const readyState = mongoose.connection.readyState; // 0=disconnected,1=connected,2=connecting,3=disconnecting
+  const db =
+    readyState === 1 ? "connected" : readyState === 2 ? "connecting" : readyState === 3 ? "disconnecting" : "disconnected";
+  res.json({ status: "ok", db, ts: Date.now() });
+});
 
 // ─── API Routes ───────────────────────────────────────────────────────────────
 app.use("/api/auth", authRoutes);

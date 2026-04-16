@@ -1,19 +1,35 @@
 const mongoose = require("mongoose");
 
 let isConnected = false;
+let isConnecting = false;
+
+const wait = (ms) => new Promise((r) => setTimeout(r, ms));
 
 const connectDB = async () => {
   if (isConnected) return;
+  if (isConnecting) return;
+  isConnecting = true;
 
-  try {
-    const conn = await mongoose.connect(process.env.MONGODB_URI, {
-      serverSelectionTimeoutMS: 5000,
-    });
-    isConnected = true;
-    console.log(`[MongoDB] Connected: ${conn.connection.host}`);
-  } catch (err) {
-    console.error("[MongoDB] Connection failed:", err.message);
-    process.exit(1);
+  let attempt = 0;
+  // Keep retrying — don't crash the server (lets /health work and avoids connection refused).
+  // Routes that need DB will naturally fail until connected.
+  // eslint-disable-next-line no-constant-condition
+  while (true) {
+    attempt += 1;
+    try {
+      const conn = await mongoose.connect(process.env.MONGODB_URI, {
+        serverSelectionTimeoutMS: 5000,
+      });
+      isConnected = true;
+      isConnecting = false;
+      console.log(`[MongoDB] Connected: ${conn.connection.host}`);
+      return;
+    } catch (err) {
+      const delay = Math.min(30_000, 1000 * 2 ** Math.min(5, attempt - 1));
+      console.error(`[MongoDB] Connection failed (attempt ${attempt}). Retrying in ${delay}ms:`, err.message);
+      // eslint-disable-next-line no-await-in-loop
+      await wait(delay);
+    }
   }
 };
 

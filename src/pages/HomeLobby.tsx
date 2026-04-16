@@ -23,7 +23,7 @@ const CATEGORY_THEMES = [
   { bg: "bg-white", text: "text-black", textMuted: "text-black/60", icon: "text-black/40" },
 ];
 
-const POPULAR_COUNT = 5;
+const POPULAR_COUNT = 6;
 
 function mergeAllTopics(apiList: Category[]): Category[] {
   const byId = new Map<string, Category>();
@@ -166,25 +166,31 @@ const HomeLobby: React.FC = () => {
   const renderTopicRow = (cat: Category, colorIndex: number) => {
     const theme = CATEGORY_THEMES[colorIndex % CATEGORY_THEMES.length];
     return (
+      <div className="mx-4">
       <motion.button
         key={cat.id}
         type="button"
         whileTap={{ scale: 0.98 }}
         onClick={() => navigate(`/category/${cat.id}`)}
-        className={`w-full ${theme.bg} rounded-xl p-4 flex items-center gap-3 text-left`}
+        className={`${theme.bg} rounded-lg aspect-square w-full flex items-center justify-center p-2`}
       >
-        <span className="text-3xl shrink-0">{cat.icon}</span>
-        <div className="flex-1 min-w-0">
+        <span className="text-6xl leading-none">{cat.icon}</span>
+        {/* <div className="flex-1 min-w-0">
           <p className={`font-display font-bold ${theme.text} text-sm`}>{cat.name}</p>
           <p className={`${theme.textMuted} text-[10px]`}>{cat.questionCount} questions</p>
         </div>
-        <ChevronRight className={`w-5 h-5 ${theme.icon} shrink-0`} />
+        <ChevronRight className={`w-5 h-5 ${theme.icon} shrink-0`} /> */}
       </motion.button>
+      <div className="flex-1 min-w-0">
+          <p className={`font-display font-bold ${theme.text} text-sm text-zinc-900 text-center`}>{cat.name}</p>
+          <p className={`${theme.textMuted} text-[10px] text-zinc-900/50 text-center`}>{cat.questionCount} questions</p>
+      </div>
+      </div>
     );
   };
 
   return (
-    <div className="min-h-screen bg-[#121212]">
+    <div className="min-h-screen bg-[#fcf7f7]">
       <div className="quizup-header-gray px-4 py-3 flex items-center justify-between">
         <div className="flex items-center gap-2">
           <img
@@ -274,31 +280,31 @@ const HomeLobby: React.FC = () => {
           <p className="text-foreground text-2xl font-display font-extrabold">Find a Match</p>
           <p className="text-foreground/70 text-xs mt-1">Challenge someone in real-time trivia</p>
         </div>
-        <div className="absolute right-4 top-1/2 -translate-y-1/2 opacity-20">
+        <div className="absolute right-4 top-1/2 -translate-y-1/2 opacity-80">
           <span className="text-7xl">⚡</span>
         </div>
       </motion.button>
 
-      <div className="bg-zinc-900/80 border-b border-zinc-800">
+      <div className="bg-zinc-900/80 border-b border-zinc-900/50">
         <div className="flex items-center divide-x divide-zinc-800">
           <div className="flex-1 py-3 text-center">
-            <p className="text-[10px] text-zinc-500 uppercase tracking-wider">Your Level</p>
+            <p className="text-[10px] text-zinc-300 uppercase tracking-wider">Your Level</p>
             <p className="text-xl font-display font-extrabold text-white">{user?.level || 1}</p>
           </div>
           <div className="flex-1 py-3 text-center">
-            <p className="text-[10px] text-zinc-500 uppercase tracking-wider">Wins</p>
+            <p className="text-[10px] text-zinc-300 uppercase tracking-wider">Wins</p>
             <p className="text-xl font-display font-extrabold text-white">{user?.wins || 0}</p>
           </div>
           <div className="flex-1 py-3 text-center">
-            <p className="text-[10px] text-zinc-500 uppercase tracking-wider">Win Streak</p>
+            <p className="text-[10px] text-zinc-300 uppercase tracking-wider">Win Streak</p>
             <p className="text-xl font-display font-extrabold text-white">{user?.winStreak || 0}🔥</p>
           </div>
         </div>
       </div>
 
-      <div className="px-4 pt-4">
+      <div className="px-4 pt-4 bg-gray-300/50 p-3">
         <div className="flex items-center justify-between mb-3">
-          <h2 className="font-display font-bold text-white text-sm uppercase tracking-wider">Recent Matches</h2>
+          <h2 className="font-display font-bold text-zinc-800 text-sm uppercase tracking-wider">Recent Matches</h2>
           <button
             type="button"
             onClick={() => navigate("/history")}
@@ -353,13 +359,13 @@ const HomeLobby: React.FC = () => {
         </div>
       </div>
 
-      <div className="px-4 pb-24">
-        <h2 className="font-display font-bold text-white text-sm uppercase tracking-wider mb-3">Popular Topics</h2>
+      <div className="px-4 pb-24 ">
+        <h2 className="font-display font-bold text-zinc-800 text-sm uppercase tracking-wider mb-3 mt-3">Popular Topics</h2>
         {!topicsLoaded ? (
           <p className="text-zinc-500 text-sm py-4">Loading topics…</p>
         ) : (
           <>
-            <div className="space-y-2">{popularTopics.map((cat, i) => renderTopicRow(cat, i))}</div>
+            <div className="grid grid-cols-3 gap-4">{popularTopics.map((cat, i) => renderTopicRow(cat, i))}</div>
 
             {moreTopics.length > 0 && (
               <div className="mt-4">
@@ -390,13 +396,13 @@ const HomeLobby: React.FC = () => {
                   )}
                 </AnimatePresence>
 
-                <button
+                {/* <button
                   type="button"
                   onClick={() => navigate("/categories")}
                   className="w-full mt-3 py-2 text-xs text-zinc-500 hover:text-zinc-400"
                 >
                   Open full topics list
-                </button>
+                </button> */}
               </div>
             )}
           </>
