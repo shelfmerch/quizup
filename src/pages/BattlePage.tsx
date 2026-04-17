@@ -227,7 +227,7 @@ const BattlePage: React.FC = () => {
   if (state.phase === "match_end") {
     const winner = getWinner();
     return (
-      <div className="min-h-screen bg-black text-white flex flex-col max-w-md mx-auto">
+      <div className="h-[100dvh] overflow-hidden bg-black text-white flex flex-col max-w-md mx-auto">
         <div
           className={`p-8 text-center ${
             winner === "player" ? "text-emerald-400" : winner === "opponent" ? "text-red-400" : "text-zinc-300"
@@ -283,7 +283,7 @@ const BattlePage: React.FC = () => {
   // Intro
   if (state.phase === "intro") {
     return (
-      <div className="min-h-screen bg-black text-white flex flex-col items-center justify-center max-w-md mx-auto px-6">
+      <div className="h-[100dvh] overflow-hidden bg-black text-white flex flex-col items-center justify-center max-w-md mx-auto px-6">
         <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="text-center w-full">
           <div className="flex justify-between items-start gap-4 mb-10">
             <div className="flex-1 flex gap-3 items-start text-left">
@@ -330,7 +330,7 @@ const BattlePage: React.FC = () => {
   const p2 = state.match.player2;
 
   return (
-    <div className="min-h-screen bg-black text-white flex flex-col max-w-md mx-auto font-sans">
+    <div className="h-[100dvh] overflow-hidden bg-black text-white flex flex-col max-w-md mx-auto font-sans">
       {/* 1v1 header — names, taglines, colored scores */}
       <header className="flex px-3 pt-4 pb-3 gap-2 border-b border-zinc-900">
         <div className="flex-1 flex gap-2.5 items-start min-w-0">
@@ -358,7 +358,7 @@ const BattlePage: React.FC = () => {
       />
 
       {/* Side bars + main column */}
-      <div className="flex-1 flex flex-row items-stretch min-h-[min(520px,72vh)] px-1 gap-1 pb-4 pt-0">
+      <div className="flex-1 flex flex-row items-stretch min-h-0 px-1 gap-1 pb-4 pt-0">
         <VerticalTimerBar percent={timerPercent} variant="you" urgent={urgent} />
 
         <div className="flex-1 flex flex-col min-w-0 px-2 overflow-y-auto">

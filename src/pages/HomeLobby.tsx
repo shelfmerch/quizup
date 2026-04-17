@@ -590,7 +590,7 @@ const HomeLobby: React.FC = () => {
         )}
       </div>
 
-      <div className="px-4 pt-4 bg-gray-300/50 p-3">
+      <div className="px-4 bg-gray-300/50 p-3">
         <div className="flex items-center justify-between mb-3">
           <h2 className="font-display font-bold text-zinc-800 text-sm uppercase tracking-wider">Recent Matches</h2>
           <button
