@@ -459,7 +459,7 @@ const HomeLobby: React.FC = () => {
 
       <div className="px-4 pb-24 ">
         {(isAuthenticated || incomingChallenges.length > 0) && (
-          <div className="mt-4 mb-4 rounded-2xl border border-zinc-200 bg-white p-4 shadow-sm">
+          <div className="mt-4 mb-4 rounded-2xl border border-red-500 bg-white p-4 shadow-sm">
             <div className="flex items-center justify-between mb-2">
               <h2 className="font-display font-bold text-zinc-800 text-sm uppercase tracking-wider">Challenges</h2>
               {incomingChallenges.length > 0 && (

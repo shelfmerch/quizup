@@ -2,12 +2,13 @@ import React, { useEffect, useState, useCallback } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { profileService } from "@/services/profileService";
 import { toast } from "@/components/ui/sonner";
-import { MatchFoundPayload, Profile } from "@/types";
+import { Category, MatchFoundPayload, Profile } from "@/types";
 import { MOCK_ACHIEVEMENTS } from "@/data/mock-data";
 import { resolveMediaUrl } from "@/config/env";
 import { Settings, LogOut, Search, ArrowLeft, UserPlus, UserCheck, MessageCircle, Loader2, Camera, Swords } from "lucide-react";
 import { useNavigate, useParams } from "react-router-dom";
 import { getSocket } from "@/services/socketService";
+import { fetchPublicCategories } from "@/services/categoryService";
 
 const ProfilePage: React.FC = () => {
   const { user, logout, refreshUser } = useAuth();
@@ -26,6 +27,10 @@ const ProfilePage: React.FC = () => {
   const [challengeSending, setChallengeSending] = useState(false);
   const [challengeStatus, setChallengeStatus] = useState<string | null>(null);
   const [challengeCategoryId, setChallengeCategoryId] = useState<string>("");
+  const [challengeModalOpen, setChallengeModalOpen] = useState(false);
+  const [allCategories, setAllCategories] = useState<Category[]>([]);
+  const [categoriesLoading, setCategoriesLoading] = useState(false);
+  const [categoriesError, setCategoriesError] = useState<string | null>(null);
 
   const handleAvatarSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -137,6 +142,26 @@ const ProfilePage: React.FC = () => {
     }
   };
 
+  const ensureCategoriesLoaded = useCallback(async () => {
+    if (allCategories.length > 0 || categoriesLoading) return;
+    setCategoriesLoading(true);
+    setCategoriesError(null);
+    try {
+      const list = await fetchPublicCategories();
+      setAllCategories(list);
+    } catch {
+      setCategoriesError("Could not load topics");
+    } finally {
+      setCategoriesLoading(false);
+    }
+  }, [allCategories.length, categoriesLoading]);
+
+  const openChallengeModal = async () => {
+    setChallengeStatus(null);
+    setChallengeModalOpen(true);
+    void ensureCategoriesLoaded();
+  };
+
   const handleChallenge = async () => {
     if (!p || isOwnProfile) return;
     if (!user?.id) {
@@ -144,13 +169,22 @@ const ProfilePage: React.FC = () => {
       return;
     }
 
+    // Open topic selection modal; actual send happens when a topic is chosen.
+    openChallengeModal();
+  };
+
+  const sendChallengeForCategory = async (categoryIdRaw: string) => {
+    if (!p || !user?.id) return;
+
+    const categoryId = (categoryIdRaw || p.favoriteCategory || "science").toString().trim() || "science";
     setChallengeStatus(null);
     setChallengeSending(true);
     try {
-      const categoryId = (challengeCategoryId || p.favoriteCategory || "science").toString().trim() || "science";
       getSocket().emit("challenge:send", { toUserId: p.id, categoryId });
       setChallengeStatus("Challenge sent");
       toast.success("Challenge sent");
+      setChallengeModalOpen(false);
+      setChallengeCategoryId(categoryId);
     } catch (err) {
       setChallengeStatus(err instanceof Error ? err.message : "Could not send challenge");
     } finally {
@@ -339,30 +373,10 @@ const ProfilePage: React.FC = () => {
         )}
       </div>
 
-      {/* Challenge topic selector + status */}
-      {!isOwnProfile && (
-        <div className="px-4 pb-2 flex flex-col gap-1.5">
-          <div className="flex items-center gap-2">
-            <label className="text-[11px] text-muted-foreground uppercase tracking-wider">
-              Challenge topic
-            </label>
-            <select
-              value={challengeCategoryId || p.favoriteCategory || "science"}
-              onChange={(e) => setChallengeCategoryId(e.target.value)}
-              className="ml-auto h-8 px-2 rounded-md border border-border bg-quizup-card text-xs text-foreground"
-            >
-              {p.favoriteCategory && (
-                <option value={p.favoriteCategory}>{p.favoriteCategory}</option>
-              )}
-              <option value="science">Science</option>
-              <option value="general-knowledge">General Knowledge</option>
-              <option value="sports">Sports</option>
-              <option value="movies">Movies</option>
-            </select>
-          </div>
-          {challengeStatus && (
-            <p className="text-xs text-muted-foreground">{challengeStatus}</p>
-          )}
+      {/* Challenge status (below actions) */}
+      {!isOwnProfile && challengeStatus && (
+        <div className="px-4 pb-2">
+          <p className="text-xs text-muted-foreground">{challengeStatus}</p>
         </div>
       )}
 
@@ -400,6 +414,66 @@ const ProfilePage: React.FC = () => {
       )}
 
       {/* Chat is a dedicated page now: /chat/:peerId */}
+      {!isOwnProfile && challengeModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/60 sm:items-center">
+          <div className="w-full max-w-md bg-quizup-card rounded-t-3xl sm:rounded-3xl overflow-hidden border border-border shadow-xl">
+            <div className="px-4 py-3 border-b border-border flex items-center justify-between">
+              <div>
+                <p className="text-xs text-muted-foreground uppercase tracking-wider">Challenge</p>
+                <p className="text-sm font-semibold text-foreground truncate">
+                  {p.displayName || p.username}
+                </p>
+              </div>
+              <button
+                type="button"
+                className="text-xs text-muted-foreground"
+                onClick={() => setChallengeModalOpen(false)}
+              >
+                Close
+              </button>
+            </div>
+
+            <div className="max-h-[60vh] overflow-y-auto px-4 py-3 space-y-2">
+              {categoriesLoading && (
+                <div className="flex items-center justify-center py-6">
+                  <Loader2 className="w-5 h-5 text-muted-foreground animate-spin" />
+                </div>
+              )}
+
+              {categoriesError && !categoriesLoading && (
+                <p className="text-xs text-quizup-red py-2">{categoriesError}</p>
+              )}
+
+              {!categoriesLoading && !categoriesError && allCategories.length === 0 && (
+                <p className="text-xs text-muted-foreground py-2">
+                  No topics available right now.
+                </p>
+              )}
+
+              {!categoriesLoading &&
+                allCategories.map((cat) => (
+                  <button
+                    key={cat.id}
+                    type="button"
+                    disabled={challengeSending}
+                    onClick={() => sendChallengeForCategory(cat.id)}
+                    className="w-full flex items-center gap-3 px-3 py-2 rounded-2xl bg-quizup-surface border border-border text-left hover:bg-quizup-card transition-colors disabled:opacity-60"
+                  >
+                    <div className="w-9 h-9 rounded-xl bg-quizup-card flex items-center justify-center text-lg">
+                      <span>{cat.icon}</span>
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className="text-sm font-semibold text-foreground truncate">{cat.name}</p>
+                      <p className="text-[10px] text-muted-foreground">
+                        {cat.questionCount} questions
+                      </p>
+                    </div>
+                  </button>
+                ))}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
