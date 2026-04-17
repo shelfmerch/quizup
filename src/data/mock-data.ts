@@ -15,7 +15,7 @@ export const MOCK_CATEGORIES: Category[] = [
   { id: "art", name: "Art & Design", icon: "🎨", color: "320 70% 55%", questionCount: 200, description: "Painting, sculpture, design" },
   { id: "k-pop", name: "K-Pop", icon: "🎤", color: "330 80% 58%", questionCount: 120, description: "Korean pop, groups, and idols" },
   { id: "squid-game", name: "Squid Game", icon: "🦑", color: "142 65% 42%", questionCount: 55, description: "The Netflix series — trivia and lore" },
-  { id: "pak-dramas", name: "Pak Dramas", icon: "🎬", color: "24 90% 55%", questionCount: 49, description: "Pakistani dramas — iconic stories & characters" },
+  { id: "pak-dramas", name: "Pak Dramas", icon: "🎬", color: "24 90% 55%", questionCount: 71, description: "Pakistani dramas — iconic stories & characters" },
   { id: "english", name: "English", icon: "📘", color: "210 85% 55%", questionCount: 49, description: "Vocabulary, meanings, and usage" },
   { id: "urdu", name: "Urdu", icon: "📗", color: "152 69% 42%", questionCount: 49, description: "Urdu vocabulary — meanings and usage" },
   { id: "logos", name: "Logos", icon: "🧠", color: "4 78% 55%", questionCount: 22, description: "Logo quiz — identify brands from their logos" },

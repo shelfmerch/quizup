@@ -467,6 +467,7 @@ const HomeLobby: React.FC = () => {
                   {incomingChallenges.length} incoming
                 </p>
               )}
+              <button onClick={()=>navigate('/leaderboard')} className="text-white bg-green-400 rounded-2xl p-2">SEND</button>
             </div>
 
             {!isAuthenticated ? (
