@@ -366,9 +366,9 @@ const HomeLobby: React.FC = () => {
           <Icons8Icon
             name={slug}
             fallback={fallback}
-            size={48}
+            size={80}
             style="animated-fluency"
-            className="relative z-10 w-12 h-12 object-contain drop-shadow-sm"
+            className="relative z-10 w-20 h-20 object-contain drop-shadow-sm"
             alt={cat.name}
           />
         </motion.button>
@@ -592,7 +592,7 @@ const HomeLobby: React.FC = () => {
                 <p className="text-zinc-500 text-sm">Follow some players to see them here.</p>
               ) : (
                 <div className="flex flex-row gap-4 overflow-x-auto pb-1">
-                  {entries.slice(0,6).map((u) => (
+                  {entries.slice(0,5).map((u) => (
                     <button
                       key={u.id}
                       type="button"
