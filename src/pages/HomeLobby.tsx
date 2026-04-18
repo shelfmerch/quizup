@@ -12,10 +12,14 @@ import {
 import { Category } from "@/types";
 import { fetchChatUnreadSummary, type ChatUnreadItem } from "@/services/chatApi";
 import { subscribeChatInbox } from "@/services/chatService";
+import { leaderboardService } from "@/services/leaderboardService";
+import { LeaderboardEntry } from "@/types";
 import { resolveMediaUrl } from "@/config/env";
-import { Search, Settings, ChevronRight, ChevronDown, Bell } from "lucide-react";
+import { Search, ChevronRight, ChevronDown, Bell } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { getSocket } from "@/services/socketService";
+import Icons8Icon, { getCategoryIconSlug } from "@/components/Icons8Icon";
+
 
 const CATEGORY_THEMES = [
   { bg: "quizup-header-red", text: "text-foreground", textMuted: "text-foreground/60", icon: "text-foreground/40" },
@@ -70,6 +74,32 @@ const HomeLobby: React.FC = () => {
 
   const [incomingChallenges, setIncomingChallenges] = useState<ChallengeWire[]>([]);
   const [challengeError, setChallengeError] = useState<string | null>(null);
+
+  const [followingUsers, setFollowingUsers] = useState<{ id: string; username: string; displayName: string; avatarUrl: string; level: number; country: string }[]>([]);
+  const [followingLoading, setFollowingLoading] = useState(false);
+  const [entries, setEntries] = useState<LeaderboardEntry[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    leaderboardService.getGlobalLeaderboard().then((data) => {
+      setEntries(data);
+      setLoading(false);
+    });
+  }, []);
+
+  useEffect(() => {
+    if (!isAuthenticated) { setFollowingUsers([]); return; }
+    let cancelled = false;
+    setFollowingLoading(true);
+    profileService.getFollowingUsers().then((list) => {
+      if (!cancelled) setFollowingUsers(list);
+    }).catch(() => {
+      if (!cancelled) setFollowingUsers([]);
+    }).finally(() => {
+      if (!cancelled) setFollowingLoading(false);
+    });
+    return () => { cancelled = true; };
+  }, [isAuthenticated]);
 
   const loadChatUnread = useCallback(async () => {
     try {
@@ -319,26 +349,33 @@ const HomeLobby: React.FC = () => {
 
   const renderTopicRow = (cat: Category, colorIndex: number) => {
     const theme = CATEGORY_THEMES[colorIndex % CATEGORY_THEMES.length];
+    const { slug, fallback } = getCategoryIconSlug(cat.name);
     return (
-      <div className="mx-4">
-      <motion.button
-        key={cat.id}
-        type="button"
-        whileTap={{ scale: 0.98 }}
-        onClick={() => navigate(`/category/${cat.id}`)}
-        className={`${theme.bg} rounded-lg aspect-square w-full flex items-center justify-center p-2`}
-      >
-        <span className="text-6xl leading-none">{cat.icon}</span>
-        {/* <div className="flex-1 min-w-0">
-          <p className={`font-display font-bold ${theme.text} text-sm`}>{cat.name}</p>
-          <p className={`${theme.textMuted} text-[10px]`}>{cat.questionCount} questions</p>
+      <div className="mx-1">
+        <motion.button
+          key={cat.id}
+          type="button"
+          whileHover={{ scale: 1.05 }}
+          whileTap={{ scale: 0.95 }}
+          onClick={() => navigate(`/category/${cat.id}`)}
+          className={`${theme.bg} rounded-2xl aspect-square w-full flex items-center justify-center p-2 shadow-md relative overflow-hidden`}
+          style={{ boxShadow: "0 4px 16px rgba(0,0,0,0.12)" }}
+        >
+          {/* subtle shimmer layer */}
+          <div className="absolute inset-0 bg-white/10 rounded-2xl" />
+          <Icons8Icon
+            name={slug}
+            fallback={fallback}
+            size={48}
+            style="animated-fluency"
+            className="relative z-10 w-12 h-12 object-contain drop-shadow-sm"
+            alt={cat.name}
+          />
+        </motion.button>
+        <div className="flex-1 min-w-0 mt-1">
+          <p className={`font-display text-xs font-semibold text-zinc-900 text-center leading-tight`}>{cat.name}</p>
+          <p className={`text-[9px] text-zinc-500 text-center`}>{cat.questionCount} Qs</p>
         </div>
-        <ChevronRight className={`w-5 h-5 ${theme.icon} shrink-0`} /> */}
-      </motion.button>
-      <div className="flex-1 min-w-0">
-          <p className={`font-display ${theme.text} text-sm text-zinc-900 text-center`}>{cat.name}</p>
-          <p className={`${theme.textMuted} text-[10px] text-zinc-900/50 text-center`}>{cat.questionCount} questions</p>
-      </div>
       </div>
     );
   };
@@ -353,7 +390,7 @@ const HomeLobby: React.FC = () => {
               `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(user?.username || "user")}`
             )}
             alt="avatar"
-            onClick={()=>navigate('/profile')}
+            onClick={() => navigate('/profile')}
             className="w-10 h-10 rounded-full border-2 border-foreground/30 object-cover"
           />
           <span className="font-display font-bold text-foreground text-sm">{user?.username || "Player"}</span>
@@ -425,17 +462,31 @@ const HomeLobby: React.FC = () => {
 
       <motion.button
         type="button"
-        whileTap={{ scale: 0.98 }}
+        whileTap={{ scale: 0.97 }}
+        whileHover={{ scale: 1.01 }}
         onClick={() => navigate("/categories")}
         className="w-full quizup-header-red p-6 text-left relative overflow-hidden"
       >
+        {/* animated bg pulse */}
+        <motion.div
+          className="absolute inset-0 bg-white/5"
+          animate={{ opacity: [0, 0.15, 0] }}
+          transition={{ repeat: Infinity, duration: 2.5, ease: "easeInOut" }}
+        />
         <div className="relative z-10">
           <p className="text-foreground/60 text-xs font-semibold uppercase tracking-wider mb-1">Ready to play?</p>
           <p className="text-foreground text-2xl font-display font-extrabold">Find a Match</p>
           <p className="text-foreground/70 text-xs mt-1">Challenge someone in real-time trivia</p>
         </div>
-        <div className="absolute right-4 top-1/2 -translate-y-1/2 opacity-80">
-          <span className="text-7xl">⚡</span>
+        <div className="absolute right-4 top-1/2 -translate-y-1/2">
+          <Icons8Icon
+            name="lightning-bolt"
+            fallback="⚡"
+            size={96}
+            style="animated-fluency"
+            className="w-20 h-20 opacity-90 drop-shadow-lg"
+            alt=""
+          />
         </div>
       </motion.button>
 
@@ -463,11 +514,13 @@ const HomeLobby: React.FC = () => {
             <div className="flex items-center justify-between mb-2">
               <h2 className="font-display font-bold text-zinc-800 text-sm uppercase tracking-wider">Challenges</h2>
               {incomingChallenges.length > 0 && (
-                <p className="text-[10px] text-zinc-500 uppercase tracking-wider">
-                  {incomingChallenges.length} incoming
-                </p>
+                <div className="flex items-center gap-2">
+                  <p className="text-[10px] text-zinc-500 uppercase tracking-wider">
+                    {incomingChallenges.length} incoming
+                  </p>
+                  <button onClick={() => navigate('/leaderboard')} className="text-white bg-green-400 rounded-2xl p-2">SEND</button>
+                </div>
               )}
-              <button onClick={()=>navigate('/leaderboard')} className="text-white bg-green-400 rounded-2xl p-2">SEND</button>
             </div>
 
             {!isAuthenticated ? (
@@ -498,7 +551,7 @@ const HomeLobby: React.FC = () => {
                             onClick={() => {
                               try {
                                 getSocket().emit("challenge:respond", { challengeId: ch.id, action: "reject" });
-                              } catch {}
+                              } catch { }
                             }}
                             className="px-3 py-1.5 rounded-lg text-xs font-semibold border border-zinc-300 text-zinc-700 hover:bg-white"
                           >
@@ -509,7 +562,7 @@ const HomeLobby: React.FC = () => {
                             onClick={() => {
                               try {
                                 getSocket().emit("challenge:respond", { challengeId: ch.id, action: "accept" });
-                              } catch {}
+                              } catch { }
                             }}
                             className="px-3 py-1.5 rounded-lg text-xs font-semibold quizup-header-green text-foreground"
                           >
@@ -525,12 +578,57 @@ const HomeLobby: React.FC = () => {
           </div>
         )}
 
+        <hr className="border-zinc-200 my-4" />
+
+         <div className="mt-6">
+              <h3 className="font-display font-bold text-zinc-800 text-xs uppercase tracking-wider mb-3">
+                People
+              </h3>
+              {!isAuthenticated ? (
+                <p className="text-zinc-500 text-sm">Sign in to see people you follow.</p>
+              ) : followingLoading ? (
+                <p className="text-zinc-500 text-sm">Loading people…</p>
+              ) : followingUsers.length === 0 ? (
+                <p className="text-zinc-500 text-sm">Follow some players to see them here.</p>
+              ) : (
+                <div className="flex flex-row gap-4 overflow-x-auto pb-1">
+                  {entries.slice(0,6).map((u) => (
+                    <button
+                      key={u.id}
+                      type="button"
+                      onClick={() => navigate(`/profile/${u.id}`)}
+                      className="flex flex-col items-center gap-1.5 shrink-0"
+                    >
+                      <div
+                        className="w-14 h-14 rounded-full border-2 overflow-hidden"
+                        style={{ borderColor: "hsl(270 60% 50%)" }}
+                      >
+                        <img
+                          src={resolveMediaUrl(
+                            u.avatarUrl,
+                            `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(u.username)}`
+                          )}
+                          alt={u.username}
+                          className="w-full h-full object-cover"
+                        />
+                      </div>
+                      <span className="text-[10px] font-semibold text-zinc-700 truncate max-w-[56px] text-center">{u.displayName || u.username}</span>
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+
+        <hr className="border-zinc-200 my-4" /> 
+
         <h2 className="font-display font-bold text-zinc-800 text-sm uppercase tracking-wider mb-3 mt-3">Popular Topics</h2>
         {!topicsLoaded ? (
           <p className="text-zinc-500 text-sm py-4">Loading topics…</p>
         ) : (
           <>
             <div className="grid grid-cols-3 gap-4">{popularTopics.map((cat, i) => renderTopicRow(cat, i))}</div>
+
+          <hr className="border-zinc-200 my-4" /> 
 
             <div className="mt-6">
               <h3 className="font-display font-bold text-zinc-800 text-xs uppercase tracking-wider mb-3">
@@ -548,108 +646,72 @@ const HomeLobby: React.FC = () => {
                 </div>
               )}
             </div>
+ 
+            <hr className="border-zinc-200 my-4" /> 
 
-            {moreTopics.length > 0 && (
-              <div className="mt-4">
-                <button
-                  type="button"
-                  // onClick={() => setExploreOpen((o) => !o)}
-                  onClick={() => navigate("/categories")}
-                  className="flex items-center justify-center gap-1 w-full py-3 text-sm font-semibold text-quizup-green"
-                >
-                  Explore more topics
-                  {exploreOpen ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
-                </button>
-
-                <AnimatePresence initial={false}>
-                  {exploreOpen && (
-                    <motion.div
-                      initial={{ height: 0, opacity: 0 }}
-                      animate={{ height: "auto", opacity: 1 }}
-                      exit={{ height: 0, opacity: 0 }}
-                      transition={{ duration: 0.2 }}
-                      className="overflow-hidden"
-                    >
-                      <div className="space-y-2 pt-2 border-t border-zinc-800 mt-2">
-                        <p className="text-[10px] text-zinc-500 uppercase tracking-wider mb-2">All other topics</p>
-                        {moreTopics.map((cat, i) => renderTopicRow(cat, i + popularTopics.length))}
-                      </div>
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-
-                {/* <button
-                  type="button"
-                  onClick={() => navigate("/categories")}
-                  className="w-full mt-3 py-2 text-xs text-zinc-500 hover:text-zinc-400"
-                >
-                  Open full topics list
-                </button> */}
-              </div>
-            )}
-          </>
+           
+            </>
         )}
-      </div>
-
-      <div className="px-4 bg-gray-300/50 p-3">
-        <div className="flex items-center justify-between mb-3">
-          <h2 className="font-display font-bold text-zinc-800 text-sm uppercase tracking-wider">Recent Matches</h2>
-          <button
-            type="button"
-            onClick={() => navigate("/history")}
-            className="text-xs text-quizup-green font-semibold flex items-center gap-0.5"
-          >
-            View All <ChevronRight className="w-3 h-3" />
-          </button>
         </div>
 
-        <div className="space-y-2 mb-6">
-          {historyLoading ? (
-            <>
-              {[0, 1, 2].map((i) => (
-                <div key={i} className="bg-zinc-900 rounded-xl p-3 h-[72px] border border-zinc-800 animate-pulse" />
-              ))}
-            </>
-          ) : historyError ? (
-            <p className="text-zinc-500 text-sm py-2">Couldn&apos;t load recent matches.</p>
-          ) : recentMatches.length === 0 ? (
-            <p className="text-zinc-500 text-sm py-2">No completed matches yet. Play a battle to see history here.</p>
-          ) : (
-            recentMatches.map((match) => (
-              <div key={match.matchId} className="bg-zinc-900 rounded-xl p-3 flex items-center gap-3 border border-zinc-800">
-                <img
-                  src={match.opponentAvatar || "https://api.dicebear.com/7.x/avataaars/svg?seed=opponent"}
-                  alt=""
-                  className="w-10 h-10 rounded-full bg-zinc-800"
-                />
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-semibold text-white truncate">{match.opponentName}</p>
-                  <p className="text-[10px] text-zinc-500">{match.categoryName}</p>
-                </div>
-                <div className="text-right shrink-0">
-                  <p className="text-sm font-display font-bold text-white">
-                    {match.playerScore} - {match.opponentScore}
-                  </p>
-                  <p
-                    className={`text-[10px] font-bold uppercase ${
-                      match.result === "win"
+        {/* <div className="bg-gray-300/50 p-3">
+          <div className="flex items-center justify-between mb-3">
+            <h2 className="font-display font-bold text-zinc-800 text-sm uppercase tracking-wider">Recent Matches</h2>
+            <button
+              type="button"
+              onClick={() => navigate("/history")}
+              className="text-xs text-quizup-green font-semibold flex items-center gap-0.5"
+            >
+              View All <ChevronRight className="w-3 h-3" />
+            </button>
+          </div>
+
+          <div className="space-y-2 mb-6">
+            {historyLoading ? (
+              <>
+                {[0, 1, 2].map((i) => (
+                  <div key={i} className="bg-zinc-900 rounded-xl p-3 h-[72px] border border-zinc-800 animate-pulse" />
+                ))}
+              </>
+            ) : historyError ? (
+              <p className="text-zinc-500 text-sm py-2">Couldn&apos;t load recent matches.</p>
+            ) : recentMatches.length === 0 ? (
+              <p className="text-zinc-500 text-sm py-2">No completed matches yet. Play a battle to see history here.</p>
+            ) : (
+              recentMatches.map((match) => (
+                <div key={match.matchId} className="bg-zinc-900 rounded-xl p-3 flex items-center gap-3 border border-zinc-800">
+                  <img
+                    src={match.opponentAvatar || "https://api.dicebear.com/7.x/avataaars/svg?seed=opponent"}
+                    alt=""
+                    className="w-10 h-10 rounded-full bg-zinc-800"
+                  />
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-semibold text-white truncate">{match.opponentName}</p>
+                    <p className="text-[10px] text-zinc-500">{match.categoryName}</p>
+                  </div>
+                  <div className="text-right shrink-0">
+                    <p className="text-sm font-display font-bold text-white">
+                      {match.playerScore} - {match.opponentScore}
+                    </p>
+                    <p
+                      className={`text-[10px] font-bold uppercase ${match.result === "win"
                         ? "text-quizup-green"
                         : match.result === "loss"
                           ? "text-quizup-red"
                           : "text-quizup-gold"
-                    }`}
-                  >
-                    {match.result}
-                  </p>
+                        }`}
+                    >
+                      {match.result}
+                    </p>
+                  </div>
                 </div>
-              </div>
-            ))
-          )}
-        </div>
-      </div>
+              ))
+            )}
+          </div>
+        </div> */}
 
-    </div>
-  );
+      </div>
+      );
 };
 
-export default HomeLobby;
+      export default HomeLobby;

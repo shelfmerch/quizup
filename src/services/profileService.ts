@@ -63,6 +63,15 @@ export const profileService = {
     if (!response.ok) throw new Error("Failed to unfollow user");
   },
 
+  async getFollowingUsers(): Promise<{ id: string; username: string; displayName: string; avatarUrl: string; level: number; country: string }[]> {
+    const response = await fetch(`${API_URL}/follow/following`, {
+      headers: getAuthHeaders(),
+    });
+    if (!response.ok) return [];
+    const data = await response.json();
+    return Array.isArray(data.following) ? data.following : [];
+  },
+
   async checkIsFollowing(userId: string): Promise<boolean> {
     const response = await fetch(`${API_URL}/follow/${userId}/status`, {
       headers: getAuthHeaders(),

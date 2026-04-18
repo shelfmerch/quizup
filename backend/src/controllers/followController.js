@@ -47,6 +47,31 @@ const unfollowUser = async (req, res) => {
   }
 };
 
+// GET /api/follow/following  — list of users I follow
+const getFollowingList = async (req, res) => {
+  try {
+    const me = await User.findById(req.user._id)
+      .select("following")
+      .populate("following", "_id username displayName avatarUrl level country")
+      .lean();
+    if (!me) return res.status(404).json({ error: "User not found" });
+
+    const following = (me.following || []).map((u) => ({
+      id: u._id.toString(),
+      username: u.username,
+      displayName: u.displayName || u.username,
+      avatarUrl: u.avatarUrl || `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(u.username)}`,
+      level: u.level || 1,
+      country: u.country || "",
+    }));
+
+    return res.json({ following });
+  } catch (err) {
+    console.error("[Follow] getFollowingList error:", err);
+    return res.status(500).json({ error: "Server error" });
+  }
+};
+
 // GET /api/follow/:userId/status
 const followStatus = async (req, res) => {
   try {
@@ -66,4 +91,4 @@ const followStatus = async (req, res) => {
   }
 };
 
-module.exports = { followUser, unfollowUser, followStatus };
+module.exports = { followUser, unfollowUser, followStatus, getFollowingList };
