@@ -59,6 +59,14 @@ const userSchema = new mongoose.Schema(
     // Followed quiz topics (Category.slug values)
     followedCategories: [{ type: String, default: [] }],
 
+    // Achievements system
+    unlockedAchievements: [
+      {
+        id: { type: String, required: true },
+        unlockedAt: { type: Date, default: Date.now },
+      },
+    ],
+
     role: {
       type: String,
       enum: ["user", "admin"],
@@ -132,7 +140,11 @@ userSchema.methods.toProfile = function () {
     favoriteCategory: this.favoriteCategory,
     lastActive: this.lastActive,
     createdAt: this.createdAt,
-    achievements: [], // populated separately when needed
+    achievements: this.unlockedAchievements ? this.unlockedAchievements.map((a) => ({
+      id: a.id,
+      unlockedAt: a.unlockedAt.toISOString(),
+      isUnlocked: true
+    })) : [],
   };
 };
 

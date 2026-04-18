@@ -7,6 +7,7 @@ const {
 const Match = require("../models/Match");
 const User = require("../models/User");
 const mongoose = require("mongoose");
+const { evaluatePostMatchAchievements } = require("./achievementService");
 
 // Active timers: matchId → NodeJS timeout reference
 const questionTimers = new Map();
@@ -220,6 +221,10 @@ const finalizeMatch = async (matchId, io, endReason = "completed") => {
   // Update user stats for both players
   await updateUserStats(state.player1.userId, result1, state.player1.score, state.categoryId);
   await updateUserStats(state.player2.userId, result2, state.player2.score, state.categoryId);
+
+  // Evaluate achievements
+  await evaluatePostMatchAchievements(state.player1.userId, state.player2.userId, state, result1, state.player1.score, state.categoryId, io);
+  await evaluatePostMatchAchievements(state.player2.userId, state.player1.userId, state, result2, state.player2.score, state.categoryId, io);
 
   // Emit match_end to the room
   io.to(matchId).emit("match_end", {

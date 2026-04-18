@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useBattle } from "@/hooks/useBattle";
 import { useOnlineBattle, type OnlineBattleInit } from "@/hooks/useOnlineBattle";
@@ -6,6 +6,9 @@ import { Match, MatchPlayer } from "@/types";
 import { motion, AnimatePresence } from "framer-motion";
 import { resolveQuestionImageUrl } from "@/lib/mediaUrl";
 import { playCountdownSfx, playDefeatSfx, playVictorySfx, startMatchMusic, stopCountdownSfx, stopMatchMusic, stopVictorySfx, stopDefeatSfx } from "@/lib/battleAudio";
+import { getSocket } from "@/services/socketService";
+import { MOCK_ACHIEVEMENTS } from "@/data/mock-data";
+import Icons8Icon from "@/components/Icons8Icon";
 
 function parseBattleNav(state: unknown): { online: OnlineBattleInit | null; localMatch: Match | null } {
   if (
@@ -147,6 +150,32 @@ const BattlePage: React.FC = () => {
   const countdownTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const matchMusicStartedRef = useRef(false);
 
+  const [unlockedAchievements, setUnlockedAchievements] = useState<{ id: string; name: string; icon: string }[]>([]);
+
+  useEffect(() => {
+    if (!isOnline) return;
+    try {
+      const socket = getSocket();
+      const onNotif = (notif: any) => {
+        if (notif.type === "achievement") {
+          const mockMatch = MOCK_ACHIEVEMENTS.find(a => a.id === notif.achievementId);
+          if (mockMatch) {
+            setUnlockedAchievements(prev => {
+              if (prev.some(a => a.id === notif.achievementId)) return prev;
+              return [...prev, { id: mockMatch.id, name: mockMatch.name, icon: mockMatch.icon }];
+            });
+          }
+        }
+      };
+      socket.on("notification", onNotif);
+      return () => {
+        socket.off("notification", onNotif);
+      };
+    } catch {
+      // ignore
+    }
+  }, [isOnline]);
+
   useEffect(() => {
     if (isOnline) return;
     if (!localMatch) {
@@ -223,36 +252,58 @@ const BattlePage: React.FC = () => {
 
   const showManualNext = !isOnline;
 
-  // Match end
   if (state.phase === "match_end") {
     const winner = getWinner();
     return (
-      <div className="h-[100dvh] overflow-hidden bg-black text-white flex flex-col max-w-md mx-auto">
-        <div
-          className={`p-8 text-center ${
-            winner === "player" ? "text-emerald-400" : winner === "opponent" ? "text-red-400" : "text-zinc-300"
-          }`}
-        >
-          <p className="text-5xl mb-2">{winner === "player" ? "🏆" : winner === "opponent" ? "😔" : "🤝"}</p>
-          <h1 className="text-2xl font-bold tracking-tight">
+      <div className="h-[100dvh] overflow-hidden bg-quizup-dark text-white flex flex-col max-w-md mx-auto">
+        <div className="pt-8 pb-4 flex flex-col items-center flex-shrink-0 relative overflow-hidden">
+          <div className="absolute inset-0 bg-gradient-to-b from-quizup-gold/10 to-transparent pointer-events-none" />
+          <Icons8Icon
+            name={winner === "player" ? "trophy" : winner === "opponent" ? "crying" : "handshake"}
+            size={96}
+            style="animated-fluency"
+          />
+          <h1
+            className={`text-3xl font-display font-extrabold tracking-tight mt-4 ${
+              winner === "player" ? "text-quizup-gold" : winner === "opponent" ? "text-quizup-red" : "text-zinc-300"
+            }`}
+          >
             {winner === "player" ? "Victory!" : winner === "opponent" ? "Defeat" : "Draw!"}
           </h1>
         </div>
 
-        <div className="flex px-4 gap-3 pb-6">
-          <div className="flex-1 rounded-2xl bg-zinc-900 border border-zinc-800 p-4 text-center">
-            <img src={state.match.player1.avatarUrl} alt="" className="w-16 h-16 rounded-full mx-auto mb-2 border border-zinc-700" />
-            <p className="text-sm font-semibold truncate">{state.match.player1.username}</p>
-            <p className="text-3xl font-bold text-emerald-500 mt-2">{state.match.player1.score}</p>
+        <div className="flex px-4 gap-4 pb-6 relative z-10 flex-shrink-0">
+          <div className="flex-1 rounded-2xl bg-quizup-card border-2 border-border p-4 text-center shadow-lg relative overflow-hidden">
+            {winner === "player" && <div className="absolute inset-0 bg-emerald-500/10" />}
+            <img src={state.match.player1.avatarUrl} alt="" className="w-16 h-16 rounded-full mx-auto mb-2 border-2 border-emerald-500/50" />
+            <p className="text-sm font-semibold truncate text-white relative z-10">{state.match.player1.username}</p>
+            <p className="text-3xl font-display font-extrabold text-emerald-400 mt-2 relative z-10">{state.match.player1.score}</p>
           </div>
-          <div className="flex-1 rounded-2xl bg-zinc-900 border border-zinc-800 p-4 text-center">
-            <img src={state.match.player2.avatarUrl} alt="" className="w-16 h-16 rounded-full mx-auto mb-2 border border-zinc-700" />
-            <p className="text-sm font-semibold truncate">{state.match.player2.username}</p>
-            <p className="text-3xl font-bold text-red-500 mt-2">{state.match.player2.score}</p>
+          <div className="flex-1 rounded-2xl bg-quizup-card border-2 border-border p-4 text-center shadow-lg relative overflow-hidden">
+            {winner === "opponent" && <div className="absolute inset-0 bg-red-500/10" />}
+            <img src={state.match.player2.avatarUrl} alt="" className="w-16 h-16 rounded-full mx-auto mb-2 border-2 border-red-500/50" />
+            <p className="text-sm font-semibold truncate text-white relative z-10">{state.match.player2.username}</p>
+            <p className="text-3xl font-display font-extrabold text-red-500 mt-2 relative z-10">{state.match.player2.score}</p>
           </div>
         </div>
 
-        <div className="flex-1 flex flex-col justify-end p-4 gap-3 pb-8">
+        {unlockedAchievements.length > 0 && (
+          <div className="px-4 pb-4 animate-in fade-in slide-in-from-bottom-4 duration-500 flex-shrink-0 relative z-10">
+            <h2 className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest text-center mb-3">
+              Achievements Unlocked
+            </h2>
+            <div className="flex flex-wrap justify-center gap-2">
+              {unlockedAchievements.map(ach => (
+                <div key={ach.id} className="bg-quizup-surface/80 rounded-xl px-4 py-2 border border-quizup-gold/30 flex items-center gap-3 shadow-md">
+                  <span className="text-2xl">{ach.icon}</span>
+                  <span className="font-semibold text-sm text-quizup-gold">{ach.name}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        <div className="flex-1 overflow-y-auto px-4 pb-8 flex flex-col justify-end gap-3 min-h-[160px] relative z-10">
           <button
             type="button"
             onClick={() => {
@@ -260,7 +311,7 @@ const BattlePage: React.FC = () => {
               stopDefeatSfx();
               navigate(`/find-match/${match.categoryId}`);
             }}
-            className="w-full h-14 rounded-xl bg-emerald-600 text-white font-semibold text-base active:scale-[0.98] transition-transform"
+            className="w-full h-14 rounded-xl bg-quizup-header-purple text-white font-semibold text-base active:scale-[0.98] transition-all hover:brightness-110 shadow-lg"
           >
             Rematch
           </button>
@@ -271,7 +322,7 @@ const BattlePage: React.FC = () => {
               stopDefeatSfx();
               navigate("/home");
             }}
-            className="w-full h-14 rounded-xl bg-zinc-800 text-white font-semibold text-base border border-zinc-700"
+            className="w-full h-14 rounded-xl bg-quizup-surface text-white font-semibold text-base border border-border transition-all hover:bg-zinc-800"
           >
             Back to lobby
           </button>

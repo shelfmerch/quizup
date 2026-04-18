@@ -207,6 +207,15 @@ const ProfilePage: React.FC = () => {
     `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(p.username)}`
   );
 
+  const displayAchievements = MOCK_ACHIEVEMENTS.map(mockAch => {
+    const unlocked = p.achievements?.find(a => a.id === mockAch.id);
+    return {
+      ...mockAch,
+      isUnlocked: !!unlocked,
+      unlockedAt: unlocked?.unlockedAt,
+    };
+  });
+
   return (
     <div className="min-h-screen bg-quizup-dark">
       {/* Header */}
@@ -386,12 +395,13 @@ const ProfilePage: React.FC = () => {
           Achievements
         </h3>
         <div className="grid grid-cols-4 gap-2">
-          {MOCK_ACHIEVEMENTS.map((a) => (
+          {displayAchievements.map((a) => (
             <div
               key={a.id}
               className={`bg-quizup-card rounded-lg p-2 text-center border border-border ${
                 !a.isUnlocked ? "opacity-25" : ""
               }`}
+              title={a.description}
             >
               <span className="text-xl">{a.icon}</span>
               <p className="text-[8px] text-muted-foreground mt-1 truncate">{a.name}</p>

@@ -1,5 +1,6 @@
 const mongoose = require("mongoose");
 const User = require("../models/User");
+const { evaluateConnectionAchievements } = require("../services/achievementService");
 
 // POST /api/follow/:userId
 const followUser = async (req, res) => {
@@ -18,6 +19,9 @@ const followUser = async (req, res) => {
 
     await User.findByIdAndUpdate(meId, { $addToSet: { following: targetId } });
     await User.findByIdAndUpdate(targetId, { $addToSet: { followers: meId } });
+
+    // Evaluate social achievements (no io passed here, which is fine)
+    await evaluateConnectionAchievements(meId, null);
 
     const me = await User.findById(meId);
     return res.json({ ok: true, user: me.toProfile() });
