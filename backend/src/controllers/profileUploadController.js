@@ -1,37 +1,38 @@
-const path = require("path");
 const multer = require("multer");
+const multerS3 = require("multer-s3");
+const { s3, BUCKET } = require("../config/s3");
 const User = require("../models/User");
 
-// Must match `app.use("/uploads", express.static(...))` in `app.js` (served from `backend/uploads`, not `backend/src/uploads`).
-const uploadDir = path.join(__dirname, "..", "..", "uploads", "avatars");
-
-const storage = multer.diskStorage({
-  destination: (_req, _file, cb) => cb(null, uploadDir),
-  filename: (_req, file, cb) => {
-    const safeExt = path.extname(file.originalname || "").slice(0, 10) || ".png";
-    cb(null, `avatar_${Date.now()}_${Math.random().toString(16).slice(2)}${safeExt}`);
+// ── multer-s3 storage for profile avatars ────────────────────────────────────
+const storage = multerS3({
+  s3,
+  bucket: BUCKET,
+  contentType: multerS3.AUTO_CONTENT_TYPE,
+  key: (_req, file, cb) => {
+    const ext = file.originalname.split(".").pop().slice(0, 10) || "png";
+    cb(null, `avatars/avatar_${Date.now()}_${Math.random().toString(16).slice(2)}.${ext}`);
   },
 });
 
 const upload = multer({
   storage,
-  limits: { fileSize: 3 * 1024 * 1024 }, // 3MB
+  limits: { fileSize: 3 * 1024 * 1024 }, // 3 MB
+  fileFilter: (_req, file, cb) => {
+    const ok = /^image\/(jpeg|png|gif|webp)$/i.test(file.mimetype);
+    cb(ok ? null : new Error("Only JPEG, PNG, GIF, or WebP images are allowed"), ok);
+  },
 });
 
-// PUT /api/profile/avatar (protected) multipart/form-data field "avatar"
+// PUT /api/profile/avatar  (protected)  multipart/form-data field "avatar"
 const uploadAvatar = [
-  // ensure directory exists (multer doesn't create it)
-  (req, _res, next) => {
-    const fs = require("fs");
-    fs.mkdirSync(uploadDir, { recursive: true });
-    next();
-  },
   upload.single("avatar"),
   async (req, res) => {
     try {
       if (!req.file) return res.status(422).json({ error: "Missing avatar file" });
 
-      const publicUrl = `/uploads/avatars/${req.file.filename}`;
+      // multer-s3 exposes the public URL on req.file.location
+      const publicUrl = req.file.location;
+
       const user = await User.findByIdAndUpdate(
         req.user._id,
         { $set: { avatarUrl: publicUrl } },
@@ -48,4 +49,3 @@ const uploadAvatar = [
 ];
 
 module.exports = { uploadAvatar };
-

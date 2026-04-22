@@ -20,7 +20,7 @@ router.post("/upload-question-image", (req, res) => {
     if (!req.file) {
       return res.status(400).json({ error: "No image file" });
     }
-    return res.json({ url: `/uploads/questions/${req.file.filename}` });
+    return res.json({ url: req.file.location });
   });
 });
 
