@@ -1,67 +1,52 @@
 import React, { useState } from "react";
 
-/**
- * Icons8Icon — displays a colorful / animated icon from Icons8 CDN.
- *
- * Styles available (best for quiz app visuals):
- *   "animated-fluency"  → smooth Lottie-style GIF animations  ✨
- *   "fluency"           → flat colorful static  🎨
- *   "color"             → rich, detailed color PNGs
- *   "nolan"             → outline + color gradient
- *   "doodle"            → hand-drawn playful look
- *
- * Size: Icons8 supports 48, 96 etc.
- * Pass `animated` prop to use "animated-fluency" style.
- */
-
-type Icons8Style =
-  | "animated-fluency"
-  | "fluency"
-  | "color"
-  | "nolan"
-  | "doodle"
-  | "3d-fluency"
-  | "emoji";
-
 interface Icons8IconProps {
-  /** Icons8 icon slug, e.g. "trophy", "brain", "music" */
+  /** Icons8 icon slug, e.g. "home", "lightning-bolt" */
   name: string;
-  /** Pixel size (48 | 96 | 128). Default: 96 */
-  size?: 48 | 64 | 96 | 128;
-  /** Icons8 style. Default: "animated-fluency" */
-  style?: Icons8Style;
-  /** Alt text */
-  alt?: string;
-  /** Extra CSS class names */
+  /** Emoji or text to render if the image fails to load */
+  fallback: string;
+  /** Icon size in pixels (used in the CDN URL) */
+  size?: number;
+  /** Icons8 style, e.g. "animated-fluency", "fluency", "color" */
+  style?: string;
   className?: string;
-  /** Fallback emoji if image fails to load */
-  fallback?: string;
+  alt?: string;
 }
 
+/**
+ * Renders an animated icon from the Icons8 CDN.
+ * Falls back to an emoji span if the image fails to load.
+ *
+ * CDN pattern:
+ *   https://img.icons8.com/{style}/{size}/{slug}.gif  (animated styles)
+ *   https://img.icons8.com/{style}/{size}/{slug}.png  (static styles)
+ */
 const Icons8Icon: React.FC<Icons8IconProps> = ({
   name,
-  size = 96,
+  fallback,
+  size = 48,
   style = "animated-fluency",
-  alt = "",
   className = "",
-  fallback = "🎯",
+  alt = "",
 }) => {
-  const [failed, setFailed] = useState(false);
+  const [errored, setErrored] = useState(false);
 
-  // Animated fluency uses GIF, others use PNG
-  const ext = style === "animated-fluency" ? "gif" : "png";
-  const src = `https://img.icons8.com/${style}/${size}/${name}.${ext}`;
-
-  if (failed) {
+  if (!name || errored) {
     return (
       <span
-        className={`flex items-center justify-center leading-none ${className}`}
-        style={{ fontSize: size * 0.55 }}
+        className={className}
+        role="img"
+        aria-label={alt || fallback}
+        style={{ fontSize: size * 0.6, lineHeight: 1, display: "inline-flex", alignItems: "center", justifyContent: "center" }}
       >
         {fallback}
       </span>
     );
   }
+
+  const isAnimated = style.startsWith("animated");
+  const ext = isAnimated ? "gif" : "png";
+  const src = `https://img.icons8.com/${style}/${size}/${name}.${ext}`;
 
   return (
     <img
@@ -70,7 +55,7 @@ const Icons8Icon: React.FC<Icons8IconProps> = ({
       width={size}
       height={size}
       className={className}
-      onError={() => setFailed(true)}
+      onError={() => setErrored(true)}
       draggable={false}
     />
   );
@@ -78,70 +63,75 @@ const Icons8Icon: React.FC<Icons8IconProps> = ({
 
 export default Icons8Icon;
 
-// ─── Pre-mapped slugs for quiz categories ────────────────────────────────────
+// ─── Category → Icon slug mapping ────────────────────────────────────────────
+// Keys are lowercased category names (exact match first, then substring).
+// Icons8 animated-fluency slugs: https://img.icons8.com/animated-fluency/96/<slug>.gif
+
+/** Exact-name → icon, checked before substring keywords */
+const EXACT_MAP: Record<string, { slug: string; fallback: string }> = {
+  // ── Core quiz categories ──────────────────────────────────────────────────
+  "science":         { slug: "microscope",           fallback: "🔬" },
+  "geography":       { slug: "globe",                fallback: "🌍" },
+  "history":         { slug: "scroll",               fallback: "📜" },
+  "movies":          { slug: "clapperboard",         fallback: "🎬" },
+  "sports":          { slug: "trophy",               fallback: "🏆" },
+  "music":           { slug: "musical-notes",        fallback: "🎵" },
+  "technology":      { slug: "circuit",              fallback: "💻" },
+  "literature":      { slug: "open-book",            fallback: "📚" },
+  "gaming":          { slug: "game-controller",      fallback: "🎮" },
+  "food & drink":    { slug: "spaghetti",            fallback: "🍝" },
+  "nature":          { slug: "oak-tree",             fallback: "🌿" },
+  "art & design":    { slug: "paint-palette",        fallback: "🎨" },
+  // ── Niche / extra categories ─────────────────────────────────────────────
+  "k-pop":           { slug: "star",                 fallback: "⭐" },
+  "squid game":      { slug: "squid",                fallback: "🦑" },
+  "pak dramas":      { slug: "tv",                   fallback: "📺" },
+  "english":         { slug: "literature",           fallback: "📘" },
+  "urdu":            { slug: "quran",                fallback: "📗" },
+  "logos":           { slug: "brand",                fallback: "🏷️" },
+  // ── Common variants ───────────────────────────────────────────────────────
+  "biology":         { slug: "dna",                  fallback: "🧬" },
+  "chemistry":       { slug: "flask",                fallback: "⚗️" },
+  "physics":         { slug: "physics",              fallback: "⚛️" },
+  "astronomy":       { slug: "telescope",            fallback: "🔭" },
+  "space":           { slug: "rocket",               fallback: "🚀" },
+  "animals":         { slug: "paw-print",            fallback: "🐾" },
+  "television":      { slug: "tv",                   fallback: "📺" },
+  "mathematics":     { slug: "calculator",           fallback: "🔢" },
+  "math":            { slug: "calculator",           fallback: "🔢" },
+  "coding":          { slug: "code",                 fallback: "💻" },
+  "football":        { slug: "football",             fallback: "⚽" },
+  "soccer":          { slug: "football",             fallback: "⚽" },
+  "basketball":      { slug: "basketball",           fallback: "🏀" },
+  "tennis":          { slug: "tennis",               fallback: "🎾" },
+  "food":            { slug: "spaghetti",            fallback: "🍝" },
+  "cooking":         { slug: "cooking",              fallback: "👨‍🍳" },
+  "travel":          { slug: "passport",             fallback: "✈️" },
+  "politics":        { slug: "capitol-hill",         fallback: "🏛️" },
+  "art":             { slug: "paint-palette",        fallback: "🎨" },
+  "film":            { slug: "clapperboard",         fallback: "🎬" },
+  "language":        { slug: "translate",            fallback: "💬" },
+  "general":         { slug: "idea",                 fallback: "💡" },
+  "trivia":          { slug: "lightning-bolt",       fallback: "⚡" },
+};
+
 /**
- * Returns the best Icons8 slug for a given category name.
- * Extend this map as you add categories.
+ * Returns an Icons8 slug and emoji fallback for a category name.
+ * 1. Exact match (case-insensitive)
+ * 2. First substring keyword match
+ * 3. Default fallback
  */
-export function getCategoryIconSlug(categoryName: string): {
-  slug: string;
-  fallback: string;
-} {
-  const lower = categoryName.toLowerCase();
+export function getCategoryIconSlug(categoryName: string): { slug: string; fallback: string } {
+  const lower = categoryName.toLowerCase().trim();
 
-  if (lower.includes("k-pop") || lower.includes("kpop"))
-    return { slug: "musical-notes", fallback: "🎤" };
-  if (lower.includes("squid"))
-    return { slug: "octopus", fallback: "🦑" };
-  if (lower.includes("drama") || lower.includes("movie") || lower.includes("film"))
-    return { slug: "film", fallback: "🎬" };
-  if (lower.includes("english") || lower.includes("vocab"))
-    return { slug: "literature", fallback: "📘" };
-  if (lower.includes("urdu"))
-    return { slug: "open-book", fallback: "📗" };
-  if (lower.includes("logo") || lower.includes("brand"))
-    return { slug: "verified-badge", fallback: "🧠" };
-  if (lower.includes("science") || lower.includes("biology") || lower.includes("chemistry"))
-    return { slug: "test-tube", fallback: "🔬" };
-  if (lower.includes("physics"))
-    return { slug: "physics", fallback: "⚛️" };
-  if (lower.includes("math") || lower.includes("maths"))
-    return { slug: "calculator", fallback: "🔢" };
-  if (lower.includes("history"))
-    return { slug: "scroll", fallback: "📜" };
-  if (lower.includes("geography") || lower.includes("geo"))
-    return { slug: "globe", fallback: "🌍" };
-  if (lower.includes("sport") || lower.includes("football") || lower.includes("soccer"))
-    return { slug: "football-2", fallback: "⚽" };
-  if (lower.includes("cricket"))
-    return { slug: "cricket", fallback: "🏏" };
-  if (lower.includes("music"))
-    return { slug: "musical-notes", fallback: "🎵" };
-  if (lower.includes("art"))
-    return { slug: "paint-palette", fallback: "🎨" };
-  if (lower.includes("food") || lower.includes("cooking"))
-    return { slug: "food-bar", fallback: "🍕" };
-  if (lower.includes("tech") || lower.includes("computer") || lower.includes("coding"))
-    return { slug: "source-code", fallback: "💻" };
-  if (lower.includes("animal") || lower.includes("zoo"))
-    return { slug: "paw-print", fallback: "🐾" };
-  if (lower.includes("game") || lower.includes("gaming"))
-    return { slug: "controller", fallback: "🎮" };
-  if (lower.includes("flag"))
-    return { slug: "flag", fallback: "🚩" };
-  if (lower.includes("capital") || lower.includes("city"))
-    return { slug: "city", fallback: "🏙️" };
-  if (lower.includes("celebrity") || lower.includes("famous"))
-    return { slug: "star", fallback: "⭐" };
-  if (lower.includes("pokemon") || lower.includes("anime"))
-    return { slug: "pokemon-go-app", fallback: "⚡" };
-  if (lower.includes("harry potter") || lower.includes("wizard"))
-    return { slug: "wizard", fallback: "🧙" };
-  if (lower.includes("marvel") || lower.includes("superhero"))
-    return { slug: "spider-man-head", fallback: "🦸" };
-  if (lower.includes("religion") || lower.includes("islam") || lower.includes("quran"))
-    return { slug: "quran", fallback: "📿" };
+  // 1. exact
+  if (EXACT_MAP[lower]) return EXACT_MAP[lower];
 
-  // Generic brain/quiz fallback
-  return { slug: "brain", fallback: "🧠" };
+  // 2. substring — iterate in insertion order so longer/more-specific keys win
+  for (const [key, info] of Object.entries(EXACT_MAP)) {
+    if (lower.includes(key)) return info;
+  }
+
+  // 3. default
+  return { slug: "idea", fallback: "💡" };
 }
