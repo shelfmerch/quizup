@@ -18,8 +18,8 @@ const CATEGORIES = [
   { slug: "literature", name: "Literature", icon: "📚", color: "30 70% 50%", description: "Books, authors, poetry", questionCount: 7 },
   { slug: "gaming", name: "Gaming", icon: "🎮", color: "280 80% 55%", description: "Video games, esports, retro", questionCount: 7 },
   { slug: "food", name: "Food & Drink", icon: "🍕", color: "15 85% 55%", description: "Cuisine, recipes, beverages", questionCount: 50 },
-  { slug: "name-the-animal", name: "Name the Animal", icon: "🐾", color: "98 60% 45%", description: "Identify animals and fun facts", questionCount: 42 },
-  { slug: "name-the-celebrity", name: "Name the Celebrity", icon: "⭐", color: "45 90% 55%", description: "Recognize faces from film, music, and pop culture", questionCount: 16 },
+  { slug: "name-the-animal", name: "Name the Animal", icon: "🐾", color: "98 60% 45%", description: "Identify animals and fun facts", questionCount: 30 },
+  { slug: "name-the-celebrity", name: "Name the Celebrity", icon: "⭐", color: "45 90% 55%", description: "Recognize faces from film, music, and pop culture", questionCount: 28 },
   { slug: "nature", name: "Nature", icon: "🌿", color: "140 70% 40%", description: "Animals, plants, ecosystems", questionCount: 7 },
   { slug: "art", name: "Art & Design", icon: "🎨", color: "320 70% 55%", description: "Painting, sculpture, design", questionCount: 7 },
   { slug: "k-pop", name: "K-Pop", icon: "🎤", color: "330 80% 58%", description: "Korean pop, groups, and idols", questionCount: 7 },
@@ -243,19 +243,6 @@ const QUESTIONS = {
     { text: "Which animal is shown in the image?", options: ["Skunk", "Badger", "Raccoon", "Ferret"], correctIndex: 0, timeLimit: 10, imageUrl: "/uploads/name-the-animal-seed/skunk.png" },
     { text: "Which bird is shown in the image?", options: ["Kiwi", "Dodo", "Penguin", "Ostrich"], correctIndex: 0, timeLimit: 10, imageUrl: "/uploads/name-the-animal-seed/kiwi.png" },
     { text: "Which animal is shown in the image?", options: ["Red panda", "Raccoon", "Fox", "Lemur"], correctIndex: 0, timeLimit: 10, imageUrl: "/uploads/name-the-animal-seed/redpanda.png" },
-
-    { text: "Which primate is shown in the image?", options: ["Gorilla", "Baboon", "Orangutan", "Gibbon"], correctIndex: 1, timeLimit: 10, imageUrl: "/uploads/name-the-animal-seed/baboon.png" },
-    { text: "Which animal is shown in the image?", options: ["Sea otter", "Walrus", "Seal", "Manatee"], correctIndex: 2, timeLimit: 10, imageUrl: "/uploads/name-the-animal-seed/seal.png" },
-    { text: "Which bear-related species is shown?", options: ["Polar bear", "Brown bear", "Giant panda", "Sun bear"], correctIndex: 2, timeLimit: 10, imageUrl: "/uploads/name-the-animal-seed/panda.png" },
-    { text: "Which animal is shown in the image?", options: ["Arctic wolf", "Polar bear", "Beluga whale", "Snowy owl"], correctIndex: 1, timeLimit: 10, imageUrl: "/uploads/name-the-animal-seed/polarbear.png" },
-    { text: "Which type of bird is shown?", options: ["Woodpecker", "Nuthatch", "Treecreeper", "Barbet"], correctIndex: 0, timeLimit: 10, imageUrl: "/uploads/name-the-animal-seed/woodpecker.png" },
-    { text: "Which fish is shown in the image?", options: ["Pipefish", "Seahorse", "Needlefish", "Flying fish"], correctIndex: 1, timeLimit: 10, imageUrl: "/uploads/name-the-animal-seed/seahorse.png" },
-    { text: "Which animal is shown in the image?", options: ["Moose", "Elk", "Deer", "Reindeer"], correctIndex: 2, timeLimit: 10, imageUrl: "/uploads/name-the-animal-seed/deer.png" },
-    { text: "Which insect is shown in the image?", options: ["Damselfly", "Dragonfly", "Mayfly", "Grasshopper"], correctIndex: 1, timeLimit: 10, imageUrl: "/uploads/name-the-animal-seed/dragonfly.png" },
-    { text: "Which fish is shown in the image?", options: ["Barracuda", "Piranha", "Pacu", "Tetra"], correctIndex: 1, timeLimit: 10, imageUrl: "/uploads/name-the-animal-seed/piranha.png" },
-    { text: "Which cartilaginous fish is shown?", options: ["Sawshark", "Sawfish", "Stingray", "Skate"], correctIndex: 1, timeLimit: 10, imageUrl: "/uploads/name-the-animal-seed/sawfish.png" },
-    { text: "Which marine animal is shown?", options: ["Comb jelly", "Jellyfish", "Salp", "Sea butterfly"], correctIndex: 1, timeLimit: 10, imageUrl: "/uploads/name-the-animal-seed/jellyfish.png" },
-    { text: "Which big cat is shown in the image?", options: ["Lion", "Leopard", "Tiger", "Jaguar"], correctIndex: 2, timeLimit: 10, imageUrl: "/uploads/name-the-animal-seed/tiger.png" },
   ],
   "name-the-celebrity": [
     { text: "Who is this character?", options: ["Grizzly", "Panda", "Nom Nom", "Ice Bear"], correctIndex: 2, timeLimit: 10, imageUrl: "/uploads/name-the-celebrity-seed/nom-nom.png" },
@@ -274,6 +261,76 @@ const QUESTIONS = {
     { text: "Who is this actor?", options: ["Tom Holland", "Timothée Chalamet", "Zendaya", "Lucas Hedges"], correctIndex: 1, timeLimit: 10, imageUrl: "/uploads/name-the-celebrity-seed/timothee-chalamet.png" },
     { text: "Who is this technology entrepreneur?", options: ["Jeff Bezos", "Elon Musk", "Bill Gates", "Mark Zuckerberg"], correctIndex: 2, timeLimit: 10, imageUrl: "/uploads/name-the-celebrity-seed/bill-gates.png" },
     { text: "Who is this singer?", options: ["Shawn Mendes", "Harry Styles", "Ed Sheeran", "Justin Bieber"], correctIndex: 2, timeLimit: 10, imageUrl: "/uploads/name-the-celebrity-seed/ed-sheeran.png" },
+      {
+        text: "Who is this Indian political leader who became the President of India in 2022?",
+        options: ["Pratibha Patil", "Droupadi Murmu", "Indira Gandhi", "Sonia Gandhi"],
+        correctIndex: 1,
+        timeLimit: 10,
+        imageUrl: "/uploads/name-the-celebrity-seed/draupadi-murmu.png"
+      },
+      {
+        text: "Who are these sisters famous for their chess streams and YouTube content?",
+        options: ["Williams Sisters", "Botez Sisters", "D'Amelio Sisters", "Hadid Sisters"],
+        correctIndex: 1,
+        timeLimit: 10,
+        imageUrl: "/uploads/name-the-celebrity-seed/botez-sisters.png"
+      },
+      {
+        text: "Who is this Indian singer known for songs like 'Tum Hi Ho' and 'Channa Mereya'?",
+        options: ["Arijit Singh", "Atif Aslam", "Sonu Nigam", "Armaan Malik"],
+        correctIndex: 0,
+        timeLimit: 10,
+        imageUrl: "/uploads/name-the-celebrity-seed/arijit-singh.png"
+      },
+      {
+        text: "Who is this Pakistani Islamic scholar and philosopher?",
+        options: ["Mufti Menk", "Dr Israr Ahmed", "Zakir Naik", "Nouman Ali Khan"],
+        correctIndex: 1,
+        timeLimit: 10,
+        imageUrl: "/uploads/name-the-celebrity-seed/dr-israr-ahmed.png"
+      },
+      {
+        text: "Who is this pop star known for hits like '7 Rings' and 'Thank U, Next'?",
+        options: ["Selena Gomez", "Ariana Grande", "Taylor Swift", "Billie Eilish"],
+        correctIndex: 1,
+        timeLimit: 10,
+        imageUrl: "/uploads/name-the-celebrity-seed/ariana-grande.png"
+      },
+      {
+        text: "Who is this Pakistani actor known for dramas like 'Alif' and 'Pyarey Afzal'?",
+        options: ["Fawad Khan", "Imran Abbas", "Hamza Ali Abbasi", "Ali Zafar"],
+        correctIndex: 2,
+        timeLimit: 10,
+        imageUrl: "/uploads/name-the-celebrity-seed/hamza-ali-abbasi.png"
+      },
+      {
+        text: "Who is this British singer known for songs like 'Levitating' and 'Don't Start Now'?",
+        options: ["Adele", "Dua Lipa", "Rita Ora", "Ellie Goulding"],
+        correctIndex: 1,
+        timeLimit: 10,
+        imageUrl: "/uploads/name-the-celebrity-seed/dua-lipa.png"
+      },
+      {
+        text: "Who is this actor who played Joey Tribbiani in the sitcom Friends?",
+        options: ["Matthew Perry", "David Schwimmer", "Matt LeBlanc", "Courteney Cox"],
+        correctIndex: 2,
+        timeLimit: 10,
+        imageUrl: "/uploads/name-the-celebrity-seed/joey-tribbiani.png"
+      },
+      {
+        text: "Who is this Indian actress known for her role in 'Dangal' and 'Ludo'?",
+        options: ["Sanya Malhotra", "Fatima Sana Shaikh", "Radhika Apte", "Konkona Sen Sharma"],
+        correctIndex: 1,
+        timeLimit: 10,
+        imageUrl: "/uploads/name-the-celebrity-seed/fatima-sana-shaikh.png"
+      },
+      {
+        text: "Who is this anime character who uses a Death Note to eliminate criminals?",
+        options: ["L Lawliet", "Light Yagami", "Eren Yeager", "Levi Ackerman"],
+        correctIndex: 1,
+        timeLimit: 10,
+        imageUrl: "/uploads/name-the-celebrity-seed/light-yagami.png"
+      }
   ],
   nature: [
     { text: "What is the fastest land animal?", options: ["Lion", "Leopard", "Cheetah", "Greyhound"], correctIndex: 2 },
