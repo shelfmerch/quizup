@@ -266,70 +266,70 @@ const QUESTIONS = {
         options: ["Pratibha Patil", "Droupadi Murmu", "Indira Gandhi", "Sonia Gandhi"],
         correctIndex: 1,
         timeLimit: 10,
-        imageUrl: "/uploads/name-the-celebrity-seed/draupadi-murmu.png"
+        imageUrl: "/uploads/avatars/draupadi_murmu.jpg"
       },
       {
         text: "Who are these sisters famous for their chess streams and YouTube content?",
         options: ["Williams Sisters", "Botez Sisters", "D'Amelio Sisters", "Hadid Sisters"],
         correctIndex: 1,
         timeLimit: 10,
-        imageUrl: "/uploads/name-the-celebrity-seed/botez-sisters.png"
+        imageUrl: "/uploads/avatars/botez_sisters.jpg"
       },
       {
         text: "Who is this Indian singer known for songs like 'Tum Hi Ho' and 'Channa Mereya'?",
         options: ["Arijit Singh", "Atif Aslam", "Sonu Nigam", "Armaan Malik"],
         correctIndex: 0,
         timeLimit: 10,
-        imageUrl: "/uploads/name-the-celebrity-seed/arijit-singh.png"
+        imageUrl: "/uploads/avatars/arajit_singh.jpg"
       },
       {
         text: "Who is this Pakistani Islamic scholar and philosopher?",
         options: ["Mufti Menk", "Dr Israr Ahmed", "Zakir Naik", "Nouman Ali Khan"],
         correctIndex: 1,
         timeLimit: 10,
-        imageUrl: "/uploads/name-the-celebrity-seed/dr-israr-ahmed.png"
+        imageUrl: "/uploads/avatars/dr_israar.jpg"
       },
       {
         text: "Who is this pop star known for hits like '7 Rings' and 'Thank U, Next'?",
         options: ["Selena Gomez", "Ariana Grande", "Taylor Swift", "Billie Eilish"],
         correctIndex: 1,
         timeLimit: 10,
-        imageUrl: "/uploads/name-the-celebrity-seed/ariana-grande.png"
+        imageUrl: "/uploads/avatars/ariana_grande.jpg"
       },
       {
         text: "Who is this Pakistani actor known for dramas like 'Alif' and 'Pyarey Afzal'?",
         options: ["Fawad Khan", "Imran Abbas", "Hamza Ali Abbasi", "Ali Zafar"],
         correctIndex: 2,
         timeLimit: 10,
-        imageUrl: "/uploads/name-the-celebrity-seed/hamza-ali-abbasi.png"
+        imageUrl: "/uploads/avatars/hamza_ali_abbasi.jpg"
       },
       {
         text: "Who is this British singer known for songs like 'Levitating' and 'Don't Start Now'?",
         options: ["Adele", "Dua Lipa", "Rita Ora", "Ellie Goulding"],
         correctIndex: 1,
         timeLimit: 10,
-        imageUrl: "/uploads/name-the-celebrity-seed/dua-lipa.png"
+        imageUrl: "/uploads/avatars/dua_lipa.jpg"
       },
       {
         text: "Who is this actor who played Joey Tribbiani in the sitcom Friends?",
         options: ["Matthew Perry", "David Schwimmer", "Matt LeBlanc", "Courteney Cox"],
         correctIndex: 2,
         timeLimit: 10,
-        imageUrl: "/uploads/name-the-celebrity-seed/joey-tribbiani.png"
+        imageUrl: "/uploads/avatars/joey_tribbiani.jpg"
       },
       {
         text: "Who is this Indian actress known for her role in 'Dangal' and 'Ludo'?",
         options: ["Sanya Malhotra", "Fatima Sana Shaikh", "Radhika Apte", "Konkona Sen Sharma"],
         correctIndex: 1,
         timeLimit: 10,
-        imageUrl: "/uploads/name-the-celebrity-seed/fatima-sana-shaikh.png"
+        imageUrl: "/uploads/avatars/fatima.jpg"
       },
       {
         text: "Who is this anime character who uses a Death Note to eliminate criminals?",
         options: ["L Lawliet", "Light Yagami", "Eren Yeager", "Levi Ackerman"],
         correctIndex: 1,
         timeLimit: 10,
-        imageUrl: "/uploads/name-the-celebrity-seed/light-yagami.png"
+        imageUrl: "/uploads/avatars/light_yagami.jpg"
       }
   ],
   nature: [

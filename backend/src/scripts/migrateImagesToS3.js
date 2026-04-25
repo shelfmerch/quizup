@@ -14,6 +14,9 @@
  *
  * Only certain subfolders under uploads/ (comma-separated names, no "uploads/" prefix):
  *   node src/scripts/migrateImagesToS3.js --upload-only --folders=name-the-celebrity-seed,name-the-animal-seed
+ *
+ * Only certain files under uploads/ (comma-separated relative paths):
+ *   node src/scripts/migrateImagesToS3.js --paths=avatars/a.jpg,avatars/b.png
  */
 
 require("dotenv").config({ path: require("path").resolve(__dirname, "../../.env") });
@@ -56,6 +59,26 @@ function parseFolderFilter() {
             .filter(Boolean);
     }
     const i = process.argv.indexOf("--folders");
+    if (i !== -1 && process.argv[i + 1] && !process.argv[i + 1].startsWith("--")) {
+        return process.argv[i + 1]
+            .split(",")
+            .map((s) => s.trim())
+            .filter(Boolean);
+    }
+    return null;
+}
+
+/** Parse `--paths=a/b.png,c/d.jpg` or `--paths a/b.png,c/d.jpg` → ["a/b.png","c/d.jpg"]; null means no file filter. */
+function parsePathFilter() {
+    const eq = process.argv.find((a) => a.startsWith("--paths="));
+    if (eq) {
+        return eq
+            .slice("--paths=".length)
+            .split(",")
+            .map((s) => s.trim())
+            .filter(Boolean);
+    }
+    const i = process.argv.indexOf("--paths");
     if (i !== -1 && process.argv[i + 1] && !process.argv[i + 1].startsWith("--")) {
         return process.argv[i + 1]
             .split(",")
@@ -124,10 +147,31 @@ async function main() {
     // DB path → S3 public URL (used when patching Mongo)
     const urlMap = {};
 
-    // ── 1. Upload images (entire uploads/ or only --folders subdirs) ───────────
-    const folderFilter = parseFolderFilter();
+    // ── 1. Upload images (entire uploads/ or only --folders/--paths filters) ──
+    const pathFilter = parsePathFilter();
+    const folderFilter = pathFilter && pathFilter.length ? null : parseFolderFilter();
+
     /** @type {Generator<{fullPath: string, relPosix: string}>} */
     function* filesToUpload() {
+        if (pathFilter && pathFilter.length) {
+            for (const relInput of pathFilter) {
+                const safe = relInput
+                    .replace(/\\/g, "/")
+                    .split("/")
+                    .filter((p) => p && p !== "..")
+                    .join("/");
+                if (!safe) continue;
+                const ext = path.extname(safe).toLowerCase();
+                if (!IMAGE_EXT.has(ext)) continue;
+                const abs = path.join(UPLOADS_ROOT, safe);
+                if (!fs.existsSync(abs)) {
+                    console.warn(`  ⚠  Skipping missing file: uploads/${safe}`);
+                    continue;
+                }
+                yield { fullPath: abs, relPosix: safe };
+            }
+            return;
+        }
         if (!folderFilter || folderFilter.length === 0) {
             yield* walkImageFiles(UPLOADS_ROOT);
             return;
