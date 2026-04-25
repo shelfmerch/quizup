@@ -10,6 +10,42 @@ import { useNavigate, useParams } from "react-router-dom";
 import { getSocket } from "@/services/socketService";
 import { fetchPublicCategories } from "@/services/categoryService";
 
+type LeagueKey =
+  | "unranked"
+  | "bronze"
+  | "silver"
+  | "gold"
+  | "crystal"
+  | "master"
+  | "champion"
+  | "titan"
+  | "legend";
+
+const LEAGUES: Array<{
+  key: LeagueKey;
+  name: string;
+  minXpInclusive: number;
+  badgeUrl: string;
+}> = [
+  { key: "legend", name: "Legend", minXpInclusive: 20000, badgeUrl: "/leagues/legend.svg" },
+  { key: "titan", name: "Titan", minXpInclusive: 15000, badgeUrl: "/leagues/titan.png" },
+  { key: "champion", name: "Champion", minXpInclusive: 13000, badgeUrl: "/leagues/champion.png" },
+  { key: "master", name: "Master", minXpInclusive: 10000, badgeUrl: "/leagues/master.png" },
+  { key: "crystal", name: "Crystal", minXpInclusive: 7000, badgeUrl: "/leagues/crystal.png" },
+  { key: "gold", name: "Gold", minXpInclusive: 5000, badgeUrl: "/leagues/gold.png" },
+  { key: "silver", name: "Silver", minXpInclusive: 2000, badgeUrl: "/leagues/silver.png" },
+  { key: "bronze", name: "Bronze", minXpInclusive: 1000, badgeUrl: "/leagues/bronze.png" },
+  { key: "unranked", name: "Unranked", minXpInclusive: 0, badgeUrl: "/leagues/unranked.png" },
+];
+
+function getLeagueFromXp(xpRaw: unknown) {
+  const xp = typeof xpRaw === "number" && Number.isFinite(xpRaw) ? xpRaw : 0;
+  for (const league of LEAGUES) {
+    if (xp >= league.minXpInclusive) return league;
+  }
+  return LEAGUES[LEAGUES.length - 1];
+}
+
 const ProfilePage: React.FC = () => {
   const { user, logout, refreshUser } = useAuth();
   const navigate = useNavigate();
@@ -182,7 +218,7 @@ const ProfilePage: React.FC = () => {
     try {
       getSocket().emit("challenge:send", { toUserId: p.id, categoryId });
       setChallengeStatus("Challenge sent");
-      toast.success("Challenge sent");
+      toast.success("Challenge sent", { position: "top-center" });
       setChallengeModalOpen(false);
       setChallengeCategoryId(categoryId);
     } catch (err) {
@@ -195,13 +231,14 @@ const ProfilePage: React.FC = () => {
   const p = profile ?? (isOwnProfile ? user : null);
   if (!p) {
     return (
-      <div className="min-h-screen bg-quizup-dark flex items-center justify-center">
-        <Loader2 className="w-6 h-6 text-white/40 animate-spin" />
+      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
+        <Loader2 className="w-6 h-6 text-slate-400 animate-spin" />
       </div>
     );
   }
 
   const xpPercent = ((p.xp || 0) / (p.xpToNextLevel || 1)) * 100;
+  const league = getLeagueFromXp(p.xp);
   const avatarSrc = resolveMediaUrl(
     p.avatarUrl,
     `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(p.username)}`
@@ -217,37 +254,37 @@ const ProfilePage: React.FC = () => {
   });
 
   return (
-    <div className="min-h-screen bg-quizup-dark">
+    <div className="min-h-screen bg-slate-50 pb-20">
       {/* Header */}
-      <div className="quizup-header-purple px-4 py-3 flex items-center justify-between">
+      <div className="quizup-header-purple px-4 py-3 flex items-center justify-between text-white shadow-sm">
         {isOwnProfile ? (
-          <h1 className="font-display font-bold text-foreground text-base">
+          <h1 className="font-display font-bold text-white text-base">
             {p.displayName || p.username}
           </h1>
         ) : (
           <button onClick={() => navigate(-1)} className="flex items-center gap-1.5">
-            <ArrowLeft className="w-5 h-5 text-foreground/80" />
-            <span className="font-display font-bold text-foreground text-base">
+            <ArrowLeft className="w-5 h-5 text-white/90" />
+            <span className="font-display font-bold text-white text-base">
               {p.displayName || p.username}
             </span>
           </button>
         )}
         <div className="flex gap-3">
-          <button><Search className="w-5 h-5 text-foreground/80" /></button>
+          <button><Search className="w-5 h-5 text-white/90" /></button>
           {isOwnProfile && (
             <button onClick={() => navigate("/settings")}>
-              <Settings className="w-5 h-5 text-foreground/80" />
+              <Settings className="w-5 h-5 text-white/90" />
             </button>
           )}
         </div>
       </div>
 
       {/* Avatar + info */}
-      <div className="bg-quizup-card p-6 text-center">
+      <div className="bg-white px-6 py-8 text-center shadow-sm">
         <div className="relative inline-block mb-3 group">
           <div 
-             className={`relative w-36 h-36 rounded-full border-4 border-quizup-dark overflow-hidden ${isOwnProfile ? 'cursor-pointer' : ''}`}
-             style={{ borderColor: "hsl(270 60% 50%)" }}
+             className={`relative w-36 h-36 rounded-full border-4 border-white shadow-lg overflow-hidden ${isOwnProfile ? 'cursor-pointer' : ''}`}
+             style={{ borderColor: "white" }}
              onClick={() => isOwnProfile && fileInputRef.current?.click()}
              role={isOwnProfile ? "button" : undefined}
              aria-label={isOwnProfile ? "Change profile photo" : undefined}
@@ -274,21 +311,36 @@ const ProfilePage: React.FC = () => {
             <span className="text-[10px] font-bold text-quizup-gold">LVL {p.level}</span>
           </div> */}
         </div>
-        <h2 className="font-display font-extrabold text-xl text-foreground">
+        <h2 className="font-display font-extrabold text-2xl text-slate-900">
           {p.displayName || p.username}
         </h2>
-        <p className="text-xs text-muted-foreground mt-0.5">{p.bio}</p>
-        <p className="text-xs text-muted-foreground mt-0.5">🌍 {p.country}</p>
-        <p className="text-[10px] text-muted-foreground mt-1">Last Active: just now</p>
+        <p className="text-sm text-slate-500 mt-1">{p.bio || "No bio yet"}</p>
+        <p className="text-xs text-slate-400 mt-1">🌍 {p.country}</p>
+
+        {/* League */}
+        <div className="mt-4 flex items-center justify-center gap-3">
+          <img
+            src={league.badgeUrl}
+            alt=""
+            className="w-10 h-10 object-contain drop-shadow-sm"
+            loading="lazy"
+          />
+          <div className="text-left">
+            <p className="text-[11px] text-slate-500 font-semibold uppercase tracking-wider">League</p>
+            <p className="text-sm font-display font-extrabold text-slate-900 leading-tight">
+              {league.name}
+            </p>
+          </div>
+        </div>
       </div>
 
       {/* XP Bar */}
-      <div className="bg-quizup-card border-t border-border px-4 py-3">
-        <div className="flex justify-between text-[10px] text-muted-foreground mb-1">
+      <div className="bg-white border-t border-slate-100 px-6 py-4 shadow-sm mt-2">
+        <div className="flex justify-between text-xs font-semibold text-slate-500 mb-2">
           <span>Level {p.level}</span>
-          <span>{p.xp}/{p.xpToNextLevel} XP</span>
+          <span>{p.xp} / {p.xpToNextLevel} XP</span>
         </div>
-        <div className="w-full h-2 bg-quizup-surface rounded-full overflow-hidden">
+        <div className="w-full h-2.5 bg-slate-100 rounded-full overflow-hidden">
           <div
             className="h-full quizup-header-purple rounded-full transition-all duration-700"
             style={{ width: `${xpPercent}%` }}
@@ -297,41 +349,41 @@ const ProfilePage: React.FC = () => {
       </div>
 
       {/* Stats */}
-      <div className="bg-quizup-card border-t border-border flex divide-x divide-border">
+      <div className="bg-white border-t border-slate-100 flex divide-x divide-slate-100 shadow-sm mt-2">
         {[
           { label: "MATCHES", value: p.totalMatches },
           { label: "WINS", value: p.wins },
           { label: "LOSSES", value: p.losses },
           { label: "STREAK", value: p.winStreak },
         ].map(({ label, value }) => (
-          <div key={label} className="flex-1 py-3 text-center">
-            <p className="text-lg font-display font-extrabold text-foreground">{value}</p>
-            <p className="text-[9px] text-muted-foreground tracking-wider">{label}</p>
+          <div key={label} className="flex-1 py-4 text-center">
+            <p className="text-xl font-display font-extrabold text-slate-900">{value}</p>
+            <p className="text-[10px] text-slate-400 font-medium tracking-wider uppercase mt-1">{label}</p>
           </div>
         ))}
       </div>
 
       {/* Social counts */}
-      <div className="bg-quizup-card border-t border-border flex divide-x divide-border">
-        <div className="flex-1 py-3 text-center">
-          <p className="font-display font-bold text-foreground">{p.followers}</p>
-          <p className="text-[10px] text-muted-foreground">Followers</p>
+      <div className="bg-white border-t border-slate-100 flex divide-x divide-slate-100 shadow-sm">
+        <div className="flex-1 py-4 text-center">
+          <p className="text-lg font-display font-bold text-slate-900">{p.followers}</p>
+          <p className="text-[10px] text-slate-400 font-medium uppercase mt-1">Followers</p>
         </div>
-        <div className="flex-1 py-3 text-center">
-          <p className="font-display font-bold text-foreground">{p.following}</p>
-          <p className="text-[10px] text-muted-foreground">Following</p>
+        <div className="flex-1 py-4 text-center">
+          <p className="text-lg font-display font-bold text-slate-900">{p.following}</p>
+          <p className="text-[10px] text-slate-400 font-medium uppercase mt-1">Following</p>
         </div>
       </div>
 
       {/* Action row: follow / chat / challenge */}
-      <div className="px-4 pt-3 pb-1 flex gap-2">
+      <div className="px-4 py-4 flex gap-2">
         {isOwnProfile ? (
           /* Own profile — just Play button */
           <button
             onClick={() => navigate("/categories")}
-            className="flex-1 h-11 rounded-lg quizup-header-red text-foreground font-semibold text-sm flex items-center justify-center gap-1.5"
+            className="flex-1 h-12 rounded-xl quizup-header-purple text-white shadow-md font-bold text-[15px] flex items-center justify-center gap-2"
           >
-            ⚡ Play
+            ⚡ Play Now
           </button>
         ) : (
           <>
@@ -339,10 +391,10 @@ const ProfilePage: React.FC = () => {
             <button
               onClick={handleFollow}
               disabled={followLoading}
-              className={`flex-1 h-11 rounded-lg font-semibold text-sm flex items-center justify-center gap-2 transition-all ${
+              className={`flex-1 h-11 rounded-xl font-semibold text-sm flex items-center justify-center gap-2 transition-all shadow-sm ${
                 isFollowing
-                  ? "bg-quizup-surface text-foreground border border-border"
-                  : "quizup-header-purple text-foreground"
+                  ? "bg-slate-100 text-slate-700 border border-slate-200"
+                  : "quizup-header-purple text-white shadow-md"
               }`}
             >
               {followLoading ? (
@@ -363,7 +415,7 @@ const ProfilePage: React.FC = () => {
             {/* Chat */}
             <button
               onClick={() => navigate(`/chat/${p.id}`)}
-              className="flex-1 h-11 rounded-lg bg-quizup-surface text-foreground font-semibold text-sm border border-border flex items-center justify-center gap-2"
+              className="flex-1 h-11 rounded-xl bg-white text-slate-700 font-semibold text-sm border border-slate-200 shadow-sm flex items-center justify-center gap-2"
             >
               <MessageCircle className="w-4 h-4" />
               Chat
@@ -373,7 +425,7 @@ const ProfilePage: React.FC = () => {
             <button
               onClick={handleChallenge}
               disabled={challengeSending}
-              className="flex-1 h-11 rounded-lg quizup-header-red text-foreground font-semibold text-sm flex items-center justify-center gap-2 disabled:opacity-60"
+              className="flex-1 h-11 rounded-xl quizup-header-red text-white shadow-md font-semibold text-sm flex items-center justify-center gap-2 disabled:opacity-60"
             >
               {challengeSending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Swords className="w-4 h-4" />}
               Challenge
@@ -384,27 +436,27 @@ const ProfilePage: React.FC = () => {
 
       {/* Challenge status (below actions) */}
       {!isOwnProfile && challengeStatus && (
-        <div className="px-4 pb-2">
-          <p className="text-xs text-muted-foreground">{challengeStatus}</p>
+        <div className="px-4 pb-2 text-center">
+          <p className="text-xs text-slate-500 font-medium">{challengeStatus}</p>
         </div>
       )}
 
       {/* Achievements */}
-      <div className="px-4 pb-4">
-        <h3 className="font-display font-bold text-foreground text-sm uppercase tracking-wider mb-3">
+      <div className="px-4 py-4">
+        <h3 className="font-display font-bold text-slate-900 text-sm uppercase tracking-wider mb-4">
           Achievements
         </h3>
         <div className="grid grid-cols-4 gap-2">
           {displayAchievements.map((a) => (
             <div
               key={a.id}
-              className={`bg-quizup-card rounded-lg p-2 text-center border border-border ${
-                !a.isUnlocked ? "opacity-25" : ""
+              className={`bg-white rounded-xl p-3 text-center border border-slate-100 shadow-sm ${
+                !a.isUnlocked ? "opacity-40 grayscale" : ""
               }`}
               title={a.description}
             >
-              <span className="text-xl">{a.icon}</span>
-              <p className="text-[8px] text-muted-foreground mt-1 truncate">{a.name}</p>
+              <span className="text-2xl">{a.icon}</span>
+              <p className="text-[9px] text-slate-600 font-medium mt-2 leading-tight">{a.name}</p>
             </div>
           ))}
         </div>
@@ -412,10 +464,10 @@ const ProfilePage: React.FC = () => {
 
       {/* Logout — own profile only */}
       {isOwnProfile && (
-        <div className="px-4 pb-6">
+        <div className="px-4 pb-6 mt-4">
           <button
             onClick={async () => { await logout(); navigate("/"); }}
-            className="w-full h-11 rounded-lg bg-quizup-card border border-border text-quizup-red font-semibold text-sm flex items-center justify-center gap-2"
+            className="w-full h-12 rounded-xl bg-white border border-slate-200 text-quizup-red font-semibold text-[15px] flex items-center justify-center gap-2 shadow-sm"
           >
             <LogOut className="w-4 h-4" />
             Log Out
@@ -425,37 +477,37 @@ const ProfilePage: React.FC = () => {
 
       {/* Chat is a dedicated page now: /chat/:peerId */}
       {!isOwnProfile && challengeModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/60 sm:items-center">
-          <div className="w-full max-w-md bg-quizup-card rounded-t-3xl sm:rounded-3xl overflow-hidden border border-border shadow-xl">
-            <div className="px-4 py-3 border-b border-border flex items-center justify-between">
+        <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/40 sm:items-center backdrop-blur-sm">
+          <div className="w-full max-w-md bg-white rounded-t-3xl sm:rounded-3xl overflow-hidden shadow-2xl">
+            <div className="px-5 py-4 border-b border-slate-100 flex items-center justify-between">
               <div>
-                <p className="text-xs text-muted-foreground uppercase tracking-wider">Challenge</p>
-                <p className="text-sm font-semibold text-foreground truncate">
+                <p className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Challenge</p>
+                <p className="text-[15px] font-bold text-slate-900 truncate mt-0.5">
                   {p.displayName || p.username}
                 </p>
               </div>
               <button
                 type="button"
-                className="text-xs text-muted-foreground"
+                className="w-8 h-8 flex items-center justify-center rounded-full bg-slate-100 text-slate-500 hover:bg-slate-200 transition-colors"
                 onClick={() => setChallengeModalOpen(false)}
               >
-                Close
+                ✕
               </button>
             </div>
 
-            <div className="max-h-[60vh] overflow-y-auto px-4 py-3 space-y-2">
+            <div className="max-h-[60vh] overflow-y-auto px-4 py-4 space-y-2 bg-slate-50">
               {categoriesLoading && (
-                <div className="flex items-center justify-center py-6">
-                  <Loader2 className="w-5 h-5 text-muted-foreground animate-spin" />
+                <div className="flex items-center justify-center py-8">
+                  <Loader2 className="w-6 h-6 text-slate-400 animate-spin" />
                 </div>
               )}
 
               {categoriesError && !categoriesLoading && (
-                <p className="text-xs text-quizup-red py-2">{categoriesError}</p>
+                <p className="text-sm font-medium text-quizup-red py-4 text-center">{categoriesError}</p>
               )}
 
               {!categoriesLoading && !categoriesError && allCategories.length === 0 && (
-                <p className="text-xs text-muted-foreground py-2">
+                <p className="text-sm text-slate-500 py-4 text-center">
                   No topics available right now.
                 </p>
               )}
@@ -467,14 +519,14 @@ const ProfilePage: React.FC = () => {
                     type="button"
                     disabled={challengeSending}
                     onClick={() => sendChallengeForCategory(cat.id)}
-                    className="w-full flex items-center gap-3 px-3 py-2 rounded-2xl bg-quizup-surface border border-border text-left hover:bg-quizup-card transition-colors disabled:opacity-60"
+                    className="w-full flex items-center gap-4 px-4 py-3 rounded-2xl bg-white border border-slate-200 shadow-sm text-left hover:border-quizup-purple transition-colors disabled:opacity-60"
                   >
-                    <div className="w-9 h-9 rounded-xl bg-quizup-card flex items-center justify-center text-lg">
+                    <div className="w-10 h-10 rounded-xl bg-slate-100 flex items-center justify-center text-xl">
                       <span>{cat.icon}</span>
                     </div>
                     <div className="min-w-0 flex-1">
-                      <p className="text-sm font-semibold text-foreground truncate">{cat.name}</p>
-                      <p className="text-[10px] text-muted-foreground">
+                      <p className="text-[15px] font-bold text-slate-900 truncate">{cat.name}</p>
+                      <p className="text-xs text-slate-500 font-medium mt-0.5">
                         {cat.questionCount} questions
                       </p>
                     </div>

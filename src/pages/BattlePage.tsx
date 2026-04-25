@@ -9,6 +9,7 @@ import { playCountdownSfx, playDefeatSfx, playVictorySfx, startMatchMusic, stopC
 import { getSocket } from "@/services/socketService";
 import { MOCK_ACHIEVEMENTS } from "@/data/mock-data";
 import Icons8Icon from "@/components/Icons8Icon";
+import { useAuth } from "@/hooks/useAuth";
 
 function parseBattleNav(state: unknown): { online: OnlineBattleInit | null; localMatch: Match | null } {
   if (
@@ -135,10 +136,47 @@ function VerticalTimerBar({
   );
 }
 
+type LeagueKey =
+  | "unranked"
+  | "bronze"
+  | "silver"
+  | "gold"
+  | "crystal"
+  | "master"
+  | "champion"
+  | "titan"
+  | "legend";
+
+const LEAGUES: Array<{
+  key: LeagueKey;
+  name: string;
+  minXpInclusive: number;
+  badgeUrl: string;
+}> = [
+  { key: "legend", name: "Legend", minXpInclusive: 20000, badgeUrl: "/leagues/legend.svg" },
+  { key: "titan", name: "Titan", minXpInclusive: 15000, badgeUrl: "/leagues/titan.png" },
+  { key: "champion", name: "Champion", minXpInclusive: 13000, badgeUrl: "/leagues/champion.png" },
+  { key: "master", name: "Master", minXpInclusive: 10000, badgeUrl: "/leagues/master.png" },
+  { key: "crystal", name: "Crystal", minXpInclusive: 7000, badgeUrl: "/leagues/crystal.png" },
+  { key: "gold", name: "Gold", minXpInclusive: 5000, badgeUrl: "/leagues/gold.png" },
+  { key: "silver", name: "Silver", minXpInclusive: 2000, badgeUrl: "/leagues/silver.png" },
+  { key: "bronze", name: "Bronze", minXpInclusive: 1000, badgeUrl: "/leagues/bronze.png" },
+  { key: "unranked", name: "Unranked", minXpInclusive: 0, badgeUrl: "/leagues/unranked.png" },
+];
+
+function getLeagueFromXp(xpRaw: unknown) {
+  const xp = typeof xpRaw === "number" && Number.isFinite(xpRaw) ? xpRaw : 0;
+  for (const league of LEAGUES) {
+    if (xp >= league.minXpInclusive) return league;
+  }
+  return LEAGUES[LEAGUES.length - 1];
+}
+
 const BattlePage: React.FC = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const { online: onlineInit, localMatch } = useMemo(() => parseBattleNav(location.state), [location.state]);
+  const { user, refreshUser } = useAuth();
 
   const onlineBattle = useOnlineBattle(onlineInit);
   const localBattle = useBattle(onlineInit ? null : localMatch);
@@ -151,6 +189,58 @@ const BattlePage: React.FC = () => {
   const matchMusicStartedRef = useRef(false);
 
   const [unlockedAchievements, setUnlockedAchievements] = useState<{ id: string; name: string; icon: string }[]>([]);
+  const [showDedicatedAchievements, setShowDedicatedAchievements] = useState(false);
+  const achievementsScreenShownRef = useRef(false);
+
+  const xpBeforeMatchRef = useRef<number | null>(null);
+  const [leaguePromotion, setLeaguePromotion] = useState<{
+    from: ReturnType<typeof getLeagueFromXp>;
+    to: ReturnType<typeof getLeagueFromXp>;
+  } | null>(null);
+
+  useEffect(() => {
+    if (xpBeforeMatchRef.current !== null) return;
+    const xp = typeof user?.xp === "number" && Number.isFinite(user.xp) ? user.xp : null;
+    xpBeforeMatchRef.current = xp;
+  }, [user?.xp]);
+
+  useEffect(() => {
+    if (state?.phase !== "match_end") return;
+    if (!user?.id) return;
+    const beforeXp = xpBeforeMatchRef.current;
+    if (beforeXp === null) return;
+
+    let cancelled = false;
+    (async () => {
+      try {
+        await refreshUser();
+        if (cancelled) return;
+        const afterXp = typeof user?.xp === "number" && Number.isFinite(user.xp) ? user.xp : null;
+        if (afterXp === null) return;
+
+        const from = getLeagueFromXp(beforeXp);
+        const to = getLeagueFromXp(afterXp);
+        if (from.key !== to.key) {
+          setLeaguePromotion({ from, to });
+        }
+      } catch {
+        // ignore
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [refreshUser, state?.phase, user?.id, user?.xp]);
+
+  useEffect(() => {
+    if (state?.phase === "match_end" && unlockedAchievements.length > 0 && !achievementsScreenShownRef.current) {
+      achievementsScreenShownRef.current = true;
+      setShowDedicatedAchievements(true);
+      const t = setTimeout(() => setShowDedicatedAchievements(false), 5000);
+      return () => clearTimeout(t);
+    }
+  }, [state?.phase, unlockedAchievements.length]);
 
   useEffect(() => {
     if (!isOnline) return;
@@ -254,12 +344,45 @@ const BattlePage: React.FC = () => {
 
   if (state.phase === "match_end") {
     const winner = getWinner();
+
+    if (showDedicatedAchievements) {
+      return (
+        <div className="h-[100dvh] overflow-hidden bg-quizup-dark text-white flex flex-col items-center justify-center max-w-md mx-auto relative animate-in fade-in duration-500">
+          <div className="absolute inset-0 bg-gradient-to-b from-quizup-gold/20 to-transparent pointer-events-none" />
+          <Icons8Icon name="trophy" fallback="🏆" size={120} style="animated-fluency" />
+          <h1 className="text-3xl font-display font-extrabold tracking-tight mt-6 text-quizup-gold mb-2 text-center drop-shadow-md">
+            Achievements Unlocked!
+          </h1>
+          <div className="flex flex-col gap-4 mt-8 w-full px-8 relative z-10">
+            {leaguePromotion && (
+              <div className="bg-quizup-card rounded-2xl p-4 border border-emerald-400/40 flex items-center gap-4 shadow-xl shadow-emerald-400/10 animate-in slide-in-from-bottom-8 duration-700">
+                <img src={leaguePromotion.to.badgeUrl} alt="" className="w-12 h-12 object-contain shrink-0 drop-shadow-sm" />
+                <div className="min-w-0">
+                  <p className="text-[11px] font-bold text-emerald-300 uppercase tracking-widest">League promoted</p>
+                  <p className="font-extrabold text-lg text-white truncate">
+                    {leaguePromotion.from.name} → {leaguePromotion.to.name}
+                  </p>
+                </div>
+              </div>
+            )}
+            {unlockedAchievements.map(ach => (
+              <div key={ach.id} className="bg-quizup-card rounded-2xl p-4 border border-quizup-gold/50 flex items-center gap-4 shadow-xl shadow-quizup-gold/20 animate-in slide-in-from-bottom-8 duration-700">
+                <span className="text-4xl">{ach.icon}</span>
+                <span className="font-bold text-lg text-white">{ach.name}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      );
+    }
+
     return (
       <div className="h-[100dvh] overflow-hidden bg-quizup-dark text-white flex flex-col max-w-md mx-auto">
         <div className="pt-8 pb-4 flex flex-col items-center flex-shrink-0 relative overflow-hidden">
           <div className="absolute inset-0 bg-gradient-to-b from-quizup-gold/10 to-transparent pointer-events-none" />
           <Icons8Icon
             name={winner === "player" ? "trophy" : winner === "opponent" ? "crying" : "handshake"}
+            fallback={winner === "player" ? "🏆" : winner === "opponent" ? "😢" : "🤝"}
             size={96}
             style="animated-fluency"
           />

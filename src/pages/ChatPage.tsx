@@ -80,9 +80,9 @@ const ChatPage: React.FC = () => {
     peer?.avatarUrl || `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(peerName)}`;
 
   return (
-    <div className="min-h-screen bg-quizup-dark text-white flex flex-col max-w-md mx-auto">
+    <div className="h-[100dvh] overflow-hidden bg-quizup-dark text-white flex flex-col max-w-md mx-auto">
       {/* Header */}
-      <div className="quizup-header-red px-4 py-3 flex items-center gap-3">
+      <div className="quizup-header-red px-4 py-3 flex items-center gap-3 shrink-0">
         <button type="button" onClick={() => navigate(-1)} className="p-1 -ml-1 rounded-full active:bg-black/10">
           <ArrowLeft className="w-5 h-5 text-white" />
         </button>
@@ -129,7 +129,7 @@ const ChatPage: React.FC = () => {
       </div>
 
       {/* Input */}
-      <div className="flex items-center gap-2 px-3 py-3 border-t border-white/10">
+      <div className="flex items-center gap-2 px-3 py-3 border-t border-white/10 shrink-0">
         <input
           ref={inputRef}
           type="text"
