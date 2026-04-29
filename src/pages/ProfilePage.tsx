@@ -1,14 +1,29 @@
-import React, { useEffect, useState, useCallback } from "react";
-import { useAuth } from "@/hooks/useAuth";
-import { profileService } from "@/services/profileService";
-import { toast } from "@/components/ui/sonner";
-import { Category, MatchFoundPayload, Profile } from "@/types";
-import { MOCK_ACHIEVEMENTS } from "@/data/mock-data";
-import { resolveMediaUrl } from "@/config/env";
-import { Settings, LogOut, Search, ArrowLeft, UserPlus, UserCheck, MessageCircle, Loader2, Camera, Swords } from "lucide-react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
+import {
+  ArrowLeft,
+  Camera,
+  CheckCircle2,
+  Globe2,
+  Loader2,
+  MessageCircle,
+  Search,
+  Settings,
+  Swords,
+  Trophy,
+  XCircle,
+  UserCheck,
+  UserPlus,
+} from "lucide-react";
+import { toast } from "@/components/ui/sonner";
+import Icons8Icon, { getCategoryIconSlug } from "@/components/Icons8Icon";
+import { useAuth } from "@/hooks/useAuth";
+import { MOCK_ACHIEVEMENTS, MOCK_CATEGORIES, MOCK_MATCH_HISTORY } from "@/data/mock-data";
+import { resolveMediaUrl } from "@/config/env";
+import { fetchFollowedCategories, fetchPublicCategories } from "@/services/categoryService";
 import { getSocket } from "@/services/socketService";
-import { fetchPublicCategories } from "@/services/categoryService";
+import { profileService } from "@/services/profileService";
+import { Category, MatchFoundPayload, MatchHistoryEntry, Profile } from "@/types";
 
 type LeagueKey =
   | "unranked"
@@ -21,12 +36,7 @@ type LeagueKey =
   | "titan"
   | "legend";
 
-const LEAGUES: Array<{
-  key: LeagueKey;
-  name: string;
-  minXpInclusive: number;
-  badgeUrl: string;
-}> = [
+const LEAGUES: Array<{ key: LeagueKey; name: string; minXpInclusive: number; badgeUrl: string }> = [
   { key: "legend", name: "Legend", minXpInclusive: 20000, badgeUrl: "/leagues/legend.svg" },
   { key: "titan", name: "Titan", minXpInclusive: 15000, badgeUrl: "/leagues/titan.png" },
   { key: "champion", name: "Champion", minXpInclusive: 13000, badgeUrl: "/leagues/champion.png" },
@@ -38,6 +48,8 @@ const LEAGUES: Array<{
   { key: "unranked", name: "Unranked", minXpInclusive: 0, badgeUrl: "/leagues/unranked.png" },
 ];
 
+const TILE_COLORS = ["#f65357", "#1fb7c9", "#ffca32", "#f65357", "#8d65e7", "#15b78f"];
+
 function getLeagueFromXp(xpRaw: unknown) {
   const xp = typeof xpRaw === "number" && Number.isFinite(xpRaw) ? xpRaw : 0;
   for (const league of LEAGUES) {
@@ -46,72 +58,158 @@ function getLeagueFromXp(xpRaw: unknown) {
   return LEAGUES[LEAGUES.length - 1];
 }
 
+function playerRankLabel(level: number) {
+  if (level <= 2) return "Beginner";
+  if (level <= 5) return "Rising star";
+  if (level <= 12) return "Challenger";
+  return "Veteran";
+}
+
+const TopicTile: React.FC<{ category: Category; index: number; onClick: () => void }> = ({ category, index, onClick }) => {
+  const { slug, fallback } = getCategoryIconSlug(category.name);
+
+  return (
+    <button type="button" onClick={onClick} className="w-[74px] shrink-0 text-center">
+      <span
+        className="quizup-topic-tile mx-auto flex h-14 w-14 rounded-lg"
+        style={{ backgroundColor: TILE_COLORS[index % TILE_COLORS.length] }}
+      >
+        <Icons8Icon name={slug} fallback={fallback} size={64} style="fluency" className="h-11 w-11 object-contain" alt="" />
+      </span>
+      <span className="mt-1 block min-h-[24px] text-[10px] font-black leading-[11px] text-[#343434] line-clamp-2">
+        {category.name}
+      </span>
+      <span className="block text-[8px] font-black uppercase tracking-wide text-zinc-400">
+        LVL {Math.max(1, Math.ceil((category.questionCount || 10) / 120))}
+      </span>
+    </button>
+  );
+};
+
+const HistoryBubble: React.FC<{ match: MatchHistoryEntry; index: number }> = ({ match, index }) => {
+  const isVictory = match.result === "win";
+  const isDefeat = match.result === "loss";
+  const resultColor = isVictory ? "#15b78f" : isDefeat ? "#f65357" : "#8d8d8d";
+  const resultLabel = isVictory ? "Victory" : isDefeat ? "Defeat" : "Draw";
+  const ResultIcon = isVictory ? Trophy : isDefeat ? XCircle : CheckCircle2;
+  const badgeBg = isVictory ? "#15b78f" : isDefeat ? "#f65357" : "#8d8d8d";
+
+  return (
+    <div className="relative w-[76px] shrink-0 text-center">
+      <span
+        className="mx-auto flex h-12 w-12 items-center justify-center rounded-full border-[3px] bg-white shadow-md"
+        style={{ borderColor: resultColor }}
+      >
+        <img
+          src={resolveMediaUrl(match.opponentAvatar, `https://api.dicebear.com/7.x/avataaars/svg?seed=${match.opponentName}`)}
+          alt=""
+          className="h-9 w-9 rounded-full object-cover"
+        />
+      </span>
+      <span
+        className="absolute right-1 top-8 flex h-6 w-6 items-center justify-center rounded-md text-white shadow"
+        style={{ backgroundColor: badgeBg }}
+      >
+        <ResultIcon className="h-3.5 w-3.5" />
+      </span>
+      {/* <p className="mt-2 rounded-full px-1 py-0.5 text-[8px] font-black uppercase tracking-wide text-white" style={{ backgroundColor: resultColor }}>
+        {resultLabel}
+      </p> */}
+      <p className="mt-1 truncate text-[9px] font-black text-[#444]">{match.opponentName}</p>
+      <p className="text-[8px] font-bold uppercase" style={{ color: resultColor }}>
+        {match.playerScore}-{match.opponentScore}
+      </p>
+    </div>
+  );
+};
+
 const ProfilePage: React.FC = () => {
   const { user, logout, refreshUser } = useAuth();
   const navigate = useNavigate();
   const { userId } = useParams<{ userId?: string }>();
-
-  // Is this the logged-in user's own profile?
   const isOwnProfile = !userId || userId === user?.id;
-  const targetId = isOwnProfile ? (user?.id ?? "me") : userId!;
+  const targetId = isOwnProfile ? user?.id : userId;
 
   const [profile, setProfile] = useState<Profile | null>(null);
   const [isFollowing, setIsFollowing] = useState(false);
   const [followLoading, setFollowLoading] = useState(false);
-  const fileInputRef = React.useRef<HTMLInputElement>(null);
-  const [uploadingAvatar, setUploadingAvatar] = React.useState(false);
+  const [uploadingAvatar, setUploadingAvatar] = useState(false);
   const [challengeSending, setChallengeSending] = useState(false);
   const [challengeStatus, setChallengeStatus] = useState<string | null>(null);
-  const [challengeCategoryId, setChallengeCategoryId] = useState<string>("");
   const [challengeModalOpen, setChallengeModalOpen] = useState(false);
   const [allCategories, setAllCategories] = useState<Category[]>([]);
+  const [followedTopics, setFollowedTopics] = useState<Category[]>([]);
+  const [recentMatches, setRecentMatches] = useState<MatchHistoryEntry[]>([]);
   const [categoriesLoading, setCategoriesLoading] = useState(false);
   const [categoriesError, setCategoriesError] = useState<string | null>(null);
-
-  const handleAvatarSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file || !isOwnProfile) return;
-    if (!file.type.startsWith("image/")) {
-      e.target.value = "";
-      return;
-    }
-
-    setUploadingAvatar(true);
-    try {
-      const updated = await profileService.uploadAvatar(file);
-      setProfile(updated);
-      await refreshUser();
-    } catch (err) {
-      console.error("Failed to upload avatar", err);
-    } finally {
-      setUploadingAvatar(false);
-      e.target.value = "";
-    }
-  };
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const loadProfile = useCallback(async () => {
+    if (!targetId && !user) return;
     try {
-      const data = await profileService.getProfile(targetId);
+      const data = await profileService.getProfile(targetId ?? "me");
       setProfile(data);
-      // Back-end may return isFollowing on the profile object
       if (!isOwnProfile) {
-        const following =
-          data.isFollowing !== undefined
-            ? data.isFollowing
-            : await profileService.checkIsFollowing(targetId);
+        const following = data.isFollowing !== undefined ? data.isFollowing : await profileService.checkIsFollowing(data.id);
         setIsFollowing(following);
       }
     } catch {
-      // Fallback to auth user for own profile
       if (isOwnProfile && user) setProfile(user);
     }
-  }, [targetId, isOwnProfile, user]);
+  }, [isOwnProfile, targetId, user]);
 
   useEffect(() => {
     loadProfile();
   }, [loadProfile]);
 
-  // If a challenge is accepted while I'm here, jump into the 1v1 battle.
+  useEffect(() => {
+    let cancelled = false;
+    fetchPublicCategories()
+      .then((list) => {
+        if (!cancelled) setAllCategories(list);
+      })
+      .catch(() => {
+        if (!cancelled) setAllCategories([]);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+    fetchFollowedCategories()
+      .then((list) => {
+        if (!cancelled) setFollowedTopics(list);
+      })
+      .catch(() => {
+        if (!cancelled) setFollowedTopics([]);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [targetId]);
+
+  useEffect(() => {
+    if (!targetId) {
+      setRecentMatches(MOCK_MATCH_HISTORY.slice(0, 5));
+      return;
+    }
+
+    let cancelled = false;
+    profileService
+      .getMatchHistory(targetId, 5)
+      .then((rows) => {
+        if (!cancelled) setRecentMatches(rows.length ? rows : MOCK_MATCH_HISTORY.slice(0, 5));
+      })
+      .catch(() => {
+        if (!cancelled) setRecentMatches(MOCK_MATCH_HISTORY.slice(0, 5));
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [targetId]);
+
   useEffect(() => {
     if (!user?.id) return;
     let socket: ReturnType<typeof getSocket>;
@@ -158,6 +256,27 @@ const ProfilePage: React.FC = () => {
     };
   }, [navigate, user?.avatarUrl, user?.id, user?.level, user?.username]);
 
+  const handleAvatarSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !isOwnProfile) return;
+    if (!file.type.startsWith("image/")) {
+      e.target.value = "";
+      return;
+    }
+
+    setUploadingAvatar(true);
+    try {
+      const updated = await profileService.uploadAvatar(file);
+      setProfile(updated);
+      await refreshUser();
+    } catch (err) {
+      console.error("Failed to upload avatar", err);
+    } finally {
+      setUploadingAvatar(false);
+      e.target.value = "";
+    }
+  };
+
   const handleFollow = async () => {
     if (!profile) return;
     setFollowLoading(true);
@@ -165,14 +284,12 @@ const ProfilePage: React.FC = () => {
       if (isFollowing) {
         await profileService.unfollowUser(profile.id);
         setIsFollowing(false);
-        setProfile((p) => p ? { ...p, followers: Math.max(0, p.followers - 1) } : p);
+        setProfile((prev) => (prev ? { ...prev, followers: Math.max(0, prev.followers - 1) } : prev));
       } else {
         await profileService.followUser(profile.id);
         setIsFollowing(true);
-        setProfile((p) => p ? { ...p, followers: p.followers + 1 } : p);
+        setProfile((prev) => (prev ? { ...prev, followers: prev.followers + 1 } : prev));
       }
-    } catch {
-      // silently ignore — no toast library assumed
     } finally {
       setFollowLoading(false);
     }
@@ -183,8 +300,7 @@ const ProfilePage: React.FC = () => {
     setCategoriesLoading(true);
     setCategoriesError(null);
     try {
-      const list = await fetchPublicCategories();
-      setAllCategories(list);
+      setAllCategories(await fetchPublicCategories());
     } catch {
       setCategoriesError("Could not load topics");
     } finally {
@@ -192,35 +308,27 @@ const ProfilePage: React.FC = () => {
     }
   }, [allCategories.length, categoriesLoading]);
 
-  const openChallengeModal = async () => {
+  const handleChallenge = () => {
+    if (!profile || isOwnProfile) return;
+    if (!user?.id) {
+      navigate("/login");
+      return;
+    }
     setChallengeStatus(null);
     setChallengeModalOpen(true);
     void ensureCategoriesLoaded();
   };
 
-  const handleChallenge = async () => {
-    if (!p || isOwnProfile) return;
-    if (!user?.id) {
-      navigate("/login");
-      return;
-    }
-
-    // Open topic selection modal; actual send happens when a topic is chosen.
-    openChallengeModal();
-  };
-
   const sendChallengeForCategory = async (categoryIdRaw: string) => {
-    if (!p || !user?.id) return;
-
-    const categoryId = (categoryIdRaw || p.favoriteCategory || "science").toString().trim() || "science";
+    if (!profile || !user?.id) return;
+    const categoryId = (categoryIdRaw || profile.favoriteCategory || "science").toString().trim() || "science";
     setChallengeStatus(null);
     setChallengeSending(true);
     try {
-      getSocket().emit("challenge:send", { toUserId: p.id, categoryId });
+      getSocket().emit("challenge:send", { toUserId: profile.id, categoryId });
       setChallengeStatus("Challenge sent");
       toast.success("Challenge sent", { position: "top-center" });
       setChallengeModalOpen(false);
-      setChallengeCategoryId(categoryId);
     } catch (err) {
       setChallengeStatus(err instanceof Error ? err.message : "Could not send challenge");
     } finally {
@@ -237,251 +345,182 @@ const ProfilePage: React.FC = () => {
     );
   }
 
-  const xpPercent = ((p.xp || 0) / (p.xpToNextLevel || 1)) * 100;
   const league = getLeagueFromXp(p.xp);
   const avatarSrc = resolveMediaUrl(
     p.avatarUrl,
     `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(p.username)}`
   );
-
-  const displayAchievements = MOCK_ACHIEVEMENTS.map(mockAch => {
-    const unlocked = p.achievements?.find(a => a.id === mockAch.id);
-    return {
-      ...mockAch,
-      isUnlocked: !!unlocked,
-      unlockedAt: unlocked?.unlockedAt,
-    };
+  const displayAchievements = MOCK_ACHIEVEMENTS.map((mockAch) => {
+    const unlocked = p.achievements?.find((a) => a.id === mockAch.id);
+    return { ...mockAch, isUnlocked: !!unlocked, unlockedAt: unlocked?.unlockedAt };
   });
+  const topicsToShow = (followedTopics.length ? followedTopics : allCategories.length ? allCategories : MOCK_CATEGORIES).slice(0, 4);
 
   return (
     <div className="quizup-app pb-20">
-      {/* Header */}
       <div className="quizup-topbar">
-        {isOwnProfile ? (
-          <h1 className="font-display font-bold text-white text-base">
-            {p.displayName || p.username}
-          </h1>
-        ) : (
-          <button onClick={() => navigate(-1)} className="flex items-center gap-1.5">
-            <ArrowLeft className="w-5 h-5 text-white/90" />
-            <span className="font-display font-bold text-white text-base">
-              {p.displayName || p.username}
-            </span>
+        <button onClick={isOwnProfile ? () => navigate("/settings") : () => navigate(-1)} aria-label={isOwnProfile ? "Settings" : "Back"}>
+          {isOwnProfile ? <Settings className="h-5 w-5" /> : <ArrowLeft className="h-5 w-5" />}
+        </button>
+        <h1 className="font-display text-[17px] font-black">QuizUp</h1>
+        <div className="flex items-center gap-4">
+          <button aria-label="Search"><Search className="h-5 w-5" /></button>
+          <button onClick={() => !isOwnProfile && navigate(`/chat/${p.id}`)} aria-label="Chat">
+            <MessageCircle className="h-5 w-5" />
           </button>
-        )}
-        <div className="flex gap-3">
-          <button><Search className="w-5 h-5 text-white/90" /></button>
-          {isOwnProfile && (
-            <button onClick={() => navigate("/settings")}>
-              <Settings className="w-5 h-5 text-white/90" />
-            </button>
-          )}
         </div>
       </div>
 
-      {/* Avatar + info */}
-      <div className="quizup-pattern relative overflow-hidden px-6 pb-6 pt-7 text-center text-white shadow-sm">
-        <div className="absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-black/45 to-transparent" />
-        <div className="relative z-10">
-        <div className="relative inline-block mb-3 group">
-          <div 
-             className={`relative w-28 h-28 rounded-full border-4 border-white shadow-xl overflow-hidden ${isOwnProfile ? 'cursor-pointer' : ''}`}
-             style={{ borderColor: "white" }}
-             onClick={() => isOwnProfile && fileInputRef.current?.click()}
-             role={isOwnProfile ? "button" : undefined}
-             aria-label={isOwnProfile ? "Change profile photo" : undefined}
-          >
-            <img
-              src={avatarSrc}
-              alt=""
-              className={`w-full h-full object-cover transition-opacity ${uploadingAvatar ? 'opacity-50' : 'opacity-100'}`}
-            />
-            {isOwnProfile && (
-                <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                    {uploadingAvatar ? (
-                       <Loader2 className="w-6 h-6 text-white animate-spin" />
-                    ) : (
-                       <Camera className="w-6 h-6 text-white" />
-                    )}
-                </div>
-            )}
-          </div>
-          {isOwnProfile && (
-             <input type="file" ref={fileInputRef} onChange={handleAvatarSelect} accept="image/*" className="hidden" />
-          )}
-          {/* <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 bg-quizup-dark rounded-full px-3 py-0.5">
-            <span className="text-[10px] font-bold text-quizup-gold">LVL {p.level}</span>
-          </div> */}
-        </div>
-        <h2 className="font-display font-extrabold text-2xl text-white drop-shadow">
-          {p.displayName || p.username}
-        </h2>
-        {/* <p className="text-sm text-slate-500 mt-1">{p.bio || "No bio yet"}</p>
-        <p className="text-xs text-slate-400 mt-1">🌍 {p.country}</p> */}
-
-        {/* League */}
-        <div className="mt-4 flex items-center justify-center gap-3">
-          <img
-            src={league.badgeUrl}
-            alt=""
-            className="w-10 h-10 object-contain drop-shadow-sm"
-            loading="lazy"
-          />
-          <div className="text-left">
-            <p className="text-[11px] text-white/70 font-semibold uppercase tracking-wider">League</p>
-            <p className="text-sm font-display font-extrabold text-white leading-tight">
-              {league.name}
-            </p>
-          </div>
-        </div>
-        </div>
-      </div>
-
-      {/* XP Bar */}
-      <div className="bg-white border-y border-[#dddddd] px-6 py-4 shadow-sm">
-        <div className="flex justify-between text-xs font-semibold text-slate-500 mb-2">
-          <span>Level {p.level}</span>
-          <span>{p.xp} / {p.xpToNextLevel} XP</span>
-        </div>
-        <div className="w-full h-2.5 bg-slate-100 rounded-full overflow-hidden">
-          <div
-            className="h-full quizup-header-purple rounded-full transition-all duration-700"
-            style={{ width: `${xpPercent}%` }}
-          />
-        </div>
-      </div>
-
-      {/* Stats */}
-      <div className="bg-white flex divide-x divide-[#dddddd] border-y border-[#dddddd] shadow-sm mt-2">
-        {[
-          { label: "MATCHES", value: p.totalMatches, color: "text-blue-600" },
-          { label: "WINS", value: p.wins, color: "text-green-600" },
-          { label: "LOSSES", value: p.losses, color: "text-red-600" },
-          { label: "STREAK", value: p.winStreak, color: "text-orange-600" },
-        ].map(({ label, value, color }) => (
-          <div key={label} className="flex-1 py-4 text-center">
-            <p className={`text-xl font-display font-extrabold ${color}`}>{value}</p>
-            <p className="text-[10px] text-slate-400 font-medium tracking-wider uppercase mt-1">{label}</p>
-          </div>
-        ))}
-      </div>
-
-      {/* Social counts */}
-      <div className="bg-white border-b border-[#dddddd] flex divide-x divide-[#dddddd] shadow-sm">
-        <div className="flex-1 py-4 text-center">
-          <p className="text-lg font-display font-bold text-slate-900">{p.followers}</p>
-          <p className="text-[10px] text-slate-400 font-medium uppercase mt-1">Followers</p>
-        </div>
-        <div className="flex-1 py-4 text-center">
-          <p className="text-lg font-display font-bold text-slate-900">{p.following}</p>
-          <p className="text-[10px] text-slate-400 font-medium uppercase mt-1">Following</p>
-        </div>
-      </div>
-
-      {/* Action row: follow / chat / challenge */}
-      <div className="px-4 py-4 flex gap-2">
-        {isOwnProfile ? (
-          /* Own profile — just Play button */
-          <button
-            onClick={() => navigate("/categories")}
-            className="flex-1 h-14 rounded-2xl btn-gradient-purple text-white shadow-lg font-bold text-[15px] flex items-center justify-center gap-2"
-          >
-            ⚡ Play Now
-          </button>
-        ) : (
-          <>
-            {/* Follow / Unfollow */}
-            <button
-              onClick={handleFollow}
-              disabled={followLoading}
-              className={`flex-1 h-11 rounded-xl font-semibold text-sm flex items-center justify-center gap-2 transition-all shadow-sm ${
-                isFollowing
-                  ? "bg-slate-100 text-slate-700 border border-slate-200"
-                  : "quizup-header-purple text-white shadow-md"
-              }`}
-            >
-              {followLoading ? (
-                <Loader2 className="w-4 h-4 animate-spin" />
-              ) : isFollowing ? (
+      <section className="relative overflow-hidden bg-[#222] text-white">
+        <div className="absolute inset-0 bg-cover bg-center opacity-70" style={{ backgroundImage: "url('/images/default_banner.png')" }} />
+        <div className="absolute inset-0 bg-gradient-to-b from-black/20 via-black/35 to-black/70" />
+        <div className="relative px-6 pb-5 pt-5">
+          <div className="flex items-center gap-4">
+            <div className="relative shrink-0">
+              <button
+                type="button"
+                onClick={() => isOwnProfile && fileInputRef.current?.click()}
+                className={`h-24 w-24 overflow-hidden rounded-full border-[4px] border-white bg-white shadow-xl ${isOwnProfile ? "cursor-pointer" : ""}`}
+                aria-label={isOwnProfile ? "Change profile photo" : undefined}
+              >
+                <img src={avatarSrc} alt="" className={`h-full w-full object-cover ${uploadingAvatar ? "opacity-50" : ""}`} />
+              </button>
+              {isOwnProfile && (
                 <>
-                  <UserCheck className="w-4 h-4" />
-                  Following
-                </>
-              ) : (
-                <>
-                  <UserPlus className="w-4 h-4" />
-                  Follow
+                  <button
+                    type="button"
+                    onClick={() => fileInputRef.current?.click()}
+                    className="absolute bottom-0 right-0 flex h-8 w-8 items-center justify-center rounded-full border-2 border-white bg-[#f65357] shadow-lg"
+                    aria-label="Change profile photo"
+                  >
+                    {uploadingAvatar ? <Loader2 className="h-4 w-4 animate-spin" /> : <Camera className="h-4 w-4" />}
+                  </button>
+                  <input type="file" ref={fileInputRef} onChange={handleAvatarSelect} accept="image/*" className="hidden" />
                 </>
               )}
-            </button>
+            </div>
 
-            {/* Chat */}
-            <button
-              onClick={() => navigate(`/chat/${p.id}`)}
-              className="flex-1 h-11 rounded-xl bg-white text-slate-700 font-semibold text-sm border border-slate-200 shadow-sm flex items-center justify-center gap-2"
-            >
-              <MessageCircle className="w-4 h-4" />
-              Chat
-            </button>
+            <div className="min-w-0 flex-1">
+              <div className="flex items-center gap-2">
+                <h2 className="truncate font-display text-2xl font-black leading-tight drop-shadow">
+                  {p.displayName || p.username}
+                </h2>
+                <span className="h-2 w-2 rounded-full bg-[#20c997]" />
+                <span className="ml-auto font-display text-2xl font-light text-white/85">{p.level}</span>
+              </div>
+              {/* <p className="mt-0.5 text-sm font-semibold text-white/75">{playerRankLabel(p.level)}</p>
+              <p className="mt-1 flex items-center gap-1 text-sm font-bold text-white/85">
+                <Globe2 className="h-3.5 w-3.5" />
+                {p.country || "Country not set"}
+              </p> */}
+              <div className="mt-3 flex items-center gap-2">
+                <img src={league.badgeUrl} alt="" className="h-8 w-8 object-contain drop-shadow" />
+                <span className="text-xs font-black uppercase tracking-wide text-white/85">{league.name}</span>
+              </div>
+            </div>
+          </div>
 
-            {/* Challenge */}
-            <button
-              onClick={handleChallenge}
-              disabled={challengeSending}
-              className="flex-1 h-12 rounded-2xl btn-gradient-red text-white shadow-lg font-semibold text-sm flex items-center justify-center gap-2 disabled:opacity-60"
-            >
-              {challengeSending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Swords className="w-4 h-4" />}
-              Challenge
-            </button>
-          </>
+          <div className="mt-5 grid grid-cols-3 divide-x divide-white/25 border-t border-white/10 pt-3 text-center">
+            {[
+              { label: "Games", value: p.totalMatches ?? 0 },
+              { label: "Followers", value: p.followers ?? 0 },
+              { label: "Following", value: p.following ?? 0 },
+            ].map((stat) => (
+              <div key={stat.label}>
+                <p className="text-[10px] font-black uppercase tracking-widest text-white/45">{stat.label}</p>
+                <p className="font-display text-4xl font-light leading-none drop-shadow">{stat.value}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <div className="quizup-section px-4 py-3">
+        <div className="grid grid-cols-2 gap-3">
+          <button
+            onClick={isOwnProfile ? () => navigate("/leaderboard") : handleFollow}
+            disabled={!isOwnProfile && followLoading}
+            className={`flex h-12 items-center justify-center gap-2 rounded-lg text-sm font-black shadow-sm transition active:scale-[0.98] ${
+              !isOwnProfile && isFollowing
+                ? "border border-[#dddddd] bg-white text-slate-700"
+                : "bg-[#f65357] text-white"
+            }`}
+          >
+            {!isOwnProfile && followLoading ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : !isOwnProfile && isFollowing ? (
+              <UserCheck className="h-4 w-4" />
+            ) : (
+              <UserPlus className="h-4 w-4" />
+            )}
+            {!isOwnProfile && isFollowing ? "Following" : "Follow"}
+          </button>
+          <button
+            onClick={isOwnProfile ? () => navigate("/categories") : handleChallenge}
+            disabled={!isOwnProfile && challengeSending}
+            className="flex h-12 items-center justify-center gap-2 rounded-lg bg-[#080808] text-sm font-black text-white shadow-sm transition active:scale-[0.98] disabled:opacity-60"
+          >
+            {challengeSending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Swords className="h-4 w-4" />}
+            Challenge
+          </button>
+        </div>
+        {challengeStatus && !isOwnProfile && (
+          <p className="pt-2 text-center text-xs font-bold text-slate-500">{challengeStatus}</p>
         )}
       </div>
 
-      {/* Challenge status (below actions) */}
-      {!isOwnProfile && challengeStatus && (
-        <div className="px-4 pb-2 text-center">
-          <p className="text-xs text-slate-500 font-medium">{challengeStatus}</p>
+      <section className="quizup-section px-4 py-4">
+        <h3 className="quizup-section-title mb-3">Followed Topics</h3>
+        <div className="flex gap-3 overflow-x-auto pb-1">
+          {topicsToShow.map((cat, index) => (
+            <TopicTile key={cat.id} category={cat} index={index} onClick={() => navigate(`/category/${cat.id}`)} />
+          ))}
         </div>
-      )}
+      </section>
 
-      {/* Achievements */}
-      <div className="px-4 py-4">
-        <h3 className="font-display font-bold text-slate-900 text-sm uppercase tracking-wider mb-4">
-          Achievements
-        </h3>
-        <div className="grid grid-cols-4 gap-3">
-          {displayAchievements.map((a) => (
-            <div
-              key={a.id}
-              className={`bg-white/80 backdrop-blur-sm rounded-2xl p-3 text-center border border-white shadow-sm transition-transform hover:scale-105 active:scale-95 ${
-                !a.isUnlocked ? "opacity-30 grayscale" : ""
-              }`}
-              title={a.description}
-            >
-              <div className="w-10 h-10 mx-auto bg-slate-50 rounded-full flex items-center justify-center text-xl shadow-inner mb-2">
+      <section className="quizup-section mt-2 px-4 py-4">
+        <div className="mb-3 flex items-center justify-between">
+          <h3 className="quizup-section-title">Game History</h3>
+          <button className="quizup-see-all" onClick={() => navigate("/history")}>See all</button>
+        </div>
+        <div className="flex gap-4 overflow-x-auto pb-1">
+          {recentMatches.slice(0, 5).map((match, index) => (
+            <HistoryBubble key={match.matchId} match={match} index={index} />
+          ))}
+        </div>
+      </section>
+
+      <section className="quizup-section mt-2 px-4 py-4">
+        <div className="mb-3 flex items-center justify-between">
+          <h3 className="quizup-section-title">Achievements</h3>
+          <span className="text-[10px] font-black uppercase text-zinc-400">
+            {displayAchievements.filter((a) => a.isUnlocked).length}/{displayAchievements.length}
+          </span>
+        </div>
+        <div className="flex gap-3 overflow-x-auto pb-1">
+          {displayAchievements.slice(0, 6).map((a) => (
+            <div key={a.id} className={`w-[58px] shrink-0 text-center ${!a.isUnlocked ? "opacity-35 grayscale" : ""}`} title={a.description}>
+              <span className="mx-auto flex h-12 w-12 items-center justify-center rounded-lg bg-white text-xl shadow-md border border-[#dddddd]">
                 {a.icon}
-              </div>
-              <p className="text-[9px] text-slate-800 font-bold leading-tight">{a.name}</p>
+              </span>
+              <p className="mt-1 line-clamp-2 text-[9px] font-black leading-[10px] text-[#444]">{a.name}</p>
             </div>
           ))}
         </div>
-      </div>
+      </section>
 
-      {/* Logout — own profile only */}
       {isOwnProfile && (
-        <div className="px-4 pb-6 mt-4">
-          <button
-            onClick={async () => { await logout(); navigate("/"); }}
-            className="w-full h-12 rounded-xl bg-white border border-slate-200 text-quizup-red font-semibold text-[15px] flex items-center justify-center gap-2 shadow-sm"
-          >
-            <LogOut className="w-4 h-4" />
+        <div className="grid grid-cols-2 gap-2 px-4 py-4">
+          <button onClick={() => navigate("/categories")} className="h-11 rounded-lg bg-[#f65357] text-sm font-black text-white shadow-md">
+            Play Now
+          </button>
+          <button onClick={async () => { await logout(); navigate("/"); }} className="h-11 rounded-lg border border-[#dddddd] bg-white text-sm font-black text-[#f65357] shadow-sm">
             Log Out
           </button>
         </div>
       )}
 
-      {/* Chat is a dedicated page now: /chat/:peerId */}
-      {!isOwnProfile && challengeModalOpen && (
+      {challengeModalOpen && !isOwnProfile && (
         <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/40 sm:items-center backdrop-blur-sm">
           <div className="w-full max-w-md bg-white rounded-t-3xl sm:rounded-3xl overflow-hidden shadow-2xl">
             <div className="px-5 py-4 border-b border-slate-100 flex items-center justify-between">
@@ -496,7 +535,7 @@ const ProfilePage: React.FC = () => {
                 className="w-8 h-8 flex items-center justify-center rounded-full bg-slate-100 text-slate-500 hover:bg-slate-200 transition-colors"
                 onClick={() => setChallengeModalOpen(false)}
               >
-                ✕
+                x
               </button>
             </div>
 

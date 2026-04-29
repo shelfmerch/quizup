@@ -127,7 +127,7 @@
   }
 
   .quizup-blackbar {
-    @apply sticky top-0 z-50 h-12 bg-[#050505] text-white flex items-center justify-between px-4;
+    @apply sticky top-0 z-50 h-12 bg-[#f65357] text-white flex items-center justify-between px-4;
   }
 
   .quizup-section {

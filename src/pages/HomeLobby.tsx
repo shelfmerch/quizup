@@ -136,7 +136,7 @@ const HomeLobby: React.FC = () => {
           <Settings className="h-5 w-5" />
         </button>
         <button onClick={() => navigate("/profile")} className="flex items-center gap-2">
-          <img src={avatarSrc} alt="" className="h-8 w-8 rounded-full border-2 border-white object-cover" />
+          {/* <img src={avatarSrc} alt="" className="h-8 w-8 rounded-full border-2 border-white object-cover" /> */}
           <span className="font-display text-[17px] font-extrabold">QuizUp</span>
         </button>
         <div className="flex items-center gap-3">
@@ -221,7 +221,7 @@ const HomeLobby: React.FC = () => {
 
           <Section title="Invite & Play with friends!" onSeeAll={() => navigate("/leaderboard")}>
             <div className="flex gap-4 overflow-x-auto">
-              {entries.slice(0, 6).map((entry) => (
+              {entries.slice(0, 5).map((entry) => (
                 <button
                   key={entry.userId}
                   type="button"
