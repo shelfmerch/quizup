@@ -280,7 +280,7 @@ const ProfilePage: React.FC = () => {
       </div>
 
       {/* Avatar + info */}
-      <div className="bg-white px-6 py-8 text-center shadow-sm">
+      <div className="bg-white/80 backdrop-blur-md border-b border-slate-100 px-6 py-8 text-center shadow-sm">
         <div className="relative inline-block mb-3 group">
           <div 
              className={`relative w-36 h-36 rounded-full border-4 border-white shadow-lg overflow-hidden ${isOwnProfile ? 'cursor-pointer' : ''}`}
@@ -314,8 +314,8 @@ const ProfilePage: React.FC = () => {
         <h2 className="font-display font-extrabold text-2xl text-slate-900">
           {p.displayName || p.username}
         </h2>
-        <p className="text-sm text-slate-500 mt-1">{p.bio || "No bio yet"}</p>
-        <p className="text-xs text-slate-400 mt-1">🌍 {p.country}</p>
+        {/* <p className="text-sm text-slate-500 mt-1">{p.bio || "No bio yet"}</p>
+        <p className="text-xs text-slate-400 mt-1">🌍 {p.country}</p> */}
 
         {/* League */}
         <div className="mt-4 flex items-center justify-center gap-3">
@@ -349,15 +349,15 @@ const ProfilePage: React.FC = () => {
       </div>
 
       {/* Stats */}
-      <div className="bg-white border-t border-slate-100 flex divide-x divide-slate-100 shadow-sm mt-2">
+      <div className="bg-white/80 backdrop-blur-md border-t border-slate-100 flex divide-x divide-slate-100 shadow-sm mt-2">
         {[
-          { label: "MATCHES", value: p.totalMatches },
-          { label: "WINS", value: p.wins },
-          { label: "LOSSES", value: p.losses },
-          { label: "STREAK", value: p.winStreak },
-        ].map(({ label, value }) => (
+          { label: "MATCHES", value: p.totalMatches, color: "text-blue-600" },
+          { label: "WINS", value: p.wins, color: "text-green-600" },
+          { label: "LOSSES", value: p.losses, color: "text-red-600" },
+          { label: "STREAK", value: p.winStreak, color: "text-orange-600" },
+        ].map(({ label, value, color }) => (
           <div key={label} className="flex-1 py-4 text-center">
-            <p className="text-xl font-display font-extrabold text-slate-900">{value}</p>
+            <p className={`text-xl font-display font-extrabold ${color}`}>{value}</p>
             <p className="text-[10px] text-slate-400 font-medium tracking-wider uppercase mt-1">{label}</p>
           </div>
         ))}
@@ -381,7 +381,7 @@ const ProfilePage: React.FC = () => {
           /* Own profile — just Play button */
           <button
             onClick={() => navigate("/categories")}
-            className="flex-1 h-12 rounded-xl quizup-header-purple text-white shadow-md font-bold text-[15px] flex items-center justify-center gap-2"
+            className="flex-1 h-14 rounded-2xl btn-gradient-purple text-white shadow-lg font-bold text-[15px] flex items-center justify-center gap-2"
           >
             ⚡ Play Now
           </button>
@@ -425,7 +425,7 @@ const ProfilePage: React.FC = () => {
             <button
               onClick={handleChallenge}
               disabled={challengeSending}
-              className="flex-1 h-11 rounded-xl quizup-header-red text-white shadow-md font-semibold text-sm flex items-center justify-center gap-2 disabled:opacity-60"
+              className="flex-1 h-12 rounded-2xl btn-gradient-red text-white shadow-lg font-semibold text-sm flex items-center justify-center gap-2 disabled:opacity-60"
             >
               {challengeSending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Swords className="w-4 h-4" />}
               Challenge
@@ -446,17 +446,19 @@ const ProfilePage: React.FC = () => {
         <h3 className="font-display font-bold text-slate-900 text-sm uppercase tracking-wider mb-4">
           Achievements
         </h3>
-        <div className="grid grid-cols-4 gap-2">
+        <div className="grid grid-cols-4 gap-3">
           {displayAchievements.map((a) => (
             <div
               key={a.id}
-              className={`bg-white rounded-xl p-3 text-center border border-slate-100 shadow-sm ${
-                !a.isUnlocked ? "opacity-40 grayscale" : ""
+              className={`bg-white/80 backdrop-blur-sm rounded-2xl p-3 text-center border border-white shadow-sm transition-transform hover:scale-105 active:scale-95 ${
+                !a.isUnlocked ? "opacity-30 grayscale" : ""
               }`}
               title={a.description}
             >
-              <span className="text-2xl">{a.icon}</span>
-              <p className="text-[9px] text-slate-600 font-medium mt-2 leading-tight">{a.name}</p>
+              <div className="w-10 h-10 mx-auto bg-slate-50 rounded-full flex items-center justify-center text-xl shadow-inner mb-2">
+                {a.icon}
+              </div>
+              <p className="text-[9px] text-slate-800 font-bold leading-tight">{a.name}</p>
             </div>
           ))}
         </div>

@@ -23,6 +23,7 @@ const initSockets = (httpServer) => {
     "http://localhost:5173",
     "http://localhost:8080",
     "http://localhost:8081",
+    "http://locahost:8085",
     "http://127.0.0.1:5173",
     "http://127.0.0.1:8080",
     "http://127.0.0.1:8081",

@@ -82,7 +82,7 @@ function TimerProgressBar({
 
   return (
     <motion.div
-      className={`mx-3 mb-2 h-3 rounded-full bg-zinc-800/90 overflow-hidden border border-zinc-700/80 ${
+      className={`mx-3 mb-2 h-3 rounded-full bg-slate-100 overflow-hidden border border-slate-200/50 ${
         urgent ? "ring-2 ring-red-500/60 shadow-[0_0_12px_rgba(239,68,68,0.35)]" : ""
       }`}
       animate={urgent ? { opacity: [1, 0.88, 1] } : { opacity: 1 }}
@@ -123,7 +123,7 @@ function VerticalTimerBar({
   const p = Math.max(0, Math.min(100, percent));
   return (
     <div
-      className="w-2 shrink-0 rounded-full bg-zinc-800 overflow-hidden flex flex-col justify-end self-stretch my-1 h-full min-h-[240px]"
+      className="w-2 shrink-0 rounded-full bg-slate-100 overflow-hidden flex flex-col justify-end self-stretch my-1 h-full min-h-[240px]"
       aria-hidden
     >
       <motion.div
@@ -347,28 +347,28 @@ const BattlePage: React.FC = () => {
 
     if (showDedicatedAchievements) {
       return (
-        <div className="h-[100dvh] overflow-hidden bg-quizup-dark text-white flex flex-col items-center justify-center max-w-md mx-auto relative animate-in fade-in duration-500">
-          <div className="absolute inset-0 bg-gradient-to-b from-quizup-gold/20 to-transparent pointer-events-none" />
+        <div className="h-[100dvh] overflow-hidden flex flex-col items-center justify-center max-w-md mx-auto relative animate-in fade-in duration-500">
+          <div className="absolute inset-0 bg-gradient-to-b from-amber-100/50 to-transparent pointer-events-none" />
           <Icons8Icon name="trophy" fallback="🏆" size={120} style="animated-fluency" />
-          <h1 className="text-3xl font-display font-extrabold tracking-tight mt-6 text-quizup-gold mb-2 text-center drop-shadow-md">
-            Achievements Unlocked!
+          <h1 className="text-4xl font-display font-black tracking-tight mt-6 text-slate-900 mb-2 text-center drop-shadow-sm">
+            Epic Unlocks!
           </h1>
           <div className="flex flex-col gap-4 mt-8 w-full px-8 relative z-10">
             {leaguePromotion && (
-              <div className="bg-quizup-card rounded-2xl p-4 border border-emerald-400/40 flex items-center gap-4 shadow-xl shadow-emerald-400/10 animate-in slide-in-from-bottom-8 duration-700">
-                <img src={leaguePromotion.to.badgeUrl} alt="" className="w-12 h-12 object-contain shrink-0 drop-shadow-sm" />
+              <div className="glass-card rounded-3xl p-5 border-emerald-200 flex items-center gap-4 shadow-xl shadow-emerald-500/10 animate-in slide-in-from-bottom-8 duration-700">
+                <img src={leaguePromotion.to.badgeUrl} alt="" className="w-14 h-14 object-contain shrink-0 drop-shadow-md" />
                 <div className="min-w-0">
-                  <p className="text-[11px] font-bold text-emerald-300 uppercase tracking-widest">League promoted</p>
-                  <p className="font-extrabold text-lg text-white truncate">
-                    {leaguePromotion.from.name} → {leaguePromotion.to.name}
+                  <p className="text-[11px] font-bold text-emerald-600 uppercase tracking-widest">League promoted</p>
+                  <p className="font-extrabold text-xl text-slate-900 truncate">
+                    {leaguePromotion.to.name}
                   </p>
                 </div>
               </div>
             )}
             {unlockedAchievements.map(ach => (
-              <div key={ach.id} className="bg-quizup-card rounded-2xl p-4 border border-quizup-gold/50 flex items-center gap-4 shadow-xl shadow-quizup-gold/20 animate-in slide-in-from-bottom-8 duration-700">
-                <span className="text-4xl">{ach.icon}</span>
-                <span className="font-bold text-lg text-white">{ach.name}</span>
+              <div key={ach.id} className="glass-card rounded-3xl p-5 border-amber-200 flex items-center gap-4 shadow-xl shadow-amber-500/10 animate-in slide-in-from-bottom-8 duration-700">
+                <span className="text-4xl drop-shadow-sm">{ach.icon}</span>
+                <span className="font-bold text-lg text-slate-900">{ach.name}</span>
               </div>
             ))}
           </div>
@@ -377,56 +377,62 @@ const BattlePage: React.FC = () => {
     }
 
     return (
-      <div className="h-[100dvh] overflow-hidden bg-quizup-dark text-white flex flex-col max-w-md mx-auto">
-        <div className="pt-8 pb-4 flex flex-col items-center flex-shrink-0 relative overflow-hidden">
-          <div className="absolute inset-0 bg-gradient-to-b from-quizup-gold/10 to-transparent pointer-events-none" />
+      <div className="h-[100dvh] overflow-hidden flex flex-col max-w-md mx-auto">
+        <div className="pt-10 pb-6 flex flex-col items-center flex-shrink-0 relative overflow-hidden">
+          <div className="absolute inset-0 bg-gradient-to-b from-white to-transparent pointer-events-none" />
           <Icons8Icon
             name={winner === "player" ? "trophy" : winner === "opponent" ? "crying" : "handshake"}
             fallback={winner === "player" ? "🏆" : winner === "opponent" ? "😢" : "🤝"}
-            size={96}
+            size={110}
             style="animated-fluency"
           />
           <h1
-            className={`text-3xl font-display font-extrabold tracking-tight mt-4 ${
-              winner === "player" ? "text-quizup-gold" : winner === "opponent" ? "text-quizup-red" : "text-zinc-300"
+            className={`text-4xl font-display font-black tracking-tight mt-6 ${
+              winner === "player" ? "text-emerald-600" : winner === "opponent" ? "text-red-600" : "text-slate-600"
             }`}
           >
-            {winner === "player" ? "Victory!" : winner === "opponent" ? "Defeat" : "Draw!"}
+            {winner === "player" ? "You Won!" : winner === "opponent" ? "Defeat" : "Draw!"}
           </h1>
         </div>
 
-        <div className="flex px-4 gap-4 pb-6 relative z-10 flex-shrink-0">
-          <div className="flex-1 rounded-2xl bg-quizup-card border-2 border-border p-4 text-center shadow-lg relative overflow-hidden">
-            {winner === "player" && <div className="absolute inset-0 bg-emerald-500/10" />}
-            <img src={state.match.player1.avatarUrl} alt="" className="w-16 h-16 rounded-full mx-auto mb-2 border-2 border-emerald-500/50" />
-            <p className="text-sm font-semibold truncate text-white relative z-10">{state.match.player1.username}</p>
-            <p className="text-3xl font-display font-extrabold text-emerald-400 mt-2 relative z-10">{state.match.player1.score}</p>
+        <div className="flex px-4 gap-4 pb-8 relative z-10 flex-shrink-0">
+          <div className="flex-1 rounded-3xl glass-card p-5 text-center relative overflow-hidden">
+            {winner === "player" && <div className="absolute inset-0 bg-emerald-500/5" />}
+            <div className="relative inline-block">
+              <img src={state.match.player1.avatarUrl} alt="" className="w-20 h-20 rounded-full mx-auto mb-3 border-4 border-white shadow-lg" />
+              {winner === "player" && <span className="absolute -top-1 -right-1 text-2xl">👑</span>}
+            </div>
+            <p className="text-sm font-black truncate text-slate-900 relative z-10">{state.match.player1.username}</p>
+            <p className="text-4xl font-display font-black text-emerald-500 mt-2 relative z-10 drop-shadow-sm">{state.match.player1.score}</p>
           </div>
-          <div className="flex-1 rounded-2xl bg-quizup-card border-2 border-border p-4 text-center shadow-lg relative overflow-hidden">
-            {winner === "opponent" && <div className="absolute inset-0 bg-red-500/10" />}
-            <img src={state.match.player2.avatarUrl} alt="" className="w-16 h-16 rounded-full mx-auto mb-2 border-2 border-red-500/50" />
-            <p className="text-sm font-semibold truncate text-white relative z-10">{state.match.player2.username}</p>
-            <p className="text-3xl font-display font-extrabold text-red-500 mt-2 relative z-10">{state.match.player2.score}</p>
+          <div className="flex-1 rounded-3xl glass-card p-5 text-center relative overflow-hidden">
+            {winner === "opponent" && <div className="absolute inset-0 bg-red-500/5" />}
+            <div className="relative inline-block">
+              <img src={state.match.player2.avatarUrl} alt="" className="w-20 h-20 rounded-full mx-auto mb-3 border-4 border-white shadow-lg" />
+              {winner === "opponent" && <span className="absolute -top-1 -right-1 text-2xl">👑</span>}
+            </div>
+            <p className="text-sm font-black truncate text-slate-900 relative z-10">{state.match.player2.username}</p>
+            <p className="text-4xl font-display font-black text-red-500 mt-2 relative z-10 drop-shadow-sm">{state.match.player2.score}</p>
           </div>
         </div>
 
         {unlockedAchievements.length > 0 && (
-          <div className="px-4 pb-4 animate-in fade-in slide-in-from-bottom-4 duration-500 flex-shrink-0 relative z-10">
-            <h2 className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest text-center mb-3">
+          <div className="px-6 pb-6 animate-in fade-in slide-in-from-bottom-4 duration-500 flex-shrink-0 relative z-10">
+            <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] text-center mb-4">
               Achievements Unlocked
-            </h2>
-            <div className="flex flex-wrap justify-center gap-2">
+            </p>
+            <div className="flex flex-wrap justify-center gap-3">
               {unlockedAchievements.map(ach => (
-                <div key={ach.id} className="bg-quizup-surface/80 rounded-xl px-4 py-2 border border-quizup-gold/30 flex items-center gap-3 shadow-md">
-                  <span className="text-2xl">{ach.icon}</span>
-                  <span className="font-semibold text-sm text-quizup-gold">{ach.name}</span>
+                <div key={ach.id} className="bg-white/90 rounded-[1.2rem] px-5 py-2.5 border border-white flex items-center gap-3 shadow-md">
+                  <span className="text-2xl drop-shadow-sm">{ach.icon}</span>
+                  <span className="font-bold text-sm text-slate-800">{ach.name}</span>
                 </div>
               ))}
             </div>
           </div>
         )}
 
-        <div className="flex-1 overflow-y-auto px-4 pb-8 flex flex-col justify-end gap-3 min-h-[160px] relative z-10">
+        <div className="flex-1 px-6 pb-10 flex flex-col justify-end gap-4 relative z-10">
           <button
             type="button"
             onClick={() => {
@@ -434,9 +440,9 @@ const BattlePage: React.FC = () => {
               stopDefeatSfx();
               navigate(`/find-match/${match.categoryId}`);
             }}
-            className="w-full h-14 rounded-xl bg-quizup-header-purple text-white font-semibold text-base active:scale-[0.98] transition-all hover:brightness-110 shadow-lg"
+            className="w-full h-16 rounded-2xl btn-gradient-purple text-white font-black text-lg shadow-xl shadow-purple-500/20"
           >
-            Rematch
+            Play Again
           </button>
           <button
             type="button"
@@ -445,9 +451,9 @@ const BattlePage: React.FC = () => {
               stopDefeatSfx();
               navigate("/home");
             }}
-            className="w-full h-14 rounded-xl bg-quizup-surface text-white font-semibold text-base border border-border transition-all hover:bg-zinc-800"
+            className="w-full h-16 rounded-2xl bg-white/80 backdrop-blur-md text-slate-700 font-bold text-lg border border-slate-200 shadow-sm"
           >
-            Back to lobby
+            Lobby
           </button>
         </div>
       </div>
@@ -457,35 +463,40 @@ const BattlePage: React.FC = () => {
   // Intro
   if (state.phase === "intro") {
     return (
-      <div className="h-[100dvh] overflow-hidden bg-black text-white flex flex-col items-center justify-center max-w-md mx-auto px-6">
-        <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="text-center w-full">
-          <div className="flex justify-between items-start gap-4 mb-10">
-            <div className="flex-1 flex gap-3 items-start text-left">
+      <div className="h-[100dvh] overflow-hidden flex flex-col items-center justify-center max-w-md mx-auto px-8">
+        <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} className="text-center w-full glass-card p-10 rounded-[3rem]">
+          <div className="flex justify-between items-center gap-4 mb-12">
+            <div className="flex-1 flex flex-col items-center gap-3">
               <img
                 src={state.match.player1.avatarUrl}
                 alt=""
-                className="w-14 h-14 rounded-full shrink-0 border border-zinc-700"
+                className="w-20 h-20 rounded-full shadow-xl border-4 border-white"
               />
               <div className="min-w-0">
-                <p className="font-semibold text-sm truncate">{state.match.player1.username}</p>
-                <p className="text-xs text-zinc-500">{playerTagline(state.match.player1)}</p>
+                <p className="font-black text-sm text-slate-900 truncate">{state.match.player1.username}</p>
+                <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">{playerTagline(state.match.player1)}</p>
               </div>
             </div>
-            <div className="flex-1 flex gap-3 items-start flex-row-reverse text-right">
+            
+            <div className="px-4">
+              <span className="text-2xl font-display font-black text-slate-300">VS</span>
+            </div>
+
+            <div className="flex-1 flex flex-col items-center gap-3">
               <img
                 src={state.match.player2.avatarUrl}
                 alt=""
-                className="w-14 h-14 rounded-full shrink-0 border border-zinc-700"
+                className="w-20 h-20 rounded-full shadow-xl border-4 border-white"
               />
               <div className="min-w-0">
-                <p className="font-semibold text-sm truncate">{state.match.player2.username}</p>
-                <p className="text-xs text-zinc-500">{playerTagline(state.match.player2)}</p>
+                <p className="font-black text-sm text-slate-900 truncate">{state.match.player2.username}</p>
+                <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">{playerTagline(state.match.player2)}</p>
               </div>
             </div>
           </div>
-          <p className="text-2xl font-bold tracking-tight">Get ready!</p>
-          <p className="text-zinc-500 text-sm mt-2">
-            {state.match.categoryName} · {state.match.totalRounds} questions
+          <p className="text-3xl font-display font-black tracking-tight text-slate-900">Get Ready!</p>
+          <p className="text-slate-500 font-bold text-sm mt-3 px-4">
+             {state.match.categoryName} · {state.match.totalRounds} rounds
           </p>
         </motion.div>
       </div>
@@ -504,23 +515,23 @@ const BattlePage: React.FC = () => {
   const p2 = state.match.player2;
 
   return (
-    <div className="h-[100dvh] overflow-hidden bg-black text-white flex flex-col max-w-md mx-auto font-sans">
+    <div className="h-[100dvh] overflow-hidden flex flex-col max-w-md mx-auto font-sans">
       {/* 1v1 header — names, taglines, colored scores */}
-      <header className="flex px-3 pt-4 pb-3 gap-2 border-b border-zinc-900">
-        <div className="flex-1 flex gap-2.5 items-start min-w-0">
-          <img src={p1.avatarUrl} alt="" className="w-12 h-12 rounded-full shrink-0 border border-zinc-700 object-cover" />
+      <header className="flex px-4 pt-4 pb-3 gap-3 border-b border-slate-100 bg-white/80 backdrop-blur-md">
+        <div className="flex-1 flex gap-3 items-start min-w-0">
+          <img src={p1.avatarUrl} alt="" className="w-14 h-14 rounded-full shrink-0 border-2 border-white shadow-md object-cover" />
           <div className="min-w-0 flex-1">
-            <p className="font-semibold text-[15px] leading-tight truncate text-white">{p1.username}</p>
-            <p className="text-xs text-zinc-500 mt-0.5">{playerTagline(p1)}</p>
-            <p className="text-[28px] font-bold text-emerald-500 leading-none mt-1.5 tabular-nums">{p1.score}</p>
+            <p className="font-black text-[15px] leading-tight truncate text-slate-900">{p1.username}</p>
+            <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider mt-0.5">{playerTagline(p1)}</p>
+            <p className="text-3xl font-display font-black text-emerald-500 leading-none mt-2 tabular-nums drop-shadow-sm">{p1.score}</p>
           </div>
         </div>
-        <div className="flex-1 flex gap-2.5 items-start flex-row-reverse min-w-0 text-right">
-          <img src={p2.avatarUrl} alt="" className="w-12 h-12 rounded-full shrink-0 border border-zinc-700 object-cover" />
+        <div className="flex-1 flex gap-3 items-start flex-row-reverse min-w-0 text-right">
+          <img src={p2.avatarUrl} alt="" className="w-14 h-14 rounded-full shrink-0 border-2 border-white shadow-md object-cover" />
           <div className="min-w-0 flex-1">
-            <p className="font-semibold text-[15px] leading-tight truncate text-white">{p2.username}</p>
-            <p className="text-xs text-zinc-500 mt-0.5">{playerTagline(p2)}</p>
-            <p className="text-[28px] font-bold text-red-500 leading-none mt-1.5 tabular-nums">{p2.score}</p>
+            <p className="font-black text-[15px] leading-tight truncate text-slate-900">{p2.username}</p>
+            <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider mt-0.5">{playerTagline(p2)}</p>
+            <p className="text-3xl font-display font-black text-red-500 leading-none mt-2 tabular-nums drop-shadow-sm">{p2.score}</p>
           </div>
         </div>
       </header>
@@ -536,10 +547,10 @@ const BattlePage: React.FC = () => {
         <VerticalTimerBar percent={timerPercent} variant="you" urgent={urgent} />
 
         <div className="flex-1 flex flex-col min-w-0 px-2 overflow-y-auto">
-          <p className="text-[10px] text-zinc-500 text-center uppercase tracking-widest mb-3">
-            Question {state.currentQuestionIndex + 1} of {state.match.totalRounds}
+          <p className="text-[10px] text-slate-400 text-center uppercase tracking-[0.2em] mb-4 mt-2 font-black">
+            Round {state.currentQuestionIndex + 1} / {state.match.totalRounds}
             {!isRevealed && (
-              <span className="text-zinc-600 normal-case tracking-normal">
+              <span className="text-slate-300 normal-case tracking-normal font-bold">
                 {" "}
                 · <span className="tabular-nums">{state.timeRemaining}</span>s
               </span>
@@ -556,11 +567,11 @@ const BattlePage: React.FC = () => {
               className="flex flex-col flex-1"
             >
               {/* Question text first, then image (screenshot order) */}
-              <p className="text-center text-[17px] font-medium leading-snug text-white px-1 mb-4">{question.text}</p>
+              <p className="text-center text-xl font-bold leading-snug text-slate-900 px-2 mb-6 tracking-tight">{question.text}</p>
 
               {questionImageSrc ? (
-                <div className="w-full rounded-2xl overflow-hidden bg-zinc-900 border border-zinc-800 mb-4">
-                  <img src={questionImageSrc} alt="" className="w-full max-h-52 object-contain mx-auto" />
+                <div className="w-full rounded-[2.5rem] overflow-hidden bg-white shadow-xl border border-slate-100 mb-8 p-2">
+                  <img src={questionImageSrc} alt="" className="w-full max-h-60 rounded-[2rem] object-cover mx-auto" />
                 </div>
               ) : null}
 
@@ -572,27 +583,27 @@ const BattlePage: React.FC = () => {
                   const showResult = isRevealed;
 
                   let tile =
-                    "bg-zinc-200 text-zinc-900 hover:bg-white active:scale-[0.98] border border-zinc-300/80";
+                    "bg-white text-slate-800 border-2 border-slate-100 shadow-md hover:border-slate-300 active:scale-[0.98] active:bg-slate-50";
                   if (showResult && isCorrect) {
-                    tile = "bg-emerald-200 text-emerald-950 border-2 border-emerald-500";
+                    tile = "bg-emerald-500 text-white border-none shadow-lg shadow-emerald-500/20";
                   } else if (showResult && isSelected && !isCorrect) {
-                    tile = "bg-red-200 text-red-950 border-2 border-red-500";
+                    tile = "bg-red-500 text-white border-none shadow-lg shadow-red-500/20";
                   } else if (showResult && !isCorrect) {
-                    tile = "bg-zinc-700/50 text-zinc-400 border border-zinc-600";
+                    tile = "bg-slate-50 text-slate-300 border-slate-100 opacity-60";
                   } else if (isSelected && !showResult) {
-                    tile = "bg-white text-black ring-2 ring-emerald-500 ring-offset-2 ring-offset-black border border-zinc-300";
+                    tile = "bg-purple-600 text-white border-none ring-4 ring-purple-100 shadow-lg shadow-purple-500/20";
                   }
 
                   return (
                     <motion.button
                       key={idx}
                       type="button"
-                      whileTap={!isRevealed && state.playerAnswer === null ? { scale: 0.97 } : {}}
+                      whileTap={!isRevealed && state.playerAnswer === null ? { scale: 0.95 } : {}}
                       onClick={() => !isRevealed && state.playerAnswer === null && submitAnswer(idx)}
                       disabled={isRevealed || state.playerAnswer !== null}
-                      className={`rounded-xl min-h-[56px] px-3 flex items-center justify-center text-center transition-colors ${tile} disabled:opacity-90`}
+                      className={`rounded-2xl min-h-[64px] px-4 flex items-center justify-center text-center transition-all duration-300 ${tile} disabled:opacity-100`}
                     >
-                      <span className="text-sm font-semibold leading-tight">{option}</span>
+                      <span className="text-[15px] font-black leading-tight tracking-tight">{option}</span>
                     </motion.button>
                   );
                 })}
@@ -601,16 +612,16 @@ const BattlePage: React.FC = () => {
               {isRevealed && showManualNext && (
                 <motion.button
                   type="button"
-                  initial={{ opacity: 0, y: 8 }}
+                  initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
                   onClick={proceedToNext}
-                  className="w-full h-12 rounded-xl bg-zinc-100 text-black font-semibold text-sm mt-3"
+                  className="w-full h-14 rounded-2xl btn-gradient-purple text-white font-black text-sm mt-6 shadow-xl"
                 >
-                  {state.currentQuestionIndex + 1 >= state.match.totalRounds ? "See results" : "Next question"}
+                  {state.currentQuestionIndex + 1 >= state.match.totalRounds ? "FINISH MATCH" : "NEXT ROUND"}
                 </motion.button>
               )}
               {isRevealed && !showManualNext && (
-                <p className="text-center text-zinc-500 text-sm mt-3">Next round starting…</p>
+                <p className="text-center text-slate-400 font-bold text-xs mt-6 tracking-widest uppercase animate-pulse">Waiting for opponent…</p>
               )}
             </motion.div>
           </AnimatePresence>

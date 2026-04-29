@@ -137,32 +137,32 @@ const CategoryDetail: React.FC = () => {
 
   if (!category) {
     return (
-      <div className="min-h-screen bg-zinc-950 flex items-center justify-center text-zinc-500">
+      <div className="min-h-screen flex items-center justify-center text-slate-400">
         Loading…
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-[#111] text-white flex flex-col max-w-md mx-auto">
+    <div className="min-h-screen flex flex-col max-w-md mx-auto">
       {/* ── Header Bar ───────────────────────────────────────────────────────── */}
-      <div className={`${theme.header} px-4 py-3 flex items-center justify-between shrink-0`}>
+      <div className={`${theme.header} px-4 py-3 flex items-center justify-between shrink-0 shadow-sm sticky top-0 z-50`}>
         <button
           type="button"
           onClick={() => navigate(-1)}
-          className="text-foreground p-1 -ml-1 rounded-full active:bg-black/10"
+          className="text-white p-1 -ml-1 rounded-full active:bg-black/10"
           aria-label="Go back"
         >
           <ArrowLeft className="w-5 h-5" />
         </button>
-        <h1 className="font-display font-bold text-foreground text-base tracking-tight">
+        <h1 className="font-display font-bold text-white text-base tracking-tight">
           {category.name}
         </h1>
         <div className="w-6" /> {/* spacer */}
       </div>
 
       {/* ── Hero: Icon + Action Buttons ──────────────────────────────────────── */}
-      <div className="bg-zinc-900 px-5 pt-7 pb-6">
+      <div className="bg-white px-5 pt-7 pb-6 shadow-sm">
         <div className="flex items-center gap-5">
           {/* Big icon circle */}
           <motion.div
@@ -220,11 +220,11 @@ const CategoryDetail: React.FC = () => {
                   setFollowBusy(false);
                 }
               }}
-              className={`flex items-center gap-2 px-4 py-2.5 rounded-full text-sm font-semibold border active:bg-zinc-700 ${
-                isAuthenticated ? "bg-zinc-800 text-white border-zinc-700" : "bg-zinc-900 text-zinc-500 border-zinc-800"
+              className={`flex items-center gap-2 px-4 py-2.5 rounded-full text-sm font-semibold border active:bg-slate-100 ${
+                isAuthenticated ? "bg-white text-slate-700 border-slate-200" : "bg-slate-50 text-slate-400 border-slate-100"
               } ${followBusy ? "opacity-60" : ""}`}
             >
-              <Star className={`w-4 h-4 ${isFollowed ? "text-amber-400 fill-amber-400" : "text-zinc-200"}`} />
+              <Star className={`w-4 h-4 ${isFollowed ? "text-amber-400 fill-amber-400" : "text-slate-300"}`} />
               {isFollowed ? "Following" : "Follow"}
             </motion.button>
 
@@ -235,9 +235,9 @@ const CategoryDetail: React.FC = () => {
               transition={{ delay: 0.15 }}
               whileTap={{ scale: 0.96 }}
               onClick={() => navigate(`/leaderboard`)}
-              className="flex items-center gap-2 px-4 py-2.5 rounded-full text-sm font-semibold bg-zinc-800 text-white border border-zinc-700 active:bg-zinc-700"
+              className="flex items-center gap-2 px-4 py-2.5 rounded-full text-sm font-semibold bg-white text-slate-700 border border-slate-200 active:bg-slate-50"
             >
-              <Trophy className="w-4 h-4 text-yellow-400" />
+              <Trophy className="w-4 h-4 text-amber-500" />
               Rankings
             </motion.button>
           </div>
@@ -245,21 +245,21 @@ const CategoryDetail: React.FC = () => {
 
         {/* Category title + description under the row */}
         <div className="mt-5">
-          <p className="font-display font-extrabold text-white text-xl tracking-tight">
+          <p className="font-display font-extrabold text-slate-900 text-xl tracking-tight">
             {category.name}
           </p>
           {category.description && (
-            <p className="text-zinc-400 text-sm mt-0.5">{category.description}</p>
+            <p className="text-slate-500 text-sm mt-0.5">{category.description}</p>
           )}
         </div>
       </div>
 
       {/* ── Questions Completed Progress ──────────────────────────────────────── */}
-      <div className="bg-zinc-900/70 border-t border-zinc-800 px-5 py-4">
-        <p className="text-[10px] uppercase tracking-widest text-zinc-500 font-semibold mb-2">
+      <div className="bg-white/60 border-t border-slate-100 px-5 py-4">
+        <p className="text-[10px] uppercase tracking-widest text-slate-400 font-semibold mb-2">
           Questions Completed
         </p>
-        <div className="h-2.5 rounded-full bg-zinc-800 overflow-hidden">
+        <div className="h-2.5 rounded-full bg-slate-100 overflow-hidden">
           <div
             className="h-full rounded-full"
             style={{
@@ -268,33 +268,33 @@ const CategoryDetail: React.FC = () => {
             }}
           />
         </div>
-        <p className="text-[10px] text-zinc-600 mt-1">0%</p>
+        <p className="text-[10px] text-slate-400 mt-1">0%</p>
       </div>
 
       {/* ── Stats Row ─────────────────────────────────────────────────────────── */}
-      <div className="bg-zinc-900 border-t border-zinc-800">
-        <div className="flex items-center divide-x divide-zinc-800">
+      <div className="bg-white border-t border-slate-100">
+        <div className="flex items-center divide-x divide-slate-100">
           <div className="flex-1 py-4 text-center">
-            <p className="text-[9px] text-zinc-500 uppercase tracking-wider mb-1">
+            <p className="text-[9px] text-slate-400 uppercase tracking-wider mb-1">
               Your Level
             </p>
-            <p className="text-2xl font-display font-extrabold text-white leading-none">
+            <p className="text-2xl font-display font-extrabold text-slate-900 leading-none">
               {user?.level ?? 1}
             </p>
           </div>
           <div className="flex-1 py-4 text-center">
-            <p className="text-[9px] text-zinc-500 uppercase tracking-wider mb-1">
+            <p className="text-[9px] text-slate-400 uppercase tracking-wider mb-1">
               Followers
             </p>
-            <p className="text-2xl font-display font-extrabold text-white leading-none">
+            <p className="text-2xl font-display font-extrabold text-slate-900 leading-none">
               {mockFollowers.toLocaleString()}
             </p>
           </div>
           <div className="flex-1 py-4 text-center">
-            <p className="text-[9px] text-zinc-500 uppercase tracking-wider mb-1">
+            <p className="text-[9px] text-slate-400 uppercase tracking-wider mb-1">
               Question Count
             </p>
-            <p className="text-2xl font-display font-extrabold text-white leading-none">
+            <p className="text-2xl font-display font-extrabold text-slate-900 leading-none">
               {category.questionCount}
             </p>
           </div>
@@ -303,8 +303,8 @@ const CategoryDetail: React.FC = () => {
       {/* ── Top 5 Players ─────────────────────────────────────────────────────── */}
       <div className="flex-1 px-4 pt-5 pb-28">
         <div className="flex items-center gap-2 mb-3">
-          <Trophy className="w-4 h-4 text-yellow-400" />
-          <h2 className="font-display font-bold text-white text-sm uppercase tracking-wider">
+          <Trophy className="w-4 h-4 text-amber-500" />
+          <h2 className="font-display font-bold text-slate-800 text-sm uppercase tracking-wider">
             Top Players
           </h2>
         </div>
@@ -314,7 +314,7 @@ const CategoryDetail: React.FC = () => {
             {[0, 1, 2].map((i) => (
               <div
                 key={i}
-                className="h-16 rounded-2xl bg-zinc-900 border border-zinc-800 animate-pulse"
+                className="h-16 rounded-2xl bg-white border border-slate-100 animate-pulse"
               />
             ))}
           </div>
@@ -345,7 +345,7 @@ const CategoryDetail: React.FC = () => {
                 transition={{ delay: idx * 0.07 }}
                 type="button"
                 onClick={() => navigate(`/profile/${player.userId}`)}
-                className="relative w-full text-left flex items-center gap-3 bg-zinc-900 border border-zinc-800 rounded-2xl px-4 py-3 overflow-hidden hover:bg-zinc-800/60 active:scale-[0.99] transition"
+                className="relative w-full text-left flex items-center gap-3 bg-white border border-slate-100 rounded-2xl px-4 py-3 overflow-hidden shadow-sm hover:border-slate-200 active:scale-[0.99] transition"
               >
                 {/* subtle rank glow strip on left */}
                 <div
@@ -366,13 +366,13 @@ const CategoryDetail: React.FC = () => {
                     `https://api.dicebear.com/7.x/avataaars/svg?seed=${player.username}`
                   }
                   alt=""
-                  className="w-10 h-10 rounded-full bg-zinc-800 border border-zinc-700 shrink-0"
+                  className="w-10 h-10 rounded-full bg-slate-50 border border-slate-100 shrink-0"
                 />
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-semibold text-white truncate">
+                  <p className="text-sm font-semibold text-slate-900 truncate">
                     {player.username}
                   </p>
-                  <p className="text-[10px] text-zinc-500">
+                  <p className="text-[10px] text-slate-400">
                     Level {player.level} · {player.wins} wins
                   </p>
                 </div>
@@ -383,7 +383,7 @@ const CategoryDetail: React.FC = () => {
                   >
                     {player.score.toLocaleString()}
                   </p>
-                  <p className="text-[9px] text-zinc-600 uppercase tracking-wide">pts</p>
+                  <p className="text-[9px] text-slate-400 uppercase tracking-wide">pts</p>
                 </div>
               </motion.button>
             ))}

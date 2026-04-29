@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800;900&family=Inter:wght@400;500;600;700&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -6,141 +6,116 @@
 
 @layer base {
   :root {
-    --background: 220 20% 10%;
-    --foreground: 0 0% 100%;
+    --background: 0 0% 100%;
+    --foreground: 222.2 84% 4.9%;
 
-    --card: 220 18% 14%;
-    --card-foreground: 0 0% 100%;
+    --card: 0 0% 100%;
+    --card-foreground: 222.2 84% 4.9%;
 
-    --popover: 220 18% 14%;
-    --popover-foreground: 0 0% 100%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 222.2 84% 4.9%;
 
-    --primary: 160 84% 44%;
-    --primary-foreground: 0 0% 100%;
+    --primary: 221.2 83.2% 53.3%;
+    --primary-foreground: 210 40% 98%;
 
-    --secondary: 220 16% 20%;
-    --secondary-foreground: 0 0% 90%;
+    --secondary: 210 40% 96.1%;
+    --secondary-foreground: 222.2 47.4% 11.2%;
 
-    --muted: 220 14% 16%;
-    --muted-foreground: 0 0% 55%;
+    --muted: 210 40% 96.1%;
+    --muted-foreground: 215.4 16.3% 46.9%;
 
-    --accent: 38 92% 55%;
-    --accent-foreground: 0 0% 10%;
+    --accent: 210 40% 96.1%;
+    --accent-foreground: 222.2 47.4% 11.2%;
 
-    --destructive: 0 72% 55%;
-    --destructive-foreground: 0 0% 100%;
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 210 40% 98%;
 
-    --border: 220 14% 20%;
-    --input: 220 14% 20%;
-    --ring: 160 84% 44%;
+    --border: 214.3 31.8% 91.4%;
+    --input: 214.3 31.8% 91.4%;
+    --ring: 221.2 83.2% 53.3%;
 
     --radius: 0.75rem;
 
-    /* QuizUp-style colors */
-    --quizup-gray: 220 15% 40%
+    /* QuizUp Specific Colors (HSL) */
     --quizup-red: 4 78% 55%;
     --quizup-green: 152 69% 42%;
-    --quizup-teal: 174 72% 40%;
+    --quizup-teal: 174 62% 38%;
+    --quizup-blue: 214 86% 59%;
+    --quizup-purple: 269 51% 60%;
+    --quizup-orange: 21 79% 55%;
     --quizup-gold: 45 100% 51%;
-    --quizup-purple: 270 60% 50%;
-    --quizup-blue: 210 80% 55%;
-    --quizup-orange: 25 90% 55%;
-    --quizup-dark: 220 20% 8%;
-    --quizup-card: 220 18% 12%;
-    --quizup-surface: 220 16% 15%;
-
-    --sidebar-background: 220 20% 10%;
-    --sidebar-foreground: 0 0% 100%;
-    --sidebar-primary: 160 84% 44%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 220 16% 22%;
-    --sidebar-accent-foreground: 0 0% 90%;
-    --sidebar-border: 220 14% 22%;
-    --sidebar-ring: 160 84% 44%;
+    
+    --quizup-dark: 240 10% 4%;
+    --quizup-card: 240 6% 10%;
+    --quizup-surface: 240 5% 15%;
   }
-}
 
-@layer base {
   * {
     @apply border-border;
   }
 
   body {
-    @apply bg-background text-foreground font-body antialiased;
+    background: linear-gradient(135deg, #ffffff 0%, #f0f4ff 50%, #fef0ff 100%);
+    background-attachment: fixed;
+    @apply text-slate-900 font-body antialiased;
     -webkit-tap-highlight-color: transparent;
   }
 }
 
-@layer utilities {
-  .quizup-header-gray{
-    background-color: hsl(var(--quizup-gray));
+@layer components {
+  .font-display {
+    font-family: 'Outfit', sans-serif;
   }
-  .quizup-header-red {
-    background-color: hsl(var(--quizup-red));
-  }
-  .quizup-header-green {
-    background-color: hsl(var(--quizup-green));
-  }
-  .quizup-header-teal {
-    background-color: hsl(var(--quizup-teal));
-  }
-  .quizup-header-purple {
-    background-color: hsl(var(--quizup-purple));
-  }
-  .quizup-header-blue {
-    background-color: hsl(var(--quizup-blue));
-  }
-  .quizup-header-orange {
-    background-color: hsl(var(--quizup-orange));
+  
+  .font-body {
+    font-family: 'Inter', sans-serif;
   }
 
-  .quizup-answer-green {
-    background-color: hsl(var(--quizup-green));
+  .quizup-header-red { background-color: hsl(var(--quizup-red)); }
+  .quizup-header-green { background-color: hsl(var(--quizup-green)); }
+  .quizup-header-teal { background-color: hsl(var(--quizup-teal)); }
+  .quizup-header-blue { background-color: hsl(var(--quizup-blue)); }
+  .quizup-header-purple { background-color: hsl(var(--quizup-purple)); }
+  .quizup-header-orange { background-color: hsl(var(--quizup-orange)); }
+
+  .quizup-answer-red { background-color: hsl(var(--quizup-red)); }
+  .quizup-answer-green { background-color: hsl(var(--quizup-green)); }
+
+  .glass-card {
+    @apply bg-white/70 backdrop-blur-xl border border-white/40 shadow-2xl shadow-slate-200/60;
   }
-  .quizup-answer-red {
-    background-color: hsl(var(--quizup-red));
+  
+  .glass-morphism {
+    @apply bg-white/40 backdrop-blur-md border border-white/20;
   }
 
-  .text-quizup-green {
-    color: hsl(var(--quizup-green));
-  }
-  .text-quizup-red {
-    color: hsl(var(--quizup-red));
-  }
-  .text-quizup-gold {
-    color: hsl(var(--quizup-gold));
+  .gradient-text {
+    @apply bg-clip-text text-transparent bg-gradient-to-br from-purple-600 via-indigo-600 to-blue-600 font-bold;
   }
 
-  .bg-quizup-dark {
-    background-color: hsl(var(--quizup-dark));
-  }
-  .bg-quizup-card {
-    background-color: hsl(var(--quizup-card));
-  }
-  .bg-quizup-surface {
-    background-color: hsl(var(--quizup-surface));
+  .btn-gradient-purple {
+    @apply bg-gradient-to-br from-[#8b5cf6] via-[#a855f7] to-[#d946ef] text-white shadow-xl shadow-purple-500/20 hover:shadow-purple-500/40 transition-all active:scale-[0.96] hover:-translate-y-0.5;
   }
 
-  .game-gradient {
-    background: linear-gradient(135deg, hsl(var(--primary)) 0%, hsl(var(--quizup-teal)) 100%);
+  .btn-gradient-blue {
+    @apply bg-gradient-to-br from-[#3b82f6] to-[#06b6d4] text-white shadow-xl shadow-blue-500/20 hover:shadow-blue-500/40 transition-all active:scale-[0.96] hover:-translate-y-0.5;
   }
 
-  /* Home lobby "Find a Match" CTA — fallback + legacy WebKit + standard gradient */
-  .find-match-cta-gradient {
-    background: #D70652;
-    background: -webkit-linear-gradient(to right, #FF025E, #D70652);
-    background: linear-gradient(to right, #FF025E, #D70652);
+  .btn-gradient-green {
+    @apply bg-gradient-to-br from-[#10b981] to-[#059669] text-white shadow-xl shadow-green-500/20 hover:shadow-green-500/40 transition-all active:scale-[0.96] hover:-translate-y-0.5;
+  }
+
+  .btn-gradient-red {
+    @apply bg-gradient-to-br from-[#f43f5e] to-[#e11d48] text-white shadow-xl shadow-red-500/20 hover:shadow-red-500/40 transition-all active:scale-[0.96] hover:-translate-y-0.5;
+  }
+
+  .quizup-pattern {
+    background-image: 
+      radial-gradient(circle at 2px 2px, rgba(0,0,0,0.02) 1px, transparent 0);
+    background-size: 24px 24px;
   }
 
   .safe-bottom {
     padding-bottom: env(safe-area-inset-bottom, 0px);
-  }
-
-  /* QuizUp-style pattern background */
-  .quizup-pattern {
-    background-image: 
-      radial-gradient(circle at 20% 50%, hsl(var(--quizup-surface)) 1px, transparent 1px),
-      radial-gradient(circle at 80% 30%, hsl(var(--quizup-surface)) 1px, transparent 1px);
-    background-size: 30px 30px;
   }
 }

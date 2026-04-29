@@ -25,12 +25,12 @@ const Login: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-quizup-dark flex flex-col max-w-md mx-auto">
-      <div className="quizup-header-teal px-4 py-3 flex items-center gap-3">
-        <button onClick={() => navigate("/")} className="text-foreground">
+    <div className="min-h-screen flex flex-col max-w-md mx-auto">
+      <div className="quizup-header-teal px-4 py-3 flex items-center gap-3 shadow-sm">
+        <button onClick={() => navigate("/")} className="text-white">
           <ArrowLeft className="w-5 h-5" />
         </button>
-        <h1 className="font-display font-bold text-foreground text-base">Sign In</h1>
+        <h1 className="font-display font-bold text-white text-base">Sign In</h1>
       </div>
 
       <div className="flex-1 flex flex-col justify-center px-6">
@@ -60,7 +60,7 @@ const Login: React.FC = () => {
           <button
             type="submit"
             disabled={loading}
-            className="w-full h-14 rounded-lg quizup-header-green text-foreground font-display font-bold text-base disabled:opacity-50"
+            className="w-full h-14 rounded-lg quizup-header-green text-white font-display font-bold text-base disabled:opacity-50 shadow-md"
           >
             {loading ? "Signing in..." : "SIGN IN"}
           </button>

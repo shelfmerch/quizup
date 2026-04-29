@@ -56,13 +56,13 @@ const BottomNav: React.FC = () => {
               key={path}
               onClick={() => navigate(path)}
               className={`flex flex-col items-center justify-center gap-0.5 flex-1 h-full transition-all duration-200 ${
-                active ? "scale-105" : "opacity-60 hover:opacity-80"
+                active ? "scale-105" : "opacity-50 hover:opacity-80"
               }`}
             >
               {/* Color icon when active, greyscale when inactive via CSS filter */}
               <div
                 className="transition-all duration-200"
-                style={active ? {} : { filter: "grayscale(1) brightness(0.5)" }}
+                style={active ? {} : { filter: "grayscale(1) brightness(0.8)" }}
               >
                 <Icons8Icon
                   name={iconSlug}
@@ -75,7 +75,7 @@ const BottomNav: React.FC = () => {
               </div>
               <span
                 className={`text-[9px] font-semibold tracking-wider transition-colors duration-200 ${
-                  active ? "text-[hsl(var(--quizup-red))]" : "text-zinc-400"
+                  active ? "text-[hsl(var(--quizup-red))]" : "text-slate-400"
                 }`}
               >
                 {label}

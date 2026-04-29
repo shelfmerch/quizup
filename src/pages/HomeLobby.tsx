@@ -373,16 +373,16 @@ const HomeLobby: React.FC = () => {
           />
         </motion.button>
         <div className="flex-1 min-w-0 mt-1">
-          <p className={`font-display text-xs font-semibold text-zinc-900 text-center leading-tight`}>{cat.name}</p>
-          <p className={`text-[9px] text-zinc-500 text-center`}>{cat.questionCount} Qs</p>
+          <p className={`font-display text-xs font-semibold text-slate-800 text-center leading-tight`}>{cat.name}</p>
+          <p className={`text-[9px] text-slate-400 text-center`}>{cat.questionCount} Qs</p>
         </div>
       </div>
     );
   };
 
   return (
-    <div className="min-h-screen bg-[#fcf7f7]">
-      <div className="quizup-header-gray px-4 py-3 flex items-center justify-between">
+    <div className="min-h-screen">
+      <div className="bg-white/80 backdrop-blur-md sticky top-0 z-50 px-4 py-3 flex items-center justify-between border-b border-slate-100">
         <div className="flex items-center gap-2">
           <img
             src={resolveMediaUrl(
@@ -391,13 +391,13 @@ const HomeLobby: React.FC = () => {
             )}
             alt="avatar"
             onClick={() => navigate('/profile')}
-            className="w-10 h-10 rounded-full border-2 border-foreground/30 object-cover"
+            className="w-10 h-10 rounded-full border-2 border-slate-200 object-cover cursor-pointer"
           />
-          <span className="font-display font-bold text-foreground text-sm">{user?.username || "Player"}</span>
+          <span className="font-display font-bold text-slate-900 text-sm">{user?.username || "Player"}</span>
         </div>
         <div className="flex items-center gap-3">
           <button type="button">
-            <Search className="w-5 h-5 text-foreground/80" />
+            <Search className="w-5 h-5 text-slate-500" />
           </button>
           <div className="relative" ref={chatDropdownRef}>
             <button
@@ -406,20 +406,20 @@ const HomeLobby: React.FC = () => {
                 setChatUnreadOpen((o) => !o);
                 loadChatUnread();
               }}
-              className="relative p-0.5 rounded-lg hover:bg-white/10 transition-colors"
+              className="relative p-0.5 rounded-lg hover:bg-slate-100 transition-colors"
               aria-label="Chat notifications"
             >
-              <Bell className="w-5 h-5 text-foreground/80" />
+              <Bell className="w-5 h-5 text-slate-500" />
               {chatTotalUnread > 0 && (
-                <span className="absolute -top-0.5 -right-1 min-w-[18px] h-[18px] px-1 rounded-full bg-red-500 text-white text-[10px] font-bold flex items-center justify-center leading-none border border-[#121212]">
+                <span className="absolute -top-0.5 -right-1 min-w-[18px] h-[18px] px-1 rounded-full bg-red-500 text-white text-[10px] font-bold flex items-center justify-center leading-none border-2 border-white">
                   {chatTotalUnread > 99 ? "99+" : chatTotalUnread}
                 </span>
               )}
             </button>
             {chatUnreadOpen && (
-              <div className="absolute right-0 top-full mt-2 w-[min(100vw-2rem,18rem)] max-h-80 overflow-y-auto rounded-xl border border-zinc-700/90 bg-zinc-900 shadow-2xl z-[100] py-1">
+              <div className="absolute right-0 top-full mt-2 w-[min(100vw-2rem,18rem)] max-h-80 overflow-y-auto rounded-xl border border-slate-200 bg-white shadow-2xl z-[100] py-1">
                 {chatUnreadItems.length === 0 ? (
-                  <p className="text-xs text-zinc-500 px-4 py-8 text-center">No unread messages</p>
+                  <p className="text-xs text-slate-400 px-4 py-8 text-center">No unread messages</p>
                 ) : (
                   chatUnreadItems.map((item) => (
                     <button
@@ -429,7 +429,7 @@ const HomeLobby: React.FC = () => {
                         navigate(`/chat/${item.peerId}`);
                         setChatUnreadOpen(false);
                       }}
-                      className="w-full flex items-center gap-3 px-3 py-2.5 hover:bg-white/5 text-left transition-colors"
+                      className="w-full flex items-center gap-3 px-3 py-2.5 hover:bg-slate-50 text-left transition-colors"
                     >
                       <img
                         src={resolveMediaUrl(
@@ -437,13 +437,13 @@ const HomeLobby: React.FC = () => {
                           `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(item.username)}`
                         )}
                         alt=""
-                        className="w-10 h-10 rounded-full object-cover border border-zinc-600 shrink-0"
+                        className="w-10 h-10 rounded-full object-cover border border-slate-100 shrink-0"
                       />
                       <div className="min-w-0 flex-1">
-                        <p className="text-sm font-semibold text-white truncate">
+                        <p className="text-sm font-semibold text-slate-900 truncate">
                           {item.displayName || item.username}
                         </p>
-                        <p className="text-[10px] text-zinc-500">Direct message</p>
+                        <p className="text-[10px] text-slate-400">Direct message</p>
                       </div>
                       <span className="shrink-0 min-w-[22px] h-[22px] px-1.5 rounded-full bg-red-500 text-white text-xs font-bold flex items-center justify-center">
                         {item.unreadCount > 99 ? "99+" : item.unreadCount}
@@ -454,29 +454,24 @@ const HomeLobby: React.FC = () => {
               </div>
             )}
           </div>
-          {/* <button type="button" onClick={() => navigate("/settings")}>
-            <Settings className="w-5 h-5 text-foreground/80" />
-          </button> */}
         </div>
       </div>
 
       <motion.button
-        type="button"
-        whileTap={{ scale: 0.97 }}
-        whileHover={{ scale: 1.01 }}
+        whileTap={{ scale: 0.98 }}
         onClick={() => navigate("/categories")}
-        className="w-full quizup-header-red p-6 text-left relative overflow-hidden"
+        className="mx-4 mt-6 h-28 rounded-3xl btn-gradient-purple relative overflow-hidden flex items-center px-6"
       >
-        {/* animated bg pulse */}
+        <div className="absolute top-0 right-0 w-48 h-full bg-white/10 -skew-x-12 translate-x-24" />
         <motion.div
-          className="absolute inset-0 bg-white/5"
-          animate={{ opacity: [0, 0.15, 0] }}
+          className="absolute inset-0 bg-gradient-to-r from-white/20 to-transparent"
+          animate={{ x: ["-100%", "100%"] }}
           transition={{ repeat: Infinity, duration: 2.5, ease: "easeInOut" }}
         />
         <div className="relative z-10">
-          <p className="text-foreground/60 text-xs font-semibold uppercase tracking-wider mb-1">Ready to play?</p>
-          <p className="text-foreground text-2xl font-display font-extrabold">Find a Match</p>
-          <p className="text-foreground/70 text-xs mt-1">Challenge someone in real-time trivia</p>
+          <p className="text-white/70 text-xs font-semibold uppercase tracking-wider mb-1">Ready to play?</p>
+          <p className="text-white text-2xl font-display font-extrabold">Find a Match</p>
+          <p className="text-white/80 text-xs mt-1">Challenge someone in real-time trivia</p>
         </div>
         <div className="absolute right-4 top-1/2 -translate-y-1/2">
           <Icons8Icon
@@ -490,19 +485,19 @@ const HomeLobby: React.FC = () => {
         </div>
       </motion.button>
 
-      <div className="bg-zinc-900/80 border-b border-zinc-900/50">
-        <div className="flex items-center divide-x divide-zinc-800">
+      <div className="bg-white/60 backdrop-blur border-b border-slate-100">
+        <div className="flex items-center divide-x divide-slate-100">
           <div className="flex-1 py-3 text-center">
-            <p className="text-[10px] text-zinc-300 uppercase tracking-wider">Your Level</p>
-            <p className="text-xl font-display font-extrabold text-white">{user?.level || 1}</p>
+            <p className="text-[10px] text-slate-400 uppercase tracking-wider">Your Level</p>
+            <p className="text-xl font-display font-extrabold text-slate-900">{user?.level || 1}</p>
           </div>
           <div className="flex-1 py-3 text-center">
-            <p className="text-[10px] text-zinc-300 uppercase tracking-wider">Wins</p>
-            <p className="text-xl font-display font-extrabold text-white">{user?.wins || 0}</p>
+            <p className="text-[10px] text-slate-400 uppercase tracking-wider">Wins</p>
+            <p className="text-xl font-display font-extrabold text-slate-900">{user?.wins || 0}</p>
           </div>
           <div className="flex-1 py-3 text-center">
-            <p className="text-[10px] text-zinc-300 uppercase tracking-wider">Win Streak</p>
-            <p className="text-xl font-display font-extrabold text-white">{user?.winStreak || 0}🔥</p>
+            <p className="text-[10px] text-slate-400 uppercase tracking-wider">Win Streak</p>
+            <p className="text-xl font-display font-extrabold text-slate-900">{user?.winStreak || 0}🔥</p>
           </div>
         </div>
       </div>
@@ -510,15 +505,18 @@ const HomeLobby: React.FC = () => {
 
       <div className="px-4 pb-24 ">
         {(isAuthenticated || incomingChallenges.length > 0) && (
-          <div className="mt-4 mb-4 rounded-2xl border border-red-500 bg-white p-4 shadow-sm">
-            <div className="flex items-center justify-between mb-2">
-              <h2 className="font-display font-bold text-zinc-800 text-sm uppercase tracking-wider">Challenges</h2>
+          <div className="mt-6 mb-4 rounded-3xl glass-card p-5">
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-2">
+                <div className="w-1 h-5 bg-purple-500 rounded-full" />
+                <h2 className="font-display font-bold text-slate-800 text-sm uppercase tracking-wider">Challenges</h2>
+              </div>
               {incomingChallenges.length > 0 && (
                 <div className="flex items-center gap-2">
-                  <p className="text-[10px] text-zinc-500 uppercase tracking-wider">
+                  <p className="text-[10px] text-slate-400 uppercase tracking-wider">
                     {incomingChallenges.length} incoming
                   </p>
-                  <button onClick={() => navigate('/leaderboard')} className="text-white bg-green-400 rounded-2xl p-2">SEND</button>
+                  <button onClick={() => navigate('/leaderboard')} className="text-white btn-gradient-green rounded-2xl px-4 py-1.5 text-xs font-bold shadow-sm">SEND</button>
                 </div>
               )}
             </div>
@@ -532,18 +530,18 @@ const HomeLobby: React.FC = () => {
                 {incomingChallenges.length > 0 && (
                   <div className="space-y-2 mb-3">
                     {incomingChallenges.map((ch) => (
-                      <div key={ch.id} className="rounded-xl border border-zinc-200 bg-zinc-50 p-3 flex items-center gap-3">
+                      <div key={ch.id} className="rounded-xl border border-slate-50 bg-slate-50/50 p-3 flex items-center gap-3">
                         <img
                           src={resolveMediaUrl(
                             ch.from.avatarUrl,
                             `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(ch.from.username)}`
                           )}
                           alt=""
-                          className="w-10 h-10 rounded-full border border-zinc-200 object-cover shrink-0"
+                          className="w-10 h-10 rounded-full border border-slate-200 object-cover shrink-0"
                         />
                         <div className="min-w-0 flex-1">
-                          <p className="text-sm font-semibold text-zinc-900 truncate">{ch.from.username} challenged you</p>
-                          <p className="text-[10px] text-zinc-500 truncate">{ch.categoryName}</p>
+                          <p className="text-sm font-semibold text-slate-900 truncate">{ch.from.username} challenged you</p>
+                          <p className="text-[10px] text-slate-400 truncate">{ch.categoryName}</p>
                         </div>
                         <div className="flex items-center gap-2 shrink-0">
                           <button
@@ -553,7 +551,7 @@ const HomeLobby: React.FC = () => {
                                 getSocket().emit("challenge:respond", { challengeId: ch.id, action: "reject" });
                               } catch { }
                             }}
-                            className="px-3 py-1.5 rounded-lg text-xs font-semibold border border-zinc-300 text-zinc-700 hover:bg-white"
+                            className="px-3 py-1.5 rounded-lg text-xs font-semibold border border-slate-200 text-slate-500 hover:bg-slate-100"
                           >
                             Reject
                           </button>
@@ -564,7 +562,7 @@ const HomeLobby: React.FC = () => {
                                 getSocket().emit("challenge:respond", { challengeId: ch.id, action: "accept" });
                               } catch { }
                             }}
-                            className="px-3 py-1.5 rounded-lg text-xs font-semibold quizup-header-green text-foreground"
+                            className="px-3 py-1.5 rounded-lg text-xs font-semibold quizup-header-green text-white"
                           >
                             Accept
                           </button>
@@ -578,18 +576,21 @@ const HomeLobby: React.FC = () => {
           </div>
         )}
 
-        <hr className="border-zinc-200 my-4" />
+        <hr className="border-slate-200 my-4" />
 
-         <div className="mt-6">
-              <h3 className="font-display font-bold text-zinc-800 text-xs uppercase tracking-wider mb-3">
-                People
-              </h3>
+         <div className="mt-8">
+              <div className="flex items-center gap-2 mb-4">
+                <div className="w-1 h-5 bg-blue-500 rounded-full" />
+                <h3 className="font-display font-bold text-slate-800 text-xs uppercase tracking-wider">
+                  People
+                </h3>
+              </div>
               {!isAuthenticated ? (
-                <p className="text-zinc-500 text-sm">Sign in to see people you follow.</p>
+                <p className="text-slate-400 text-sm">Sign in to see people you follow.</p>
               ) : followingLoading ? (
-                <p className="text-zinc-500 text-sm">Loading people…</p>
+                <p className="text-slate-400 text-sm">Loading people…</p>
               ) : followingUsers.length === 0 ? (
-                <p className="text-zinc-500 text-sm">Follow some players to see them here.</p>
+                <p className="text-slate-400 text-sm">Follow some players to see them here.</p>
               ) : (
                 <div className="flex flex-row gap-4 overflow-x-auto pb-1">
                   {entries.slice(0,5).map((u) => (
@@ -600,7 +601,7 @@ const HomeLobby: React.FC = () => {
                       className="flex flex-col items-center gap-1.5 shrink-0"
                     >
                       <div
-                        className="w-14 h-14 rounded-full border-2 overflow-hidden"
+                        className="w-14 h-14 rounded-full border-2 overflow-hidden shadow-sm"
                         style={{ borderColor: "hsl(270 60% 50%)" }}
                       >
                         <img
@@ -612,34 +613,40 @@ const HomeLobby: React.FC = () => {
                           className="w-full h-full object-cover"
                         />
                       </div>
-                      <span className="text-[10px] font-semibold text-zinc-700 truncate max-w-[56px] text-center">{u.displayName || u.username}</span>
+                      <span className="text-[10px] font-semibold text-slate-600 truncate max-w-[56px] text-center">{u.displayName || u.username}</span>
                     </button>
                   ))}
                 </div>
               )}
             </div>
 
-        <hr className="border-zinc-200 my-4" /> 
+        <hr className="border-slate-200 my-4" /> 
 
-        <h2 className="font-display font-bold text-zinc-800 text-sm uppercase tracking-wider mb-3 mt-3">Popular Topics</h2>
+        <div className="flex items-center gap-2 mb-4 mt-8">
+          <div className="w-1 h-5 bg-orange-500 rounded-full" />
+          <h2 className="font-display font-bold text-slate-800 text-sm uppercase tracking-wider">Popular Topics</h2>
+        </div>
         {!topicsLoaded ? (
-          <p className="text-zinc-500 text-sm py-4">Loading topics…</p>
+          <p className="text-slate-400 text-sm py-4">Loading topics…</p>
         ) : (
           <>
             <div className="grid grid-cols-3 gap-4">{popularTopics.map((cat, i) => renderTopicRow(cat, i))}</div>
 
-          <hr className="border-zinc-200 my-4" /> 
+          <hr className="border-slate-200 my-4" /> 
 
-            <div className="mt-6">
-              <h3 className="font-display font-bold text-zinc-800 text-xs uppercase tracking-wider mb-3">
-                Followed Topics
-              </h3>
+            <div className="mt-10">
+              <div className="flex items-center gap-2 mb-4">
+                <div className="w-1 h-5 bg-teal-500 rounded-full" />
+                <h3 className="font-display font-bold text-slate-800 text-xs uppercase tracking-wider">
+                  Followed Topics
+                </h3>
+              </div>
               {!isAuthenticated ? (
-                <p className="text-zinc-500 text-sm">Sign in to see your followed topics.</p>
+                <p className="text-slate-400 text-sm">Sign in to see your followed topics.</p>
               ) : !followedLoaded ? (
-                <p className="text-zinc-500 text-sm">Loading followed topics…</p>
+                <p className="text-slate-400 text-sm">Loading followed topics…</p>
               ) : followedTopics.length === 0 ? (
-                <p className="text-zinc-500 text-sm">You haven't followed any topics yet.</p>
+                <p className="text-slate-400 text-sm">You haven't followed any topics yet.</p>
               ) : (
                 <div className="grid grid-cols-3 gap-4">
                   {followedTopics.slice(0, 3).map((cat, i) => renderTopicRow(cat, i))}
@@ -647,7 +654,7 @@ const HomeLobby: React.FC = () => {
               )}
             </div>
  
-            <hr className="border-zinc-200 my-4" /> 
+            <hr className="border-slate-200 my-4" /> 
 
            
             </>

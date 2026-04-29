@@ -121,91 +121,93 @@ const FindMatch: React.FC = () => {
     };
   }, [categoryId, isAuthenticated, isLoading, navigate, user]);
 
-  if (!isLoading && !isAuthenticated) {
-    return (
-      <div className="min-h-screen bg-quizup-dark flex flex-col items-center justify-center max-w-md mx-auto px-6">
-        <p className="text-foreground text-center mb-4">Log in to find a real opponent.</p>
-        <button
-          type="button"
-          onClick={() => navigate("/login")}
-          className="w-full h-12 rounded-lg quizup-header-green text-foreground font-display font-bold"
-        >
-          GO TO LOGIN
-        </button>
-      </div>
-    );
-  }
-
-  return (
-    <div className="min-h-screen bg-quizup-dark flex flex-col max-w-md mx-auto">
-      <div className="quizup-header-red px-4 py-3 text-center">
-        <h1 className="font-display font-bold text-foreground text-base">{topicMeta.name}</h1>
+    <div className="min-h-screen flex flex-col max-w-md mx-auto">
+      <div className="quizup-header-red px-4 py-3 text-center shadow-md">
+        <h1 className="font-display font-bold text-white text-base tracking-tight">{topicMeta.name}</h1>
       </div>
 
       <div className="flex-1 flex flex-col items-center justify-center px-6">
-        <span className="text-6xl mb-4">{topicMeta.icon}</span>
+        <div className="w-32 h-32 rounded-full bg-white shadow-xl flex items-center justify-center text-6xl mb-8 border border-slate-100">
+          <span className="drop-shadow-lg">{topicMeta.icon}</span>
+        </div>
 
         {error ? (
-          <div className="text-center w-full">
-            <p className="text-quizup-red font-semibold mb-2">{error}</p>
-            <p className="text-muted-foreground text-sm mb-6">
-              Ensure the API is running ({API_BASE}) and you are logged in with two different accounts in two browsers.
+          <div className="text-center w-full glass-card p-6 rounded-3xl border-red-100">
+            <p className="text-red-500 font-bold mb-2">{error}</p>
+            <p className="text-slate-500 text-xs mb-6 leading-relaxed">
+              Ensure the game server is reachable and you are logged in correctly.
             </p>
-            <button type="button" onClick={() => navigate(-1)} className="text-sm text-muted-foreground">
+            <button type="button" onClick={() => navigate(-1)} className="text-sm font-bold text-slate-400 hover:text-slate-600 transition-colors">
               Go back
             </button>
           </div>
         ) : !found ? (
           <>
-            <p className="text-foreground font-display font-bold text-lg mb-2">Finding Opponent...</p>
-            <p className="text-muted-foreground text-sm mb-8 text-center">Waiting in the live matchmaking queue</p>
+            <p className="text-slate-900 font-display font-black text-2xl mb-2 tracking-tight">Finding Opponent</p>
+            <p className="text-slate-400 text-sm mb-12 text-center font-medium">Searching the live matchmaking queue...</p>
 
-            <div className="relative w-20 h-20 mb-8">
+            <div className="relative w-24 h-24 mb-12">
               {[0, 0.5, 1].map((delay) => (
                 <motion.div
                   key={delay}
-                  animate={{ scale: [1, 2.5], opacity: [0.5, 0] }}
-                  transition={{ duration: 1.5, repeat: Infinity, delay }}
+                  animate={{ scale: [1, 2.8], opacity: [0.6, 0] }}
+                  transition={{ duration: 1.8, repeat: Infinity, delay }}
                   className="absolute inset-0 rounded-full border-2"
-                  style={{ borderColor: "hsl(4 78% 55%)" }}
+                  style={{ borderColor: "hsl(var(--quizup-red))" }}
                 />
               ))}
               <div
-                className="absolute inset-0 rounded-full flex items-center justify-center"
-                style={{ backgroundColor: "hsl(4 78% 55% / 0.3)" }}
+                className="absolute inset-0 rounded-full flex items-center justify-center shadow-inner"
+                style={{ backgroundColor: "hsl(var(--quizup-red) / 0.1)" }}
               >
-                <div className="w-4 h-4 rounded-full quizup-answer-red animate-pulse" />
+                <div className="w-5 h-5 rounded-full btn-gradient-red animate-pulse" />
               </div>
             </div>
 
-            <button type="button" onClick={() => navigate(-1)} className="text-sm text-muted-foreground">
-              Cancel
+            <button type="button" onClick={() => navigate(-1)} className="px-8 py-3 rounded-full border border-slate-200 text-sm font-bold text-slate-400 hover:bg-white hover:text-slate-600 transition-all shadow-sm">
+              Cancel Search
             </button>
           </>
         ) : (
-          <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} className="text-center">
-            <p className="text-quizup-green font-display font-extrabold text-xl mb-4">OPPONENT FOUND!</p>
-            <div className="flex items-center justify-center gap-6">
-              <div className="text-center">
-                <img
-                  src={user?.avatarUrl}
-                  alt=""
-                  className="w-16 h-16 rounded-full border-2 mx-auto mb-1"
-                  style={{ borderColor: "hsl(152 69% 42%)" }}
-                />
-                <p className="text-xs text-foreground font-semibold">{user?.username}</p>
-                <p className="text-[10px] text-muted-foreground">Lvl {user?.level}</p>
-              </div>
-              <span className="text-2xl font-display font-extrabold text-quizup-gold">VS</span>
-              <div className="text-center">
-                <img
-                  src={payload?.opponent.avatarUrl}
-                  alt=""
-                  className="w-16 h-16 rounded-full border-2 mx-auto mb-1"
-                  style={{ borderColor: "hsl(4 78% 55%)" }}
-                />
-                <p className="text-xs text-foreground font-semibold">{payload?.opponent.username}</p>
-                <p className="text-[10px] text-muted-foreground">Lvl {payload?.opponent.level}</p>
+          <motion.div initial={{ scale: 0.8, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} className="text-center w-full">
+            <div className="glass-card p-8 rounded-[2.5rem] relative overflow-hidden">
+              <div className="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-green-400 to-emerald-500" />
+              <p className="text-emerald-600 font-display font-black text-2xl mb-8 tracking-tight">MATCH FOUND!</p>
+              
+              <div className="flex items-center justify-center gap-4">
+                <div className="flex-1 flex flex-col items-center gap-3">
+                  <div className="relative">
+                    <img
+                      src={user?.avatarUrl}
+                      alt=""
+                      className="w-20 h-20 rounded-full border-4 border-white shadow-xl object-cover"
+                    />
+                    <div className="absolute -bottom-1 -right-1 w-6 h-6 bg-green-500 rounded-full border-2 border-white flex items-center justify-center text-[10px] text-white font-bold">
+                      {user?.level}
+                    </div>
+                  </div>
+                  <p className="text-sm text-slate-900 font-black truncate max-w-[80px]">{user?.username}</p>
+                </div>
+
+                <div className="px-4">
+                   <div className="w-12 h-12 rounded-full bg-slate-100 flex items-center justify-center">
+                     <span className="text-lg font-display font-black text-slate-400">VS</span>
+                   </div>
+                </div>
+
+                <div className="flex-1 flex flex-col items-center gap-3">
+                  <div className="relative">
+                    <img
+                      src={payload?.opponent.avatarUrl}
+                      alt=""
+                      className="w-20 h-20 rounded-full border-4 border-white shadow-xl object-cover"
+                    />
+                    <div className="absolute -bottom-1 -right-1 w-6 h-6 bg-red-500 rounded-full border-2 border-white flex items-center justify-center text-[10px] text-white font-bold">
+                      {payload?.opponent.level}
+                    </div>
+                  </div>
+                  <p className="text-sm text-slate-900 font-black truncate max-w-[80px]">{payload?.opponent.username}</p>
+                </div>
               </div>
             </div>
           </motion.div>

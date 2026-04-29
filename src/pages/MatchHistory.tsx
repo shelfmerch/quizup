@@ -35,36 +35,36 @@ const MatchHistory: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-quizup-dark px-4 pt-4 space-y-2">
+      <div className="min-h-screen px-4 pt-4 space-y-2">
         {Array.from({ length: 5 }).map((_, i) => (
-          <div key={i} className="h-20 bg-quizup-card rounded-lg animate-pulse" />
+          <div key={i} className="h-20 bg-white/50 rounded-lg animate-pulse" />
         ))}
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-quizup-dark">
-      <div className="quizup-header-teal px-4 py-3 flex items-center justify-between">
-        <h1 className="font-display font-bold text-foreground text-base">Match History</h1>
-        <button><Search className="w-5 h-5 text-foreground/80" /></button>
+    <div className="min-h-screen">
+      <div className="bg-white/80 backdrop-blur-md sticky top-0 z-50 px-4 py-3 flex items-center justify-between border-b border-slate-100">
+        <h1 className="font-display font-bold text-slate-900 text-base">Match History</h1>
+        <button><Search className="w-5 h-5 text-slate-500" /></button>
       </div>
 
       <div className="px-4 py-3 space-y-2">
         {history.map((match) => (
-          <div key={match.matchId} className="bg-quizup-card rounded-lg p-4 flex items-center gap-3">
-            <div className={`w-10 h-10 rounded-full flex items-center justify-center text-foreground font-bold text-sm ${
-              match.result === "win" ? "quizup-answer-green" : match.result === "loss" ? "quizup-answer-red" : "quizup-header-teal"
+          <div key={match.matchId} className="bg-white border border-slate-100 rounded-xl p-4 flex items-center gap-3 shadow-sm">
+            <div className={`w-10 h-10 rounded-full flex items-center justify-center text-white font-bold text-sm ${
+              match.result === "win" ? "quizup-answer-green" : match.result === "loss" ? "quizup-answer-red" : "quizup-header-teal shadow-md"
             }`}>
               {match.result === "win" ? "W" : match.result === "loss" ? "L" : "D"}
             </div>
-            <img src={match.opponentAvatar} alt="" className="w-10 h-10 rounded-full" />
+            <img src={match.opponentAvatar} alt="" className="w-10 h-10 rounded-full border border-slate-100" />
             <div className="flex-1 min-w-0">
-              <p className="text-sm font-semibold text-foreground">{match.opponentName}</p>
-              <p className="text-[10px] text-muted-foreground">{match.categoryName}</p>
+              <p className="text-sm font-semibold text-slate-900">{match.opponentName}</p>
+              <p className="text-[10px] text-slate-500">{match.categoryName}</p>
             </div>
             <div className="text-right">
-              <p className="text-lg font-display font-extrabold text-foreground">
+              <p className="text-lg font-display font-extrabold text-slate-900">
                 {match.playerScore} - {match.opponentScore}
               </p>
             </div>
