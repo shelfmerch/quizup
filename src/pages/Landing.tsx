@@ -1,7 +1,7 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { ArrowRight, LogIn } from "lucide-react";
+import { ArrowRight, LogIn, ChevronRight, Play, User } from "lucide-react";
 
 const LOGO_SRC = "/branding/quizup-icon.png";
 
@@ -48,7 +48,7 @@ const Landing: React.FC = () => {
         Real-time 1v1 quiz battles with players worldwide
       </motion.p> */}
 
-      <motion.div
+      {/* <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.4 }}
@@ -70,7 +70,59 @@ const Landing: React.FC = () => {
             <span className="truncate">Sign In</span>
           </button>
         </div>
-      </motion.div>
+      </motion.div> */}
+
+       <main className="flex flex-1 flex-col mt-40 items-center justify-end text-center">
+            {/* <motion.div
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              transition={{ type: "spring", stiffness: 160, damping: 14 }}
+              className="flex w-full flex-col items-center"
+            >
+
+              <p className="mt-8 max-w-[20rem] text-[25px] font-semibold leading-tight text-white drop-shadow-[0_3px_5px_rgba(0,0,0,0.55)]">
+                The biggest trivia community. Millions of topics. Endless fun.
+              </p>
+            </motion.div> */}
+
+            <motion.div
+              initial={{ opacity: 0, y: 24 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.25 }}
+              className="mt-30 flex w-full flex-col items-center gap-6"
+            >
+              <button
+                onClick={() => navigate("/signup")}
+                className="flex h-20 w-[94%] mt-40 gap-4 items-center justify-between rounded-full border-[4px] border-yellow/25 bg-[#f65357] px-6 font-display text-[20px] font-black text-white shadow-[0_18px_45px_rgba(246,83,87,0.58)] active:scale-[0.98]"
+              >
+                <span className="flex h-10 w-10 items-center justify-center rounded-full bg-white text-[#f65357]">
+                  <Play className="h-4 w-4 fill-current" />
+                </span>
+                <span>Play Now</span>
+                <ChevronRight className="h-10 w-10 stroke-[4]" />
+              </button>
+
+              <button
+                onClick={() => navigate("/login")}
+                className="flex h-20 w-[94%] gap-3 items-center justify-between rounded-full border-[3px] border-white/90 bg-black/30 px-6 font-display text-[20px] font-black text-white shadow-[0_16px_38px_rgba(0,0,0,0.45)] backdrop-blur-xl active:scale-[0.98]"
+              >
+                <span className="flex h-14 w-14 items-center justify-center rounded-full bg-white text-[#14784f]">
+                  <User className="h-10 w-10 fill-current" />
+                </span>
+                <span>Continue</span>
+                <ChevronRight className="h-9 w-9 stroke-[4]" />
+              </button>
+            </motion.div>
+
+            <div className="mt-36 pb-7 text-center text-[23px] font-semibold">
+              <span className="text-white/95">Already have an account?</span>
+              <button onClick={() => navigate("/login")} className="ml-5 border-b-2 border-white pb-0.5 font-black text-white">
+                Sign In
+              </button>
+            </div>
+
+            <div className="mx-auto h-1.5 w-36 rounded-full bg-white" />
+          </main>
       </div>
     </div>
   );
