@@ -121,6 +121,7 @@ const FindMatch: React.FC = () => {
     };
   }, [categoryId, isAuthenticated, isLoading, navigate, user]);
 
+  return (
     <div className="min-h-screen flex flex-col max-w-md mx-auto">
       <div className="quizup-header-red px-4 py-3 text-center shadow-md">
         <h1 className="font-display font-bold text-white text-base tracking-tight">{topicMeta.name}</h1>

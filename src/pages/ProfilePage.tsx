@@ -254,9 +254,9 @@ const ProfilePage: React.FC = () => {
   });
 
   return (
-    <div className="min-h-screen bg-slate-50 pb-20">
+    <div className="quizup-app pb-20">
       {/* Header */}
-      <div className="quizup-header-purple px-4 py-3 flex items-center justify-between text-white shadow-sm">
+      <div className="quizup-topbar">
         {isOwnProfile ? (
           <h1 className="font-display font-bold text-white text-base">
             {p.displayName || p.username}
@@ -280,10 +280,12 @@ const ProfilePage: React.FC = () => {
       </div>
 
       {/* Avatar + info */}
-      <div className="bg-white/80 backdrop-blur-md border-b border-slate-100 px-6 py-8 text-center shadow-sm">
+      <div className="quizup-pattern relative overflow-hidden px-6 pb-6 pt-7 text-center text-white shadow-sm">
+        <div className="absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-black/45 to-transparent" />
+        <div className="relative z-10">
         <div className="relative inline-block mb-3 group">
           <div 
-             className={`relative w-36 h-36 rounded-full border-4 border-white shadow-lg overflow-hidden ${isOwnProfile ? 'cursor-pointer' : ''}`}
+             className={`relative w-28 h-28 rounded-full border-4 border-white shadow-xl overflow-hidden ${isOwnProfile ? 'cursor-pointer' : ''}`}
              style={{ borderColor: "white" }}
              onClick={() => isOwnProfile && fileInputRef.current?.click()}
              role={isOwnProfile ? "button" : undefined}
@@ -311,7 +313,7 @@ const ProfilePage: React.FC = () => {
             <span className="text-[10px] font-bold text-quizup-gold">LVL {p.level}</span>
           </div> */}
         </div>
-        <h2 className="font-display font-extrabold text-2xl text-slate-900">
+        <h2 className="font-display font-extrabold text-2xl text-white drop-shadow">
           {p.displayName || p.username}
         </h2>
         {/* <p className="text-sm text-slate-500 mt-1">{p.bio || "No bio yet"}</p>
@@ -326,16 +328,17 @@ const ProfilePage: React.FC = () => {
             loading="lazy"
           />
           <div className="text-left">
-            <p className="text-[11px] text-slate-500 font-semibold uppercase tracking-wider">League</p>
-            <p className="text-sm font-display font-extrabold text-slate-900 leading-tight">
+            <p className="text-[11px] text-white/70 font-semibold uppercase tracking-wider">League</p>
+            <p className="text-sm font-display font-extrabold text-white leading-tight">
               {league.name}
             </p>
           </div>
         </div>
+        </div>
       </div>
 
       {/* XP Bar */}
-      <div className="bg-white border-t border-slate-100 px-6 py-4 shadow-sm mt-2">
+      <div className="bg-white border-y border-[#dddddd] px-6 py-4 shadow-sm">
         <div className="flex justify-between text-xs font-semibold text-slate-500 mb-2">
           <span>Level {p.level}</span>
           <span>{p.xp} / {p.xpToNextLevel} XP</span>
@@ -349,7 +352,7 @@ const ProfilePage: React.FC = () => {
       </div>
 
       {/* Stats */}
-      <div className="bg-white/80 backdrop-blur-md border-t border-slate-100 flex divide-x divide-slate-100 shadow-sm mt-2">
+      <div className="bg-white flex divide-x divide-[#dddddd] border-y border-[#dddddd] shadow-sm mt-2">
         {[
           { label: "MATCHES", value: p.totalMatches, color: "text-blue-600" },
           { label: "WINS", value: p.wins, color: "text-green-600" },
@@ -364,7 +367,7 @@ const ProfilePage: React.FC = () => {
       </div>
 
       {/* Social counts */}
-      <div className="bg-white border-t border-slate-100 flex divide-x divide-slate-100 shadow-sm">
+      <div className="bg-white border-b border-[#dddddd] flex divide-x divide-[#dddddd] shadow-sm">
         <div className="flex-1 py-4 text-center">
           <p className="text-lg font-display font-bold text-slate-900">{p.followers}</p>
           <p className="text-[10px] text-slate-400 font-medium uppercase mt-1">Followers</p>
