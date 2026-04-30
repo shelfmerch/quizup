@@ -11,9 +11,9 @@ const Landing: React.FC = () => {
   return (
     <div 
       className="min-h-screen w-full flex flex-col items-center justify-center px-8 bg-cover bg-center bg-no-repeat"
-      style={{ backgroundImage: `url('/images/quizup-7ba5e.webp')` }}
+      style={{ backgroundImage: `url('/images/quizup-landing.png')` }}
     >
-      <div className="max-w-md w-full flex flex-col items-center mt-10">
+      <div className="max-w-md w-full min-h-screen flex flex-col items-center">
         {/* <motion.div
         initial={{ scale: 0 }}
         animate={{ scale: 1 }}
@@ -72,7 +72,7 @@ const Landing: React.FC = () => {
         </div>
       </motion.div> */}
 
-       <main className="flex flex-1 flex-col mt-40 items-center justify-end text-center">
+       <main className="flex w-full flex-1 flex-col items-center justify-end pb-8 text-center">
             {/* <motion.div
               initial={{ scale: 0.9, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
@@ -89,37 +89,41 @@ const Landing: React.FC = () => {
               initial={{ opacity: 0, y: 24 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.25 }}
-              className="mt-30 flex w-full flex-col items-center gap-6"
+              className="flex w-full flex-col items-center gap-4"
             >
               <button
                 onClick={() => navigate("/signup")}
-                className="flex h-20 w-[94%] mt-40 gap-4 items-center justify-between rounded-full border-[4px] border-yellow/25 bg-[#f65357] px-6 font-display text-[20px] font-black text-white shadow-[0_18px_45px_rgba(246,83,87,0.58)] active:scale-[0.98]"
+                className="relative flex h-20 w-[94%] overflow-hidden gap-4 items-center justify-between rounded-full bg-[#f65357] px-6 font-display text-[20px] font-black text-white shadow-[0_-5px_22px_rgba(255,222,84,0.34),0_9px_0_rgba(175,38,57,0.78),0_22px_42px_rgba(246,83,87,0.58),inset_0_3px_0_rgba(255,255,255,0.28),inset_0_-8px_16px_rgba(152,15,45,0.2)] active:translate-y-1 active:scale-[0.99] active:shadow-[0_-3px_16px_rgba(255,222,84,0.28),0_5px_0_rgba(175,38,57,0.74),0_14px_30px_rgba(246,83,87,0.48),inset_0_2px_0_rgba(255,255,255,0.24),inset_0_-5px_12px_rgba(152,15,45,0.18)]"
+                style={{
+                  background: "linear-gradient(180deg, #ff6258 0%, #f65357 54%, #e84252 100%)",
+                }}
               >
+                <span className="pointer-events-none absolute left-10 right-10 top-0 h-[5px] rounded-b-full bg-gradient-to-r from-transparent via-[#ffe66d] to-transparent opacity-95 shadow-[0_0_16px_rgba(255,226,95,0.78)]" />
                 <span className="flex h-10 w-10 items-center justify-center rounded-full bg-white text-[#f65357]">
                   <Play className="h-4 w-4 fill-current" />
                 </span>
                 <span>Play Now</span>
-                <ChevronRight className="h-10 w-10 stroke-[4]" />
+                <ChevronRight className="h-10 w-10 stroke-[2]" />
               </button>
 
               <button
                 onClick={() => navigate("/login")}
-                className="flex h-20 w-[94%] gap-3 items-center justify-between rounded-full border-[3px] border-white/90 bg-black/30 px-6 font-display text-[20px] font-black text-white shadow-[0_16px_38px_rgba(0,0,0,0.45)] backdrop-blur-xl active:scale-[0.98]"
+                className="flex mb-40 h-16 w-[94%] gap-2 items-center justify-between rounded-full border-[3px] border-white/90 bg-black/30 px-6 font-display text-[20px] font-black text-white shadow-[0_0_22px_rgba(255,255,255,0.24),0_16px_38px_rgba(0,0,0,0.5)] backdrop-blur-md active:scale-[0.98]"
               >
-                <span className="flex h-14 w-14 items-center justify-center rounded-full bg-white text-[#14784f]">
-                  <User className="h-10 w-10 fill-current" />
+                <span className="flex h-10 w-10 items-center justify-center rounded-full bg-white text-[#14784f]">
+                  <User className="h-7 w-7 fill-current" />
                 </span>
                 <span>Continue</span>
-                <ChevronRight className="h-9 w-9 stroke-[4]" />
+                <ChevronRight className="h-9 w-9 stroke-[2]" />
               </button>
             </motion.div>
 
-            <div className="mt-36 pb-7 text-center text-[23px] font-semibold">
+            {/* <div className="mt-10 pb-7 text-center text-[23px] font-semibold">
               <span className="text-white/95">Already have an account?</span>
               <button onClick={() => navigate("/login")} className="ml-5 border-b-2 border-white pb-0.5 font-black text-white">
                 Sign In
               </button>
-            </div>
+            </div> */}
 
             <div className="mx-auto h-1.5 w-36 rounded-full bg-white" />
           </main>

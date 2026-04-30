@@ -25,7 +25,11 @@ const Login: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen flex flex-col max-w-md mx-auto">
+    <div
+      className="min-h-screen bg-cover bg-center bg-no-repeat"
+      style={{ backgroundImage: "url('/images/logsign.png')" }}
+    >
+      <div className="min-h-screen flex flex-col max-w-md mx-auto">
       <div className="quizup-header-teal px-4 py-3 flex items-center gap-3 shadow-sm">
         <button onClick={() => navigate("/")} className="text-white">
           <ArrowLeft className="w-5 h-5" />
@@ -94,6 +98,7 @@ const Login: React.FC = () => {
           </button>
         </p>
       </div>
+    </div>
     </div>
   );
 };
