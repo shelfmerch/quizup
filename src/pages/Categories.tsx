@@ -76,12 +76,12 @@ const Categories: React.FC = () => {
         </div>
       </div>
 
-      <div className="bg-white px-3 py-2">
+      {/* <div className="bg-white px-3 py-2">
         <div className="grid grid-cols-2 rounded-full border border-[#b8b8b8] bg-[#ededed] p-0.5 text-center text-[11px] font-black text-[#777]">
           <button className="h-7 rounded-full bg-white shadow-sm">Topics</button>
           <button className="h-7">Tournaments (6)</button>
         </div>
-      </div>
+      </div> */}
 
       {loading ? (
         <p className="py-16 text-center text-sm font-semibold text-zinc-400">Loading topics...</p>

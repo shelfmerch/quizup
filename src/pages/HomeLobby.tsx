@@ -124,10 +124,42 @@ const HomeLobby: React.FC = () => {
   const tournaments = useMemo(() => allTopics.slice(0, 5), [allTopics]);
   const dailyChallenges = useMemo(() => allTopics.slice(5, 9), [allTopics]);
   const followed = followedTopics.length ? followedTopics.slice(0, 5) : allTopics.slice(9, 14);
+  const league = getLeagueFromXp(user?.xp);
   const avatarSrc = resolveMediaUrl(
     user?.avatarUrl,
     `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(user?.username || "player")}`
   );
+
+  type LeagueKey =
+  | "unranked"
+  | "bronze"
+  | "silver"
+  | "gold"
+  | "crystal"
+  | "master"
+  | "champion"
+  | "titan"
+  | "legend";
+
+const LEAGUES: Array<{ key: LeagueKey; name: string; minXpInclusive: number; badgeUrl: string }> = [
+  { key: "legend", name: "Legend", minXpInclusive: 20000, badgeUrl: "/leagues/legend.svg" },
+  { key: "titan", name: "Titan", minXpInclusive: 15000, badgeUrl: "/leagues/titan.png" },
+  { key: "champion", name: "Champion", minXpInclusive: 13000, badgeUrl: "/leagues/champion.png" },
+  { key: "master", name: "Master", minXpInclusive: 10000, badgeUrl: "/leagues/master.png" },
+  { key: "crystal", name: "Crystal", minXpInclusive: 7000, badgeUrl: "/leagues/crystal.png" },
+  { key: "gold", name: "Gold", minXpInclusive: 5000, badgeUrl: "/leagues/gold.png" },
+  { key: "silver", name: "Silver", minXpInclusive: 2000, badgeUrl: "/leagues/silver.png" },
+  { key: "bronze", name: "Bronze", minXpInclusive: 1000, badgeUrl: "/leagues/bronze.png" },
+  { key: "unranked", name: "Unranked", minXpInclusive: 0, badgeUrl: "/leagues/unranked.png" },
+];
+
+function getLeagueFromXp(xpRaw: unknown) {
+  const xp = typeof xpRaw === "number" && Number.isFinite(xpRaw) ? xpRaw : 0;
+  for (const league of LEAGUES) {
+    if (xp >= league.minXpInclusive) return league;
+  }
+  return LEAGUES[LEAGUES.length - 1];
+}
 
   return (
     <div className="quizup-app">
@@ -150,8 +182,9 @@ const HomeLobby: React.FC = () => {
           <div className="flex items-center gap-3">
             <img src={avatarSrc} alt="" className="h-11 w-11 rounded-full border-2 border-white object-cover" />
             <div>
-              <p className="text-[11px] uppercase tracking-wide text-white/55">League {user?.level || 1}</p>
+              {/* <p className="text-[11px] uppercase tracking-wide text-white/55">League {user?.level || 1}</p> */}
               <p className="font-display text-sm font-extrabold">{user?.username || "Player"}</p>
+              <img src={league.badgeUrl} alt="" className="h-8 w-8 object-contain drop-shadow" />          
             </div>
           </div>
           <div className="grid grid-cols-3 gap-4 text-center text-[11px] font-bold">
