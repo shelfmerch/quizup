@@ -30,18 +30,18 @@ const Leaderboard: React.FC = () => {
     <div className="min-h-screen pb-10">
       {/* Header */}
       <div className="sticky top-0 z-50 px-5 py-5 flex items-center justify-between bg-[#f4f4f4]/90 backdrop-blur-md">
-        <h1 className="font-display font-extrabold text-3xl text-slate-900 tracking-tight">Leaderboard</h1>
-        <button className="flex items-center gap-1.5 text-slate-600 text-sm font-semibold hover:text-slate-900 transition-colors">
+        <h1 className="font-display font-bold text-3xl text-slate-900 tracking-tight">Leaderboard</h1>
+        {/* <button className="flex items-center gap-1.5 text-slate-600 text-sm font-semibold hover:text-slate-900 transition-colors">
           How it Works
           <Info className="w-5 h-5 text-purple-600" />
         </button>
-      </div>
+      </div> */}
 
       {/* Top 3 Podium */}
       <div className="relative pt-10 pb-8 flex justify-center items-end px-4 overflow-hidden">
         {/* Subtle background rays/glow for 1st place */}
         <div className="absolute inset-0 pointer-events-none flex justify-center items-center -top-12">
-          <div className="w-[300px] h-[300px] bg-gradient-to-tr from-yellow-200/40 to-orange-300/40 blur-3xl rounded-full"></div>
+          <div className="w-[300px] h-[300px] bg-gradient-to-tr from-pink-200/40 to-red-300/40 blur-3xl rounded-full"></div>
         </div>
 
         <div className="flex items-end justify-center gap-4 relative z-10 w-full max-w-sm">
@@ -96,7 +96,7 @@ const Leaderboard: React.FC = () => {
       </div>
 
       {/* User Rank Banner */}
-      <div className="px-5 mb-6">
+      {/* <div className="px-5 mb-6">
         <div className="w-full bg-gradient-to-r from-purple-500 to-blue-400 rounded-[20px] py-4 px-6 flex items-center justify-between text-white shadow-lg shadow-blue-500/20 active:scale-[0.98] transition-transform cursor-pointer">
           <span className="font-semibold text-sm">You Currently Rank</span>
           <div className="flex items-center gap-3">
@@ -106,7 +106,7 @@ const Leaderboard: React.FC = () => {
             </div>
           </div>
         </div>
-      </div>
+      </div> */}
 
       {/* Rest of the leaderboard */}
       <div className="px-5 pb-8">
