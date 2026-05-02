@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { leaderboardService } from "@/services/leaderboardService";
 import { LeaderboardEntry } from "@/types";
-import { Search } from "lucide-react";
+import { Info } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
 const Leaderboard: React.FC = () => {
@@ -18,78 +18,119 @@ const Leaderboard: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen px-4 pt-4 space-y-2">
+      <div className="min-h-screen px-4 pt-4 space-y-4">
         {Array.from({ length: 8 }).map((_, i) => (
-          <div key={i} className="h-16 bg-white/50 rounded-lg animate-pulse" />
+          <div key={i} className="h-16 bg-slate-200 rounded-xl animate-pulse" />
         ))}
       </div>
     );
   }
 
-  const medals = ["🥇", "🥈", "🥉"];
-
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen pb-10">
       {/* Header */}
-      <div className="bg-white/80 backdrop-blur-md sticky top-0 z-50 px-4 py-3 flex items-center justify-between border-b border-white/50">
-        <h1 className="font-display font-bold text-slate-900 text-base">Leaderboard</h1>
-        <button><Search className="w-5 h-5 text-slate-500" /></button>
+      <div className="sticky top-0 z-50 px-5 py-5 flex items-center justify-between bg-[#f4f4f4]/90 backdrop-blur-md">
+        <h1 className="font-display font-extrabold text-3xl text-slate-900 tracking-tight">Leaderboard</h1>
+        <button className="flex items-center gap-1.5 text-slate-600 text-sm font-semibold hover:text-slate-900 transition-colors">
+          How it Works
+          <Info className="w-5 h-5 text-purple-600" />
+        </button>
       </div>
 
-      {/* Top 3 */}
-      <div className="bg-white/30 backdrop-blur-md p-6 border-b border-white/50">
-        <div className="flex items-end justify-center gap-4 h-36">
-          {/* 2nd place */}
+      {/* Top 3 Podium */}
+      <div className="relative pt-10 pb-8 flex justify-center items-end px-4 overflow-hidden">
+        {/* Subtle background rays/glow for 1st place */}
+        <div className="absolute inset-0 pointer-events-none flex justify-center items-center -top-12">
+          <div className="w-[300px] h-[300px] bg-gradient-to-tr from-yellow-200/40 to-orange-300/40 blur-3xl rounded-full"></div>
+        </div>
+
+        <div className="flex items-end justify-center gap-4 relative z-10 w-full max-w-sm">
+          {/* 2nd Place */}
           {entries[1] && (
-            <button onClick={() => navigate(`/profile/${entries[1].userId}`)} className="flex flex-col items-center">
-              <img src={entries[1].avatarUrl} alt="" className="w-12 h-12 rounded-full border-2 mb-2 shadow-md" style={{borderColor: 'silver'}} />
-              <p className="text-[10px] text-slate-900 font-bold truncate max-w-[60px]">{entries[1].username}</p>
-              <p className="text-[10px] text-slate-500 font-bold">{entries[1].score}</p>
-              <div className="w-16 h-16 btn-gradient-blue rounded-t-2xl mt-2 flex items-center justify-center shadow-lg">
-                <span className="text-xl">{medals[1]}</span>
+            <div 
+              className="relative flex flex-col items-center mb-2 cursor-pointer flex-1"
+              onClick={() => navigate(`/profile/${entries[1].userId}`)}
+            >
+              <div className="text-emerald-500 text-xs mb-2">▲</div>
+              <div className="relative p-[3px] rounded-full bg-gradient-to-tr from-cyan-400 to-blue-500 shadow-lg">
+                <img src={entries[1].avatarUrl} alt="" className="w-16 h-16 sm:w-20 sm:h-20 rounded-full border-[3px] border-white object-cover" />
+                <div className="absolute -bottom-2.5 left-1/2 -translate-x-1/2 w-6 h-6 sm:w-7 sm:h-7 rounded-full bg-cyan-400 text-white font-bold text-xs flex items-center justify-center border-2 border-white shadow-sm">2</div>
               </div>
-            </button>
+              <p className="mt-4 text-xs sm:text-sm font-bold text-slate-900 truncate w-full text-center px-1">{entries[1].username}</p>
+              <p className="text-[10px] font-semibold text-cyan-600 mt-0.5">{entries[1].score}</p>
+            </div>
           )}
-          {/* 1st place */}
+
+          {/* 1st Place */}
           {entries[0] && (
-            <button onClick={() => navigate(`/profile/${entries[0].userId}`)} className="flex flex-col items-center">
-              <img src={entries[0].avatarUrl} alt="" className="w-16 h-16 rounded-full border-4 mb-2 shadow-xl" style={{borderColor: 'gold'}} />
-              <p className="text-[10px] text-slate-900 font-bold truncate max-w-[60px]">{entries[0].username}</p>
-              <p className="text-[10px] text-slate-500 font-bold">{entries[0].score}</p>
-              <div className="w-20 h-28 btn-gradient-purple rounded-t-2xl mt-2 flex items-center justify-center shadow-xl">
-                <span className="text-3xl">{medals[0]}</span>
+            <div 
+              className="relative flex flex-col items-center -mt-6 cursor-pointer flex-1"
+              onClick={() => navigate(`/profile/${entries[0].userId}`)}
+            >
+              <div className="text-yellow-500 text-3xl mb-2 drop-shadow-md">👑</div>
+              <div className="relative p-[4px] rounded-full bg-gradient-to-tr from-yellow-300 to-orange-500 shadow-xl">
+                <img src={entries[0].avatarUrl} alt="" className="w-24 h-24 sm:w-28 sm:h-28 rounded-full border-4 border-white object-cover" />
+                <div className="absolute -bottom-3 left-1/2 -translate-x-1/2 w-8 h-8 rounded-full bg-yellow-400 text-white font-black text-sm flex items-center justify-center border-2 border-white shadow-md">1</div>
               </div>
-            </button>
+              <p className="mt-5 text-sm sm:text-base font-bold text-slate-900 truncate w-full text-center px-1">{entries[0].username}</p>
+              <p className="text-xs font-semibold text-yellow-600 mt-0.5">{entries[0].score}</p>
+            </div>
           )}
-          {/* 3rd place */}
+
+          {/* 3rd Place */}
           {entries[2] && (
-            <button onClick={() => navigate(`/profile/${entries[2].userId}`)} className="flex flex-col items-center">
-              <img src={entries[2].avatarUrl} alt="" className="w-12 h-12 rounded-full border-2 mb-2 shadow-md" style={{borderColor: '#cd7f32'}} />
-              <p className="text-[10px] text-slate-900 font-bold truncate max-w-[60px]">{entries[2].username}</p>
-              <p className="text-[10px] text-slate-500 font-bold">{entries[2].score}</p>
-              <div className="w-16 h-12 btn-gradient-red rounded-t-2xl mt-2 flex items-center justify-center shadow-lg">
-                <span className="text-xl">{medals[2]}</span>
+            <div 
+              className="relative flex flex-col items-center mb-2 cursor-pointer flex-1"
+              onClick={() => navigate(`/profile/${entries[2].userId}`)}
+            >
+              <div className="text-rose-500 text-xs mb-2">▼</div>
+              <div className="relative p-[3px] rounded-full bg-gradient-to-tr from-pink-400 to-purple-500 shadow-lg">
+                <img src={entries[2].avatarUrl} alt="" className="w-16 h-16 sm:w-20 sm:h-20 rounded-full border-[3px] border-white object-cover" />
+                <div className="absolute -bottom-2.5 left-1/2 -translate-x-1/2 w-6 h-6 sm:w-7 sm:h-7 rounded-full bg-pink-400 text-white font-bold text-xs flex items-center justify-center border-2 border-white shadow-sm">3</div>
               </div>
-            </button>
+              <p className="mt-4 text-xs sm:text-sm font-bold text-slate-900 truncate w-full text-center px-1">{entries[2].username}</p>
+              <p className="text-[10px] font-semibold text-pink-600 mt-0.5">{entries[2].score}</p>
+            </div>
           )}
         </div>
       </div>
 
+      {/* User Rank Banner */}
+      <div className="px-5 mb-6">
+        <div className="w-full bg-gradient-to-r from-purple-500 to-blue-400 rounded-[20px] py-4 px-6 flex items-center justify-between text-white shadow-lg shadow-blue-500/20 active:scale-[0.98] transition-transform cursor-pointer">
+          <span className="font-semibold text-sm">You Currently Rank</span>
+          <div className="flex items-center gap-3">
+            <span className="font-display font-black text-xl">239</span>
+            <div className="w-6 h-6 rounded-full bg-white/20 flex items-center justify-center">
+              <span className="text-emerald-300 text-xs">▲</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
       {/* Rest of the leaderboard */}
-      <div className="px-4 py-3 space-y-2">
-        {entries.slice(3).map((entry) => (
+      <div className="px-5 pb-8">
+        {entries.slice(3).map((entry, idx) => (
           <button
             key={entry.userId}
             onClick={() => navigate(`/profile/${entry.userId}`)}
-            className="w-full flex items-center gap-3 bg-white/70 backdrop-blur-sm border border-white rounded-2xl px-4 py-3 text-left active:opacity-70 transition-all hover:scale-[1.02] shadow-sm"
+            className="w-full flex items-center gap-4 py-3 border-b border-slate-200 last:border-0 active:bg-slate-100 transition-colors group"
           >
-            <span className="text-sm font-display font-extrabold text-slate-400 w-6 text-center">{entry.rank}</span>
-            <img src={entry.avatarUrl} alt="" className="w-10 h-10 rounded-full border border-slate-100 shadow-sm" />
-            <div className="flex-1 min-w-0">
-              <p className="text-sm font-bold text-slate-900 truncate">{entry.username}</p>
-              <p className="text-[10px] text-slate-500 font-medium tracking-tight">Level {entry.level} · {entry.country}</p>
+            <img src={entry.avatarUrl} alt="" className="w-12 h-12 rounded-full object-cover border border-slate-200 group-hover:border-slate-300 transition-colors" />
+            <div className="flex-1 text-left min-w-0">
+              <p className="text-[15px] font-bold text-slate-900 truncate">{entry.username}</p>
+              <p className="text-[11px] font-semibold text-slate-500 mt-0.5 truncate">{entry.score} XP</p>
             </div>
-            <p className="font-display font-extrabold text-base text-purple-600">{entry.score}</p>
+            <div className="flex items-center gap-4 pl-2">
+              <span className="font-display font-extrabold text-slate-700 text-lg w-8 text-right">{entry.rank}</span>
+              <div className="w-4 flex justify-center">
+                {idx % 3 === 0 ? (
+                  <span className="text-rose-500 text-xs">▼</span>
+                ) : (
+                  <span className="text-emerald-500 text-xs">▲</span>
+                )}
+              </div>
+            </div>
           </button>
         ))}
       </div>
