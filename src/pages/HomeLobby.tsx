@@ -167,7 +167,7 @@ const HomeLobby: React.FC = () => {
         onClick={() => navigate("/categories")}
         className="quizup-pattern relative flex h-28 w-full items-center justify-between overflow-hidden px-5 text-left text-white"
       >
-        <div>
+        <div className="bg-cover bg-center bg-no-repeat" style={{ backgroundImage: "url('/images/banner.jpg')" }}>
           <p className="font-display text-2xl font-black uppercase leading-6 drop-shadow">Challenges Galore!</p>
           <p className="mt-1 text-xs font-bold text-white/85">Pick a topic and start a lightning round.</p>
         </div>
