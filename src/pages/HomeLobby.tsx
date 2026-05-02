@@ -150,7 +150,7 @@ const HomeLobby: React.FC = () => {
           <div className="flex items-center gap-3">
             <img src={avatarSrc} alt="" className="h-11 w-11 rounded-full border-2 border-white object-cover" />
             <div>
-              <p className="text-[11px] uppercase tracking-wide text-white/55">Level {user?.level || 1}</p>
+              <p className="text-[11px] uppercase tracking-wide text-white/55">League {user?.level || 1}</p>
               <p className="font-display text-sm font-extrabold">{user?.username || "Player"}</p>
             </div>
           </div>
@@ -165,7 +165,7 @@ const HomeLobby: React.FC = () => {
       <button
         type="button"
         onClick={() => navigate("/categories")}
-        className="bg-cover bg-no-repeat bg-center quizup-pattern relative flex h-28 w-full items-center justify-between overflow-hidden px-5 text-left text-white" style={{ backgroundImage: "url('/images/banner.jpg')" }}
+        className="bg-cover bg-no-repeat bg-center quizup-pattern relative flex h-32 w-full items-center justify-between overflow-hidden px-5 text-left text-white" style={{ backgroundImage: "url('/images/banner.jpg')" }}
       >
         <div>
           <p className="font-display text-2xl font-black uppercase leading-6 drop-shadow">Challenges Galore!</p>
@@ -221,7 +221,7 @@ const HomeLobby: React.FC = () => {
 
           <Section title="Invite & Play with friends!" onSeeAll={() => navigate("/leaderboard")}>
             <div className="flex gap-4 overflow-x-auto">
-              {entries.slice(0, 5).map((entry) => (
+              {entries.slice(0, 4).map((entry) => (
                 <button
                   key={entry.userId}
                   type="button"
@@ -255,13 +255,13 @@ const HomeLobby: React.FC = () => {
         </>
       )}
 
-      <button
+      {/* <button
         className="fixed right-[calc(50%-13rem)] top-24 z-40 flex h-11 w-11 items-center justify-center rounded-full bg-white text-[#f65357] shadow-lg max-[450px]:right-3"
         onClick={() => navigate("/notifications")}
         aria-label="Notifications"
       >
         <Bell className="h-5 w-5" />
-      </button>
+      </button> */}
     </div>
   );
 };

@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800;900&family=Inter:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800;900&family=Open+Sans:wght@400;500;600;700&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -59,15 +59,23 @@
     @apply text-slate-900 font-body antialiased;
     -webkit-tap-highlight-color: transparent;
   }
+
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-display font-bold;
+  }
+
+  button {
+    @apply font-display font-semibold;
+  }
 }
 
 @layer components {
   .font-display {
-    font-family: 'Outfit', sans-serif;
+    font-family: 'Montserrat', sans-serif;
   }
   
   .font-body {
-    font-family: 'Inter', sans-serif;
+    font-family: 'Open Sans', sans-serif;
   }
 
   .quizup-header-red { background-color: hsl(var(--quizup-red)); }
