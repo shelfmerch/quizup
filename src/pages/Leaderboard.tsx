@@ -34,8 +34,8 @@ const Leaderboard: React.FC = () => {
         {/* <button className="flex items-center gap-1.5 text-slate-600 text-sm font-semibold hover:text-slate-900 transition-colors">
           How it Works
           <Info className="w-5 h-5 text-purple-600" />
-        </button>
-      </div> */}
+        </button> */}
+      </div>
 
       {/* Top 3 Podium */}
       <div className="relative pt-10 pb-8 flex justify-center items-end px-4 overflow-hidden">
