@@ -435,39 +435,41 @@ const ProfilePage: React.FC = () => {
         </div>
       </section>
 
-      <div className="quizup-section px-4 py-3">
-        <div className="grid grid-cols-2 gap-3">
-          <button
-            onClick={isOwnProfile ? () => navigate("/leaderboard") : handleFollow}
-            disabled={!isOwnProfile && followLoading}
-            className={`flex h-12 items-center justify-center gap-2 rounded-lg text-sm font-black shadow-sm transition active:scale-[0.98] ${
-              !isOwnProfile && isFollowing
-                ? "border border-[#dddddd] bg-white text-slate-700"
-                : "bg-[#f65357] text-white"
-            }`}
-          >
-            {!isOwnProfile && followLoading ? (
-              <Loader2 className="h-4 w-4 animate-spin" />
-            ) : !isOwnProfile && isFollowing ? (
-              <UserCheck className="h-4 w-4" />
-            ) : (
-              <UserPlus className="h-4 w-4" />
-            )}
-            {!isOwnProfile && isFollowing ? "Following" : "Follow"}
-          </button>
-          <button
-            onClick={isOwnProfile ? () => navigate("/categories") : handleChallenge}
-            disabled={!isOwnProfile && challengeSending}
-            className="flex h-12 items-center justify-center gap-2 rounded-lg bg-[#080808] text-sm font-black text-white shadow-sm transition active:scale-[0.98] disabled:opacity-60"
-          >
-            {challengeSending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Swords className="h-4 w-4" />}
-            Challenge
-          </button>
+      {!isOwnProfile && (
+        <div className="quizup-section px-4 py-3">
+          <div className="grid grid-cols-2 gap-3">
+            <button
+              onClick={handleFollow}
+              disabled={followLoading}
+              className={`flex h-12 items-center justify-center gap-2 rounded-lg text-sm font-black shadow-sm transition active:scale-[0.98] ${
+                isFollowing
+                  ? "border border-[#dddddd] bg-white text-slate-700"
+                  : "bg-[#f65357] text-white"
+              }`}
+            >
+              {followLoading ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : isFollowing ? (
+                <UserCheck className="h-4 w-4" />
+              ) : (
+                <UserPlus className="h-4 w-4" />
+              )}
+              {isFollowing ? "Following" : "Follow"}
+            </button>
+            <button
+              onClick={handleChallenge}
+              disabled={challengeSending}
+              className="flex h-12 items-center justify-center gap-2 rounded-lg bg-[#080808] text-sm font-black text-white shadow-sm transition active:scale-[0.98] disabled:opacity-60"
+            >
+              {challengeSending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Swords className="h-4 w-4" />}
+              Challenge
+            </button>
+          </div>
+          {challengeStatus && (
+            <p className="pt-2 text-center text-xs font-bold text-slate-500">{challengeStatus}</p>
+          )}
         </div>
-        {challengeStatus && !isOwnProfile && (
-          <p className="pt-2 text-center text-xs font-bold text-slate-500">{challengeStatus}</p>
-        )}
-      </div>
+      )}
 
       <section className="quizup-section px-4 py-4">
         <h3 className="quizup-section-title mb-3">Followed Topics</h3>
