@@ -162,11 +162,10 @@ const HomeLobby: React.FC = () => {
         </div>
       </div>
 
-      <div className="bg-cover bg-center bg-no-repeat" style={{ backgroundImage: "url('/images/banner.jpg')" }}>
       <button
         type="button"
         onClick={() => navigate("/categories")}
-        className="quizup-pattern relative flex h-28 w-full items-center justify-between overflow-hidden px-5 text-left text-white"
+        className="bg-cover bg-no-repeat bg-center quizup-pattern relative flex h-28 w-full items-center justify-between overflow-hidden px-5 text-left text-white" style={{ backgroundImage: "url('/images/banner.jpg')" }}
       >
         <div>
           <p className="font-display text-2xl font-black uppercase leading-6 drop-shadow">Challenges Galore!</p>
@@ -174,7 +173,6 @@ const HomeLobby: React.FC = () => {
         </div>
         <div className="flex h-16 w-16 items-center justify-center rounded-full bg-white/20 text-4xl font-black">!</div>
       </button>
-      </div>
 
       {loadingTopics ? (
         <p className="py-12 text-center text-sm font-semibold text-zinc-400">Loading topics...</p>
