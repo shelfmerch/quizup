@@ -12,6 +12,43 @@ import Icons8Icon, { getCategoryIconSlug } from "@/components/Icons8Icon";
 
 const TILE_COLORS = ["#f65357", "#0dbf9d", "#20b7d5", "#ffc233", "#ff8d2c", "#8d65e7"];
 
+type LeagueKey =
+  | "unranked"
+  | "bronze"
+  | "silver"
+  | "gold"
+  | "crystal"
+  | "master"
+  | "champion"
+  | "titan"
+  | "legend";
+
+const LEAGUES: Array<{ key: LeagueKey; name: string; minXpInclusive: number; badgeUrl: string }> = [
+  { key: "legend", name: "Legend", minXpInclusive: 20000, badgeUrl: "/leagues/legend.svg" },
+  { key: "titan", name: "Titan", minXpInclusive: 15000, badgeUrl: "/leagues/titan.png" },
+  { key: "champion", name: "Champion", minXpInclusive: 13000, badgeUrl: "/leagues/champion.png" },
+  { key: "master", name: "Master", minXpInclusive: 10000, badgeUrl: "/leagues/master.png" },
+  { key: "crystal", name: "Crystal", minXpInclusive: 7000, badgeUrl: "/leagues/crystal.png" },
+  { key: "gold", name: "Gold", minXpInclusive: 5000, badgeUrl: "/leagues/gold.png" },
+  { key: "silver", name: "Silver", minXpInclusive: 2000, badgeUrl: "/leagues/silver.png" },
+  { key: "bronze", name: "Bronze", minXpInclusive: 1000, badgeUrl: "/leagues/bronze.png" },
+  { key: "unranked", name: "Unranked", minXpInclusive: 0, badgeUrl: "/leagues/unranked.png" },
+];
+
+function getLeagueFromXp(xpRaw: unknown) {
+  const xp = typeof xpRaw === "number" && Number.isFinite(xpRaw) ? xpRaw : 0;
+  for (const league of LEAGUES) {
+    if (xp >= league.minXpInclusive) return league;
+  }
+  return LEAGUES[LEAGUES.length - 1];
+}
+
+/** Public-folder league art (respects Vite `base`). */
+function leagueBadgeSrc(badgeUrl: string): string {
+  const path = badgeUrl.startsWith("/") ? badgeUrl.slice(1) : badgeUrl;
+  return `${import.meta.env.BASE_URL}${path}`;
+}
+
 function mergeTopics(apiList: Category[]): Category[] {
   const byId = new Map<string, Category>();
   [...apiList, ...EXTRA_HOME_TOPICS, ...MOCK_CATEGORIES].forEach((category) => {
@@ -130,37 +167,6 @@ const HomeLobby: React.FC = () => {
     `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(user?.username || "player")}`
   );
 
-  type LeagueKey =
-  | "unranked"
-  | "bronze"
-  | "silver"
-  | "gold"
-  | "crystal"
-  | "master"
-  | "champion"
-  | "titan"
-  | "legend";
-
-const LEAGUES: Array<{ key: LeagueKey; name: string; minXpInclusive: number; badgeUrl: string }> = [
-  { key: "legend", name: "Legend", minXpInclusive: 20000, badgeUrl: "/leagues/legend.svg" },
-  { key: "titan", name: "Titan", minXpInclusive: 15000, badgeUrl: "/leagues/titan.png" },
-  { key: "champion", name: "Champion", minXpInclusive: 13000, badgeUrl: "/leagues/champion.png" },
-  { key: "master", name: "Master", minXpInclusive: 10000, badgeUrl: "/leagues/master.png" },
-  { key: "crystal", name: "Crystal", minXpInclusive: 7000, badgeUrl: "/leagues/crystal.png" },
-  { key: "gold", name: "Gold", minXpInclusive: 5000, badgeUrl: "/leagues/gold.png" },
-  { key: "silver", name: "Silver", minXpInclusive: 2000, badgeUrl: "/leagues/silver.png" },
-  { key: "bronze", name: "Bronze", minXpInclusive: 1000, badgeUrl: "/leagues/bronze.png" },
-  { key: "unranked", name: "Unranked", minXpInclusive: 0, badgeUrl: "/leagues/unranked.png" },
-];
-
-function getLeagueFromXp(xpRaw: unknown) {
-  const xp = typeof xpRaw === "number" && Number.isFinite(xpRaw) ? xpRaw : 0;
-  for (const league of LEAGUES) {
-    if (xp >= league.minXpInclusive) return league;
-  }
-  return LEAGUES[LEAGUES.length - 1];
-}
-
   return (
     <div className="quizup-app">
       <div className="quizup-blackbar">
@@ -184,7 +190,7 @@ function getLeagueFromXp(xpRaw: unknown) {
             <div>
               {/* <p className="text-[11px] uppercase tracking-wide text-white/55">League {user?.level || 1}</p> */}
               <p className="font-display text-sm font-extrabold">{user?.username || "Player"}</p>
-              <img src={league.badgeUrl} alt="" className="h-8 w-8 object-contain drop-shadow" />          
+              <img src={leagueBadgeSrc(league.badgeUrl)} alt="" className="h-6 w-6 object-contain drop-shadow" />          
             </div>
           </div>
           <div className="grid grid-cols-3 gap-4 text-center text-[11px] font-bold">
