@@ -3,7 +3,12 @@ const Question = require("../models/Question");
 const { generateQuestionBatch } = require("../services/questionGeneratorService");
 const { verifyQuestion } = require("../services/questionVerificationService");
 const { tagQuestion } = require("../services/questionTaggingService");
-const { validateDraftStructure, isDuplicateInCategory, MIN_CONFIDENCE } = require("../utils/questionStructure");
+const { validateDraftStructure, isDuplicateInCategory, MIN_CONFIDENCE: DEFAULT_MIN_CONF } = require("../utils/questionStructure");
+
+const getVerifyMinConfidence = () => {
+  const n = Number(process.env.MIN_QUESTION_VERIFY_CONFIDENCE);
+  return Number.isFinite(n) && n > 0 && n <= 1 ? n : DEFAULT_MIN_CONF;
+};
 const { normalizeQuestionText } = require("../utils/questionParsing");
 const { resolveImageUrl } = require("../utils/imageResolver");
 const { syncQuestionCount } = require("../services/categoryQuestionCount");
@@ -32,6 +37,11 @@ const processQuestionPipelineJob = async (data) => {
     categoryId,
     count: batchSize,
   });
+
+  const minConf = getVerifyMinConfidence();
+  console.log(
+    `[QuestionPipeline] start categoryId=${categoryId} batchSize=${batchSize} rawCount=${rawList?.length ?? 0} verifyMinConfidence=${minConf}`
+  );
 
   const saved = [];
   const rejected = [];
@@ -62,7 +72,7 @@ const processQuestionPipelineJob = async (data) => {
       continue;
     }
 
-    if (!verification.ok || verification.confidence < MIN_CONFIDENCE) {
+    if (!verification.ok || verification.confidence < minConf) {
       rejected.push({
         reason: "low_confidence_or_invalid",
         confidence: verification.confidence,
@@ -85,6 +95,8 @@ const processQuestionPipelineJob = async (data) => {
     }
 
     let imageUrl = null;
+    let persistType = questionType;
+    let persistImageQuery = imageQuery || "";
     if (questionType === "IMAGE") {
       try {
         imageUrl = await resolveImageUrl({
@@ -98,8 +110,12 @@ const processQuestionPipelineJob = async (data) => {
     }
 
     if (questionType === "IMAGE" && !imageUrl) {
-      rejected.push({ reason: "image_resolve_failed" });
-      continue;
+      console.warn(
+        `[QuestionPipeline] no imageUrl (check PEXELS_API_KEY / UNSPLASH_ACCESS_KEY) — saving as TEXT: "${String(text).slice(0, 60)}..."`
+      );
+      persistType = "TEXT";
+      persistImageQuery = "";
+      imageUrl = null;
     }
 
     try {
@@ -108,9 +124,9 @@ const processQuestionPipelineJob = async (data) => {
         text,
         textNorm: normalizeQuestionText(text),
         imageUrl,
-        questionType,
+        questionType: persistType,
         conceptKey,
-        imageQuery: imageQuery || "",
+        imageQuery: persistImageQuery,
         options,
         correctIndex,
         difficulty,
@@ -134,7 +150,19 @@ const processQuestionPipelineJob = async (data) => {
 
   await syncQuestionCount(categoryId);
 
-  return { saved: saved.length, rejected: rejected.length, rejectedDetails: rejected };
+  const summary = {
+    saved: saved.length,
+    rejected: rejected.length,
+    rejectedDetails: rejected,
+  };
+  const byReason = {};
+  for (const r of rejected) {
+    const key = String(r.reason || "unknown").split(":")[0];
+    byReason[key] = (byReason[key] || 0) + 1;
+  }
+  console.log(`[QuestionPipeline] done categoryId=${categoryId}`, summary.saved, "saved,", summary.rejected, "rejected", byReason);
+
+  return summary;
 };
 
 module.exports = {
