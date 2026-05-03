@@ -12,8 +12,9 @@ const getQuestionPipelineQueue = () => {
       defaultJobOptions: {
         removeOnComplete: 500,
         removeOnFail: 200,
-        attempts: 2,
-        backoff: { type: "exponential", delay: 15_000 },
+        // Gemini free tier often returns 429; whole-job retry after long backoff
+        attempts: 6,
+        backoff: { type: "exponential", delay: 60_000 },
       },
     });
   }
