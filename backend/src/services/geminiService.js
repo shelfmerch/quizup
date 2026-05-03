@@ -1,18 +1,30 @@
 const { GoogleGenerativeAI } = require("@google/generative-ai");
 
 /**
- * Models are tried in order until one accepts generateContent.
- * Set GEMINI_MODEL to pin the first choice; add GEMINI_MODEL_FALLBACKS=comma,separated
- * (optional). Built-ins cover 404s when Google deprecates an id for your API version.
+ * Order: try full Flash before Flash-Lite (often separate RPM buckets on free tier).
+ * Override with GEMINI_MODEL / GEMINI_MODEL_FALLBACKS.
  */
 const BUILTIN_MODEL_FALLBACKS = [
-  "gemini-2.5-flash-lite",
   "gemini-2.5-flash",
+  "gemini-2.5-flash-lite",
   "gemini-2.0-flash-lite",
   "gemini-2.0-flash",
 ];
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+
+/** After heavy 429s, skip this model briefly so we don't hammer the same bucket. */
+const cooldownUntil = new Map();
+
+const markModelCooldown = (modelId, ms) => {
+  const until = Date.now() + ms;
+  cooldownUntil.set(modelId, until);
+};
+
+const getCooledCandidates = () => {
+  const now = Date.now();
+  return getModelCandidates().filter((id) => (cooldownUntil.get(id) || 0) <= now);
+};
 
 /**
  * @param {unknown} e
@@ -29,7 +41,6 @@ const isRateLimitError = (e) => {
 };
 
 /**
- * Wrong / retired model id for this API key or v1beta surface.
  * @param {unknown} e
  */
 const isModelNotFound = (e) => {
@@ -48,7 +59,6 @@ const isQuotaDisabledForModel = (e) => {
 };
 
 /**
- * Parse "Please retry in 54.44s" from Google error text.
  * @param {string} message
  */
 const parseRetryDelayMs = (message) => {
@@ -59,9 +69,16 @@ const parseRetryDelayMs = (message) => {
   return Math.ceil(sec * 1000) + 1500;
 };
 
-const getMaxAttempts = () => {
-  const n = Number(process.env.GEMINI_MAX_RETRIES);
-  return Number.isFinite(n) && n >= 1 ? Math.min(12, n) : 6;
+/** Retries with backoff on the *same* model before rotating (default 2, not 6). */
+const getSameModelRateRetries = () => {
+  const n = Number(process.env.GEMINI_SAME_MODEL_RATE_RETRIES);
+  return Number.isFinite(n) && n >= 1 ? Math.min(8, n) : 2;
+};
+
+/** Full passes over the model list when every model returns 429. */
+const getMaxWaves = () => {
+  const n = Number(process.env.GEMINI_MAX_WAVES);
+  return Number.isFinite(n) && n >= 1 ? Math.min(10, n) : 5;
 };
 
 const getModelCandidates = () => {
@@ -111,46 +128,78 @@ const getModel = (modelId, opts = {}) => {
  * @returns {Promise<string>}
  */
 const generateText = async (prompt, opts = {}) => {
-  const candidates = getModelCandidates();
-  const maxAttempts = getMaxAttempts();
-  let lastErr;
+  const sameModelRetries = getSameModelRateRetries();
+  const maxWaves = getMaxWaves();
+  const cooldownMs = Number(process.env.GEMINI_MODEL_COOLDOWN_MS);
+  const modelCooldown = Number.isFinite(cooldownMs) && cooldownMs > 0 ? cooldownMs : 120_000;
 
-  outer: for (const modelId of candidates) {
-    for (let attempt = 1; attempt <= maxAttempts; attempt += 1) {
-      try {
-        const model = getModel(modelId, opts);
-        const res = await model.generateContent(prompt);
-        return res.response.text();
-      } catch (e) {
-        lastErr = e;
-        if (isModelNotFound(e)) {
-          console.warn(`[Gemini] model not available: ${modelId} — trying next candidate`);
-          continue outer;
+  let lastErr = new Error("Gemini: no response");
+
+  for (let wave = 0; wave < maxWaves; wave += 1) {
+    const candidates = getCooledCandidates();
+    if (candidates.length === 0) {
+      const waitAll = Math.min(180_000, parseRetryDelayMs(String(lastErr?.message || "")) || 45_000);
+      console.warn(`[Gemini] all models in cooldown — sleeping ${waitAll}ms`);
+      await sleep(waitAll);
+      continue;
+    }
+
+    if (wave > 0) {
+      const inter = parseRetryDelayMs(String(lastErr?.message || "")) ?? Math.min(120_000, 30_000 * wave);
+      console.warn(`[Gemini] wave ${wave + 1}/${maxWaves}, cooling ${inter}ms`);
+      await sleep(inter);
+    }
+
+    modelLoop: for (let mi = 0; mi < candidates.length; mi += 1) {
+      const modelId = candidates[mi];
+      const idx = mi;
+
+      for (let attempt = 1; attempt <= sameModelRetries; attempt += 1) {
+        try {
+          const model = getModel(modelId, opts);
+          const res = await model.generateContent(prompt);
+          return res.response.text();
+        } catch (e) {
+          lastErr = e;
+          if (isModelNotFound(e)) {
+            console.warn(`[Gemini] model not available: ${modelId} — next`);
+            continue modelLoop;
+          }
+          if (isQuotaDisabledForModel(e) && idx < candidates.length - 1) {
+            console.warn(`[Gemini] no free-tier quota for ${modelId} — next`);
+            continue modelLoop;
+          }
+          const rateLimited = isRateLimitError(e);
+          if (!rateLimited) {
+            throw e;
+          }
+
+          if (attempt < sameModelRetries) {
+            const fromApi = e?.message ? parseRetryDelayMs(e.message) : null;
+            const cap = Number(process.env.GEMINI_MAX_BACKOFF_MS);
+            const maxB = Number.isFinite(cap) && cap > 5000 ? cap : 45_000;
+            const exponential = Math.min(maxB, 3000 * 2 ** (attempt - 1));
+            const waitMs = fromApi != null ? Math.min(maxB, fromApi) : exponential;
+            console.warn(`[Gemini] rate limited ${modelId} (${attempt}/${sameModelRetries}), waiting ${waitMs}ms`);
+            await sleep(waitMs);
+            continue;
+          }
+
+          markModelCooldown(modelId, modelCooldown);
+          if (idx < candidates.length - 1) {
+            console.warn(`[Gemini] rate limited ${modelId} — switching model (no long wait)`);
+            await sleep(Number(process.env.GEMINI_MODEL_SWITCH_GAP_MS) || 2000);
+            continue modelLoop;
+          }
+
+          console.warn(`[Gemini] rate limited on last model ${modelId} — end wave`);
+          break modelLoop;
         }
-        const idx = candidates.indexOf(modelId);
-        if (isQuotaDisabledForModel(e) && idx >= 0 && idx < candidates.length - 1) {
-          console.warn(`[Gemini] no quota on free tier for ${modelId} — trying next candidate`);
-          continue outer;
-        }
-        const rateLimited = isRateLimitError(e);
-        if (rateLimited && attempt < maxAttempts) {
-          const fromApi = e?.message ? parseRetryDelayMs(e.message) : null;
-          const exponential = Math.min(120_000, 4000 * 2 ** (attempt - 1));
-          const waitMs = fromApi ?? exponential;
-          console.warn(`[Gemini] rate limited ${modelId} (attempt ${attempt}/${maxAttempts}), waiting ${waitMs}ms`);
-          await sleep(waitMs);
-          continue;
-        }
-        if (rateLimited && attempt === maxAttempts && idx >= 0 && idx < candidates.length - 1) {
-          console.warn(`[Gemini] still rate limited on ${modelId} — trying next model`);
-          continue outer;
-        }
-        throw e;
       }
     }
   }
 
-  throw lastErr || new Error("Gemini: no model candidates succeeded");
+  throw lastErr;
 };
 
 module.exports = {
