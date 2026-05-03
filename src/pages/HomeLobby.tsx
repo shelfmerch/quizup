@@ -204,7 +204,7 @@ const HomeLobby: React.FC = () => {
       <button
         type="button"
         onClick={() => navigate("/categories")}
-        className="bg-cover bg-no-repeat bg-center quizup-pattern relative flex h-32 w-full items-center justify-between overflow-hidden px-5 text-left text-white" style={{ backgroundImage: "url('/images/banner.jpg')" }}
+        className="bg-cover bg-no-repeat bg-center quizup-pattern relative flex h-36 w-full items-center justify-between overflow-hidden px-5 text-left text-white" style={{ backgroundImage: "url('/images/banner.jpg')" }}
       >
         <div>
           <p className="font-display text-2xl font-black uppercase leading-6 drop-shadow">Challenges Galore!</p>

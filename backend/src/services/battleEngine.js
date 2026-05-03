@@ -215,6 +215,31 @@ const finalizeMatch = async (matchId, io, endReason = "completed") => {
     result1 = result2 = "draw";
   }
 
+  let p1Penalty = 0;
+  let p2Penalty = 0;
+
+  if (result1 === "win" || result1 === "loss") {
+    try {
+      const user1 = await User.findById(state.player1.userId).select('level');
+      const user2 = await User.findById(state.player2.userId).select('level');
+      const level1 = user1 ? user1.level : 1;
+      const level2 = user2 ? user2.level : 1;
+      const scoreDiff = Math.abs(p1Score - p2Score);
+
+      if (result1 === "loss") {
+        let scaling = 1 + (level1 - level2) * 0.1;
+        scaling = Math.max(0.2, Math.min(scaling, 2.5));
+        p1Penalty = Math.floor(scoreDiff * scaling);
+      } else {
+        let scaling = 1 + (level2 - level1) * 0.1;
+        scaling = Math.max(0.2, Math.min(scaling, 2.5));
+        p2Penalty = Math.floor(scoreDiff * scaling);
+      }
+    } catch (e) {
+      console.error("[BattleEngine] Error calculating dynamic penalty:", e.message);
+    }
+  }
+
   // Persist match to MongoDB
   await Match.findByIdAndUpdate(matchId, {
     status: endReason === "abandoned" ? "abandoned" : "completed",
@@ -225,8 +250,8 @@ const finalizeMatch = async (matchId, io, endReason = "completed") => {
   });
 
   // Update user stats for both players
-  await updateUserStats(state.player1.userId, result1, state.player1.score, state.categoryId);
-  await updateUserStats(state.player2.userId, result2, state.player2.score, state.categoryId);
+  await updateUserStats(state.player1.userId, result1, state.player1.score, state.categoryId, p1Penalty);
+  await updateUserStats(state.player2.userId, result2, state.player2.score, state.categoryId, p2Penalty);
 
   // Evaluate achievements
   await evaluatePostMatchAchievements(state.player1.userId, state.player2.userId, state, result1, state.player1.score, state.categoryId, io);
@@ -259,7 +284,7 @@ const finalizeMatch = async (matchId, io, endReason = "completed") => {
 /**
  * Update a user's stats after a match completes.
  */
-const updateUserStats = async (userId, result, score, categoryId) => {
+const updateUserStats = async (userId, result, score, categoryId, penalty = 0) => {
   try {
     const user = await User.findById(userId);
     if (!user) return;
@@ -276,6 +301,10 @@ const updateUserStats = async (userId, result, score, categoryId) => {
       user.losses += 1;
       user.winStreak = 0;
       user.addXP(XP_LOSS);
+      if (penalty > 0) {
+        user.xp -= penalty;
+        if (user.xp < 0) user.xp = 0; // Prevent negative XP (Level Floor mechanic)
+      }
     } else {
       user.draws += 1;
       user.winStreak = 0;

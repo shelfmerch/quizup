@@ -2,6 +2,7 @@ const { Worker } = require("bullmq");
 const { createRedisConnection } = require("../queue/redis");
 const { QUEUE_NAME } = require("../queue/questionPipelineQueue");
 const { processQuestionPipelineJob } = require("../jobs/processQuestionPipelineJob");
+const { getModelCandidates } = require("../services/geminiService");
 
 /**
  * @returns {import("bullmq").Worker | null}
@@ -40,6 +41,7 @@ const startQuestionPipelineWorker = () => {
   });
 
   console.log("[QuestionPipelineWorker] listening on queue", QUEUE_NAME);
+  console.log("[QuestionPipelineWorker] Gemini model chain:", getModelCandidates().join(" → "));
   return worker;
 };
 
