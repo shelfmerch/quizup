@@ -1,9 +1,9 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Sparkles } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { adminService, AdminCategory, AdminQuestion } from "@/services/adminService";
+import { adminService, AdminCategory, AdminQuestion, GenerateQuestionsQueuedResponse } from "@/services/adminService";
 import { resolveQuestionImageUrl } from "@/lib/mediaUrl";
 import { toast } from "sonner";
 
@@ -28,6 +28,9 @@ const AdminPage: React.FC = () => {
   const [timeLimit, setTimeLimit] = useState(10);
   const [qImageUrl, setQImageUrl] = useState("");
   const [qImageUploading, setQImageUploading] = useState(false);
+
+  const [aiCount, setAiCount] = useState(10);
+  const [aiGenerating, setAiGenerating] = useState(false);
 
   const refreshCategories = async () => {
     const list = await adminService.listCategories();
@@ -93,6 +96,34 @@ const AdminPage: React.FC = () => {
       await refreshCategories();
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Create failed");
+    }
+  };
+
+  const handleGenerateAiQuestions = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedSlug) {
+      toast.error("Select a topic first");
+      return;
+    }
+    const count = Math.min(500, Math.max(1, Math.floor(Number(aiCount) || 0)));
+    if (count < 1) {
+      toast.error("Enter a count between 1 and 500");
+      return;
+    }
+    setAiGenerating(true);
+    try {
+      const res: GenerateQuestionsQueuedResponse = await adminService.generateQuestionsQueued({
+        categoryId: selectedSlug,
+        count,
+      });
+      toast.success(
+        `Queued ${res.batches} background job(s) for ${count} question(s). They appear here after the worker finishes (usually under a minute).`,
+        { duration: 8000 }
+      );
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Queue failed");
+    } finally {
+      setAiGenerating(false);
     }
   };
 
@@ -217,6 +248,38 @@ const AdminPage: React.FC = () => {
                   ))}
                 </select>
               </div>
+
+              {selectedSlug && (
+                <form onSubmit={handleGenerateAiQuestions} className="space-y-3 bg-quizup-card p-4 rounded-lg border border-quizup-green/30">
+                  <div className="flex items-center gap-2 text-quizup-green">
+                    <Sparkles className="w-4 h-4 shrink-0" />
+                    <h3 className="font-display font-bold text-foreground text-sm">Generate with AI</h3>
+                  </div>
+                  <p className="text-xs text-muted-foreground leading-relaxed">
+                    Uses Gemini + image APIs on the server. Jobs run in the background (10 questions per job). Requires{" "}
+                    <code className="text-foreground/80">REDIS_URL</code>, <code className="text-foreground/80">GEMINI_API_KEY</code>, and worker
+                    running.
+                  </p>
+                  <div>
+                    <Label className="text-xs text-muted-foreground">How many questions</Label>
+                    <Input
+                      type="number"
+                      min={1}
+                      max={500}
+                      value={aiCount}
+                      onChange={(e) => setAiCount(Number(e.target.value) || 0)}
+                      className="mt-1 bg-quizup-dark border-border text-foreground"
+                    />
+                  </div>
+                  <button
+                    type="submit"
+                    disabled={aiGenerating}
+                    className="w-full h-11 rounded-lg bg-quizup-green/90 hover:bg-quizup-green text-quizup-dark font-display font-bold text-sm disabled:opacity-50 disabled:pointer-events-none"
+                  >
+                    {aiGenerating ? "QUEUING…" : "QUEUE AI GENERATION"}
+                  </button>
+                </form>
+              )}
 
               {selectedSlug && (
                 <form onSubmit={handleCreateQuestion} className="space-y-3 bg-quizup-card p-4 rounded-lg">

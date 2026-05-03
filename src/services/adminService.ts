@@ -30,6 +30,14 @@ export interface AdminQuestion {
   isActive: boolean;
 }
 
+export interface GenerateQuestionsQueuedResponse {
+  accepted: boolean;
+  categoryId: string;
+  jobIds: string[];
+  batches: number;
+  message?: string;
+}
+
 export const adminService = {
   async listCategories(): Promise<AdminCategory[]> {
     const res = await fetch(`${API_URL}/admin/categories`, { headers: headers() });
@@ -108,5 +116,21 @@ export const adminService = {
     }
     const data = await res.json();
     return data.question;
+  },
+
+  async generateQuestionsQueued(body: {
+    categoryId: string;
+    count: number;
+  }): Promise<GenerateQuestionsQueuedResponse> {
+    const res = await fetch(`${API_URL}/admin/generate-questions`, {
+      method: "POST",
+      headers: headers(),
+      body: JSON.stringify(body),
+    });
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({}));
+      throw new Error(data.error || "Failed to queue generation");
+    }
+    return res.json();
   },
 };
