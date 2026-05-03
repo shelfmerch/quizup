@@ -45,10 +45,15 @@ const validateDraftStructure = (q) => {
   const correctAnswer = typeof q.correctAnswer === "string" ? q.correctAnswer.trim() : "";
   if (!correctAnswer) return { ok: false, reason: "missing_correct_answer" };
 
-  const correctIndex = opts.findIndex((o) => o === correctAnswer);
-  if (correctIndex < 0) return { ok: false, reason: "answer_not_in_options" };
+  let correctIndex = opts.findIndex((o) => o === correctAnswer);
+  if (correctIndex < 0) {
+    const ci = opts.findIndex((o) => o.toLowerCase() === correctAnswer.toLowerCase());
+    if (ci < 0) return { ok: false, reason: "answer_not_in_options" };
+    correctIndex = ci;
+  }
 
-  const t = q.type === "IMAGE" || q.type === "TEXT" ? q.type : null;
+  const typeRaw = typeof q.type === "string" ? q.type.trim().toUpperCase() : "";
+  const t = typeRaw === "IMAGE" || typeRaw === "TEXT" ? typeRaw : null;
   if (!t) return { ok: false, reason: "invalid_type" };
 
   const imageQuery =

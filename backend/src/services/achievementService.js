@@ -15,19 +15,16 @@ const unlockAchievement = async (user, achievementId, io) => {
   if (hasAchievement(user, achievementId)) return false;
 
   user.unlockedAchievements.push({ id: achievementId, unlockedAt: new Date() });
-  
-  // Try to dispatch a notification logic if we have socket presence
-  const battlePresence = require("../state/battlePresence");
-  const socketId = battlePresence.getUserSocket(user.id);
-  
-  if (io && socketId) {
-    // Send a real-time notification
-    io.to(socketId).emit("notification", {
+
+  // Sockets join room `user:<id>` on connect (see sockets/index.js)
+  if (io) {
+    const uid = user._id ? user._id.toString() : String(user.id);
+    io.to(`user:${uid}`).emit("notification", {
       type: "achievement",
       title: "Achievement Unlocked!",
       message: `You earned an achievement!`,
       achievementId,
-      createdAt: new Date().toISOString()
+      createdAt: new Date().toISOString(),
     });
   }
   
