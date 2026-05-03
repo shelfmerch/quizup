@@ -42,7 +42,7 @@ const userSchema = new mongoose.Schema(
     // Progression
     level: { type: Number, default: 1 },
     xp: { type: Number, default: 0 },
-    xpToNextLevel: { type: Number, default: 500 },
+    xpToNextLevel: { type: Number, default: 1000 },
 
     // Stats
     totalMatches: { type: Number, default: 0 },

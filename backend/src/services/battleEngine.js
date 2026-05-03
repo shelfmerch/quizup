@@ -26,7 +26,15 @@ const BETWEEN_QUESTION_DELAY_MS = 3_000; // 3s between round_end and next questi
 const calcPoints = (isCorrect, timeRemainingMs, timeLimitSec, pointsMultiplier = 1) => {
   if (!isCorrect) return 0;
   const mult = Number(pointsMultiplier) > 0 ? Number(pointsMultiplier) : 1;
-  const timeBonus = Math.floor((timeRemainingMs / (timeLimitSec * 1000)) * 100);
+
+  const elapsedMs = (timeLimitSec * 1000) - timeRemainingMs;
+  let timeBonus = 0;
+  if (elapsedMs <= 2000) {
+    timeBonus = 100;
+  } else {
+    timeBonus = Math.floor((timeRemainingMs / (timeLimitSec * 1000)) * 100);
+  }
+
   return Math.round((100 + timeBonus) * mult);
 };
 
