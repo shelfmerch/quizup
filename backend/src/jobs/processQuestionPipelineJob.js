@@ -17,7 +17,7 @@ const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
 const geminiCallGapMs = () => {
   const n = Number(process.env.GEMINI_CALL_GAP_MS);
-  return Number.isFinite(n) && n >= 0 ? n : 1200;
+  return Number.isFinite(n) && n >= 0 ? n : 4500;
 };
 
 /**
