@@ -30,5 +30,7 @@ router.post("/categories", createCategory);
 router.get("/questions", listQuestions);
 router.post("/questions", createQuestion);
 router.post("/generate-questions", generateQuestionsQueued);
+// Alias: some clients / proxies use snake_case
+router.post("/generate_questions", generateQuestionsQueued);
 
 module.exports = router;
