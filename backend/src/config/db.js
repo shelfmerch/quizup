@@ -17,7 +17,9 @@ const connectDB = async () => {
   while (true) {
     attempt += 1;
     try {
-      const conn = await mongoose.connect(process.env.MONGODB_URI, {
+      const uri = process.env.MONGODB_URI || process.env.MONGO_URI;
+      if (!uri) throw new Error("MONGODB_URI or MONGO_URI must be set");
+      const conn = await mongoose.connect(uri, {
         serverSelectionTimeoutMS: 5000,
       });
       isConnected = true;

@@ -7,6 +7,7 @@ const {
   createCategory,
   listQuestions,
   createQuestion,
+  generateQuestionsQueued,
 } = require("../controllers/adminController");
 const uploadQuestionImage = require("../middleware/uploadQuestionImage");
 
@@ -28,5 +29,6 @@ router.get("/categories", listCategories);
 router.post("/categories", createCategory);
 router.get("/questions", listQuestions);
 router.post("/questions", createQuestion);
+router.post("/generate-questions", generateQuestionsQueued);
 
 module.exports = router;

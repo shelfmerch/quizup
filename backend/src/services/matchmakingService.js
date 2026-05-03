@@ -3,27 +3,11 @@ const Match = require("../models/Match");
 const User = require("../models/User");
 const Category = require("../models/Category");
 const MatchQueue = require("../models/MatchQueue");
-
-/** Each 1v1 match uses at most this many questions, sampled uniformly at random from the full topic pool. */
-const QUESTIONS_PER_MATCH = 7;
-
-function shuffleInPlace(arr) {
-  for (let i = arr.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [arr[i], arr[j]] = [arr[j], arr[i]];
-  }
-  return arr;
-}
-
-/**
- * Pick up to QUESTIONS_PER_MATCH distinct questions from the pool (no repeats in one match).
- */
-function selectQuestionsForMatch(allQuestions) {
-  const pool = [...allQuestions];
-  shuffleInPlace(pool);
-  const n = Math.min(QUESTIONS_PER_MATCH, pool.length);
-  return pool.slice(0, n);
-}
+const {
+  selectQuestionsForMatch,
+  mapQuestionForMatch,
+} = require("./matchQuestionSelection");
+const { getRecentQuestionIdSetForTwoUsers } = require("./userQuestionExposure");
 
 const joinQueue = async (userId, categoryId, socketId) => {
   userId = userId.toString();
@@ -51,7 +35,8 @@ const joinQueue = async (userId, categoryId, socketId) => {
     return { matched: false };
   }
 
-  const shuffled = selectQuestionsForMatch(allQuestions);
+  const excludeIds = await getRecentQuestionIdSetForTwoUsers(userId, opponent.userId);
+  const shuffled = selectQuestionsForMatch(allQuestions, excludeIds);
 
   const category = await Category.findOne({ slug: categoryId }).lean();
   const categoryName = category ? category.name : categoryId;
@@ -65,15 +50,7 @@ const joinQueue = async (userId, categoryId, socketId) => {
     return { matched: false };
   }
 
-  const questionsMapped = shuffled.map((q) => ({
-    id: q._id.toString(),
-    categoryId: q.categoryId,
-    text: q.text,
-    imageUrl: q.imageUrl || null,
-    options: q.options,
-    correctIndex: q.correctIndex, // server-side only
-    timeLimit: q.timeLimit,
-  }));
+  const questionsMapped = shuffled.map((q, idx) => mapQuestionForMatch(q, idx, shuffled.length));
 
   const match = await Match.create({
     categoryId,
@@ -137,7 +114,8 @@ const createDirectMatch = async (challengerId, opponentId, categoryId, challenge
   if (allQuestions.length === 0) {
     throw new Error("No questions available for this category");
   }
-  const shuffled = selectQuestionsForMatch(allQuestions);
+  const excludeIds = await getRecentQuestionIdSetForTwoUsers(p1Id, p2Id);
+  const shuffled = selectQuestionsForMatch(allQuestions, excludeIds);
 
   const category = await Category.findOne({ slug: categoryId }).lean();
   const categoryName = category ? category.name : categoryId;
@@ -145,15 +123,7 @@ const createDirectMatch = async (challengerId, opponentId, categoryId, challenge
   const [p1User, p2User] = await Promise.all([User.findById(p1Id).lean(), User.findById(p2Id).lean()]);
   if (!p1User || !p2User) throw new Error("User not found");
 
-  const questionsMapped = shuffled.map((q) => ({
-    id: q._id.toString(),
-    categoryId: q.categoryId,
-    text: q.text,
-    imageUrl: q.imageUrl || null,
-    options: q.options,
-    correctIndex: q.correctIndex, // server-side only
-    timeLimit: q.timeLimit,
-  }));
+  const questionsMapped = shuffled.map((q, idx) => mapQuestionForMatch(q, idx, shuffled.length));
 
   const match = await Match.create({
     categoryId,

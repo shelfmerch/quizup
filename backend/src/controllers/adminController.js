@@ -1,5 +1,6 @@
 const Category = require("../models/Category");
 const Question = require("../models/Question");
+const { syncQuestionCount } = require("../services/categoryQuestionCount");
 
 const normalizeImageUrl = (raw) => {
   if (raw == null) return null;
@@ -18,11 +19,6 @@ const slugify = (name) => {
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/^-+|-+$/g, "");
   return s || "topic";
-};
-
-const syncQuestionCount = async (categorySlug) => {
-  const count = await Question.countDocuments({ categoryId: categorySlug, isActive: true });
-  await Category.findOneAndUpdate({ slug: categorySlug }, { questionCount: count });
 };
 
 // GET /api/admin/categories
@@ -109,6 +105,12 @@ const listQuestions = async (req, res) => {
       categoryId: q.categoryId,
       text: q.text,
       imageUrl: q.imageUrl || null,
+      questionType: q.questionType || (q.imageUrl ? "IMAGE" : "TEXT"),
+      conceptKey: q.conceptKey || "",
+      difficulty: q.difficulty ?? 5,
+      source: q.source || "MANUAL",
+      verified: q.verified ?? false,
+      tags: q.tags || [],
       options: q.options,
       correctIndex: q.correctIndex,
       timeLimit: q.timeLimit,
@@ -196,9 +198,41 @@ const createQuestion = async (req, res) => {
   }
 };
 
+const generateQuestionsQueued = async (req, res) => {
+  try {
+    const { categoryId, count } = req.body;
+    if (!categoryId || typeof categoryId !== "string") {
+      return res.status(422).json({ error: "categoryId is required" });
+    }
+    const slug = categoryId.trim().toLowerCase();
+    const cat = await Category.findOne({ slug });
+    if (!cat) {
+      return res.status(404).json({ error: "Topic (category) not found" });
+    }
+
+    const { enqueueQuestionGeneration } = require("../queue/questionPipelineQueue");
+    const { jobIds, batches } = await enqueueQuestionGeneration({ categoryId: slug, count });
+
+    return res.status(202).json({
+      accepted: true,
+      categoryId: slug,
+      jobIds,
+      batches,
+      message: "Jobs queued. Generation runs in the background.",
+    });
+  } catch (err) {
+    console.error("[Admin] generateQuestionsQueued error:", err);
+    if (String(err.message || "").includes("REDIS_URL")) {
+      return res.status(503).json({ error: "Queue unavailable (REDIS_URL)" });
+    }
+    return res.status(500).json({ error: "Server error" });
+  }
+};
+
 module.exports = {
   listCategories,
   createCategory,
   listQuestions,
   createQuestion,
+  generateQuestionsQueued,
 };

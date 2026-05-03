@@ -59,6 +59,9 @@ const userSchema = new mongoose.Schema(
     // Followed quiz topics (Category.slug values)
     followedCategories: [{ type: String, default: [] }],
 
+    /** Recent question document ids (string) to reduce repeats across matches */
+    lastPlayedQuestionIds: { type: [String], default: [] },
+
     // Achievements system
     unlockedAchievements: [
       {
