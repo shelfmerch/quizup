@@ -3,6 +3,7 @@ import { leaderboardService } from "@/services/leaderboardService";
 import { LeaderboardEntry } from "@/types";
 import { Info } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { Settings, Search, MessageCircle } from "lucide-react";
 
 const Leaderboard: React.FC = () => {
   const navigate = useNavigate();
@@ -28,9 +29,22 @@ const Leaderboard: React.FC = () => {
 
   return (
     <div className="min-h-screen pb-10">
+      <div className="quizup-blackbar">
+        <button onClick={() => navigate("/settings")} aria-label="Settings">
+          <Settings className="h-5 w-5" />
+        </button>
+        <button onClick={() => navigate("/profile")} className="flex items-center gap-2">
+          {/* <img src={avatarSrc} alt="" className="h-8 w-8 rounded-full border-2 border-white object-cover" /> */}
+          <span className="font-display text-[17px] font-extrabold">QuizUp</span>
+        </button>
+        <div className="flex items-center gap-3">
+          <Search className="h-5 w-5" />
+          <MessageCircle className="h-5 w-5" />
+        </div>
+      </div>
       {/* Header */}
-      <div className="sticky top-0 z-50 px-5 py-5 flex items-center justify-between bg-[#f4f4f4]/90 backdrop-blur-md">
-        <h1 className="font-display font-bold text-3xl text-slate-900 tracking-tight">Leaderboard</h1>
+      <div className="sticky top-0 z-50 px-4 sm:px-6 py-3 flex items-center justify-between bg-[#101010] backdrop-blur-md">
+        <h1 className="font-display font-bold text-3xl text-white tracking-tight">Leaderboard</h1>
         {/* <button className="flex items-center gap-1.5 text-slate-600 text-sm font-semibold hover:text-slate-900 transition-colors">
           How it Works
           <Info className="w-5 h-5 text-purple-600" />
@@ -38,10 +52,10 @@ const Leaderboard: React.FC = () => {
       </div>
 
       {/* Top 3 Podium */}
-      <div className="relative pt-10 pb-8 flex justify-center items-end px-4 overflow-hidden">
+      <div className="relative pt-5 pb-8 flex justify-center items-end px-4 overflow-hidden">
         {/* Subtle background rays/glow for 1st place */}
         <div className="absolute inset-0 pointer-events-none flex justify-center items-center -top-12">
-          <div className="w-[300px] h-[300px] bg-gradient-to-tr from-pink-200/40 to-red-300/40 blur-3xl rounded-full"></div>
+          <div className="w-[300px] h-[300px] bg-gradient-to-tr from-pink-400/70 to-red-500/70 blur-3xl rounded-full"></div>
         </div>
 
         <div className="flex items-end justify-center gap-4 relative z-10 w-full max-w-sm">
@@ -108,22 +122,24 @@ const Leaderboard: React.FC = () => {
         </div>
       </div> */}
 
-      {/* Rest of the leaderboard */}
-      <div className="px-5 pb-8">
+      {/* Rest of the leaderboard — full width of layout shell */}
+      <div className="w-full pb-5">
         {entries.slice(3).map((entry, idx) => (
           <button
             key={entry.userId}
             onClick={() => navigate(`/profile/${entry.userId}`)}
-            className="w-full flex items-center gap-4 py-3 border-b border-slate-200 last:border-0 active:bg-slate-100 transition-colors group"
+            className={`w-full flex items-center gap-4 px-4 sm:px-6 py-4 border-b border-slate-200 last:border-0 active:bg-slate-200/60 transition-colors group ${
+              idx % 2 === 0 ? "bg-white" : "bg-slate-100"
+            }`}
           >
-            <img src={entry.avatarUrl} alt="" className="w-12 h-12 rounded-full object-cover border border-slate-200 group-hover:border-slate-300 transition-colors" />
+            <img src={entry.avatarUrl} alt="" className="w-10 h-10 rounded-full object-cover border border-slate-200 group-hover:border-slate-300 transition-colors" />
             <div className="flex-1 text-left min-w-0">
-              <p className="text-[15px] font-bold text-slate-900 truncate">{entry.username}</p>
-              <p className="text-[11px] font-semibold text-slate-500 mt-0.5 truncate">{entry.score} XP</p>
+              <p className="text-[13px] font-bold text-slate-900 truncate">{entry.username}</p>
+              <p className="text-[9px] font-semibold text-slate-500 mt-0.5 truncate">{entry.score} XP</p>
             </div>
             <div className="flex items-center gap-4 pl-2">
-              <span className="font-display font-extrabold text-slate-700 text-lg w-8 text-right">{entry.rank}</span>
-              <div className="w-4 flex justify-center">
+              <span className="font-display font-extrabold text-slate-700 text-md w-7 text-right">{entry.rank}</span>
+              <div className="w-3 flex justify-center">
                 {idx % 3 === 0 ? (
                   <span className="text-rose-500 text-xs">▼</span>
                 ) : (

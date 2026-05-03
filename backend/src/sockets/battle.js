@@ -95,6 +95,9 @@ const registerBattle = (socket, io) => {
               options: q.options,
               timeLimit: q.timeLimit,
               imageUrl: q.imageUrl || null,
+              questionType: q.questionType || (q.imageUrl ? "IMAGE" : "TEXT"),
+              isBonusRound: Boolean(q.isBonusRound),
+              pointsMultiplier: q.pointsMultiplier != null ? q.pointsMultiplier : q.isBonusRound ? 2 : 1,
             },
             timerEndsAt: freshState.timerEndsAt,
           });

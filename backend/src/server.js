@@ -10,6 +10,14 @@ const start = async () => {
   // 1. Create HTTP server from Express app
   const server = http.createServer(app);
 
+  // 1b. Background workers (BullMQ) — same process as API for simpler ops
+  try {
+    const { startQuestionPipelineWorker } = require("./workers/questionPipelineWorker");
+    startQuestionPipelineWorker();
+  } catch (e) {
+    console.warn("[Server] Question pipeline worker failed to start:", e.message);
+  }
+
   // 2. Attach Socket.io to the same HTTP server
   initSockets(server);
 

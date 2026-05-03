@@ -25,7 +25,7 @@ const BottomNav: React.FC = () => {
 
   return (
     <nav className="fixed bottom-0 left-0 right-0 z-50 bg-[#080808] border-t border-black safe-bottom">
-      <div className="flex items-center justify-around h-14 max-w-md mx-auto">
+      <div className="flex items-center justify-around h-16 max-w-md mx-auto">
         {tabs.map(({ path, label, Icon, isCenter }) => {
           const active = location.pathname === path || location.pathname.startsWith(path + "/");
 
@@ -37,11 +37,11 @@ const BottomNav: React.FC = () => {
                 className="flex items-center justify-center -mt-5 flex-1"
                 aria-label="Browse topics"
               >
-                <div className="w-14 h-14 rounded-full flex items-center justify-center overflow-hidden bg-[#f65357] border-[3px] border-[#222] shadow-[0_8px_18px_rgba(0,0,0,0.45)]">
+                <div className="w-16 h-16 rounded-full flex items-center justify-center overflow-hidden bg-[#f65357] border-[3px] border-[#222] shadow-[0_8px_18px_rgba(0,0,0,0.45)]">
                   <img
                     src={LOGO_SRC}
                     alt=""
-                    className="w-10 h-10 object-cover rounded-full"
+                    className="w-13 h-13 object-cover rounded-full"
                     width={40}
                     height={40}
                     draggable={false}
@@ -60,8 +60,8 @@ const BottomNav: React.FC = () => {
                 active ? "opacity-100" : "opacity-45 hover:opacity-80"
               }`}
             >
-              <TabIcon className={`w-5 h-5 ${active ? "text-[#f65357]" : "text-zinc-300"}`} />
-              <span className={`text-[9px] font-semibold ${active ? "text-[#f65357]" : "text-zinc-400"}`}>
+              <TabIcon className={`w-7 h-7 ${active ? "text-[#f65357]" : "text-zinc-300"}`} />
+              <span className={`text-[10px] font-semibold ${active ? "text-[#f65357]" : "text-zinc-400"}`}>
                 {label}
               </span>
             </button>

@@ -8,6 +8,7 @@ const Match = require("../models/Match");
 const User = require("../models/User");
 const mongoose = require("mongoose");
 const { evaluatePostMatchAchievements } = require("./achievementService");
+const { recordMatchQuestionExposure } = require("./userQuestionExposure");
 
 // Active timers: matchId → NodeJS timeout reference
 const questionTimers = new Map();
@@ -22,10 +23,11 @@ const BETWEEN_QUESTION_DELAY_MS = 3_000; // 3s between round_end and next questi
  * Calculate points for a correct answer.
  * Server is the ONLY place that does this.
  */
-const calcPoints = (isCorrect, timeRemainingMs, timeLimitSec) => {
+const calcPoints = (isCorrect, timeRemainingMs, timeLimitSec, pointsMultiplier = 1) => {
   if (!isCorrect) return 0;
+  const mult = Number(pointsMultiplier) > 0 ? Number(pointsMultiplier) : 1;
   const timeBonus = Math.floor((timeRemainingMs / (timeLimitSec * 1000)) * 100);
-  return 100 + timeBonus;
+  return Math.round((100 + timeBonus) * mult);
 };
 
 /**
@@ -65,6 +67,9 @@ const sendNextQuestion = async (matchId, io) => {
       options: question.options,
       timeLimit: question.timeLimit,
       imageUrl: question.imageUrl || null,
+      questionType: question.questionType || (question.imageUrl ? "IMAGE" : "TEXT"),
+      isBonusRound: Boolean(question.isBonusRound),
+      pointsMultiplier: question.pointsMultiplier != null ? question.pointsMultiplier : question.isBonusRound ? 2 : 1,
     },
     timerEndsAt, // absolute server timestamp — client uses for display only
   });
@@ -93,7 +98,8 @@ const handleAnswer = async (matchId, userId, selectedIndex, io) => {
   const now = Date.now();
   const timeRemainingMs = Math.max(0, state.timerEndsAt - now);
   const isCorrect = selectedIndex === question.correctIndex;
-  const points = calcPoints(isCorrect, timeRemainingMs, question.timeLimit);
+  const mult = question.pointsMultiplier != null ? question.pointsMultiplier : question.isBonusRound ? 2 : 1;
+  const points = calcPoints(isCorrect, timeRemainingMs, question.timeLimit, mult);
 
   // Determine which player slot
   const isP1 = state.player1.userId === userId;
@@ -225,6 +231,15 @@ const finalizeMatch = async (matchId, io, endReason = "completed") => {
   // Evaluate achievements
   await evaluatePostMatchAchievements(state.player1.userId, state.player2.userId, state, result1, state.player1.score, state.categoryId, io);
   await evaluatePostMatchAchievements(state.player2.userId, state.player1.userId, state, result2, state.player2.score, state.categoryId, io);
+
+  try {
+    if (state.questions && state.questions.length) {
+      await recordMatchQuestionExposure(state.player1.userId, state.questions);
+      await recordMatchQuestionExposure(state.player2.userId, state.questions);
+    }
+  } catch (e) {
+    console.error("[BattleEngine] recordMatchQuestionExposure:", e.message);
+  }
 
   // Emit match_end to the room
   io.to(matchId).emit("match_end", {
