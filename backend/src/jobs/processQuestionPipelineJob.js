@@ -8,6 +8,13 @@ const { normalizeQuestionText } = require("../utils/questionParsing");
 const { resolveImageUrl } = require("../utils/imageResolver");
 const { syncQuestionCount } = require("../services/categoryQuestionCount");
 
+const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+
+const geminiCallGapMs = () => {
+  const n = Number(process.env.GEMINI_CALL_GAP_MS);
+  return Number.isFinite(n) && n >= 0 ? n : 1200;
+};
+
 /**
  * @param {{ categoryId: string, batchSize: number }} data
  */
@@ -121,6 +128,8 @@ const processQuestionPipelineJob = async (data) => {
       }
       rejected.push({ reason: `db_error:${e.message}` });
     }
+
+    await sleep(geminiCallGapMs());
   }
 
   await syncQuestionCount(categoryId);
