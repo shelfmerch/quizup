@@ -7,6 +7,7 @@
   "scripts": {
     "dev": "nodemon src/server.js",
     "start": "node src/server.js",
+    "start:worker": "node src/pipelineWorkerEntry.js",
     "seed": "node src/scripts/seed.js",
     "migrate:s3": "node src/scripts/migrateImagesToS3.js",
     "migrate:s3:upload-only": "node src/scripts/migrateImagesToS3.js --upload-only",

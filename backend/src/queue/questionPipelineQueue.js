@@ -3,6 +3,10 @@ const { getSharedRedis } = require("./redis");
 
 const QUEUE_NAME = "question-pipeline";
 
+const _envBatch = Number(process.env.QUESTION_PIPELINE_BATCH_SIZE);
+/** Max questions per BullMQ job (hard cap 5 for Gemini rate limits). */
+const BATCH_SIZE = Number.isFinite(_envBatch) && _envBatch >= 1 ? Math.min(5, Math.floor(_envBatch)) : 5;
+
 let _queue = null;
 
 const getQuestionPipelineQueue = () => {
@@ -10,18 +14,18 @@ const getQuestionPipelineQueue = () => {
     _queue = new Queue(QUEUE_NAME, {
       connection: getSharedRedis(),
       defaultJobOptions: {
-        removeOnComplete: 500,
-        removeOnFail: 200,
-        // Gemini free tier often returns 429; whole-job retry after long backoff
-        attempts: 6,
-        backoff: { type: "exponential", delay: 60_000 },
+        removeOnComplete: true,
+        removeOnFail: true,
+        attempts: 5,
+        backoff: { type: "exponential", delay: 30_000 },
       },
+    });
+    _queue.on("error", (err) => {
+      console.error("[QuestionPipelineQueue] error:", err?.message || err);
     });
   }
   return _queue;
 };
-
-const BATCH_SIZE = 10;
 
 /**
  * Split count into jobs of up to BATCH_SIZE.

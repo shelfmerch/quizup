@@ -12,20 +12,14 @@ const getVerifyMinConfidence = () => {
 const { normalizeQuestionText } = require("../utils/questionParsing");
 const { resolveImageUrl } = require("../utils/imageResolver");
 const { syncQuestionCount } = require("../services/categoryQuestionCount");
-
-const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
-
-const geminiCallGapMs = () => {
-  const n = Number(process.env.GEMINI_CALL_GAP_MS);
-  return Number.isFinite(n) && n >= 0 ? n : 4500;
-};
+const { BATCH_SIZE: PIPELINE_BATCH_CAP } = require("../queue/questionPipelineQueue");
 
 /**
  * @param {{ categoryId: string, batchSize: number }} data
  */
 const processQuestionPipelineJob = async (data) => {
   const categoryId = String(data.categoryId || "").trim().toLowerCase();
-  const batchSize = Math.min(20, Math.max(1, Math.floor(Number(data.batchSize) || 10)));
+  const batchSize = Math.min(PIPELINE_BATCH_CAP, Math.max(1, Math.floor(Number(data.batchSize) || PIPELINE_BATCH_CAP)));
 
   const cat = await Category.findOne({ slug: categoryId }).lean();
   if (!cat) {
@@ -144,8 +138,6 @@ const processQuestionPipelineJob = async (data) => {
       }
       rejected.push({ reason: `db_error:${e.message}` });
     }
-
-    await sleep(geminiCallGapMs());
   }
 
   await syncQuestionCount(categoryId);
