@@ -256,7 +256,7 @@ const AdminPage: React.FC = () => {
                     <h3 className="font-display font-bold text-foreground text-sm">Generate with AI</h3>
                   </div>
                   <p className="text-xs text-muted-foreground leading-relaxed">
-                    Uses Gemini + image APIs on the server. Jobs run in the background (10 questions per job). Requires{" "}
+                    Uses Gemini + image APIs on the server. Jobs run in the background (up to 5 questions per job). Requires{" "}
                     <code className="text-foreground/80">REDIS_URL</code>, <code className="text-foreground/80">GEMINI_API_KEY</code>, and worker
                     running.
                   </p>

@@ -10,12 +10,19 @@ const start = async () => {
   // 1. Create HTTP server from Express app
   const server = http.createServer(app);
 
-  // 1b. Background workers (BullMQ) — same process as API for simpler ops
-  try {
-    const { startQuestionPipelineWorker } = require("./workers/questionPipelineWorker");
-    startQuestionPipelineWorker();
-  } catch (e) {
-    console.warn("[Server] Question pipeline worker failed to start:", e.message);
+  // 1b. Optional embedded pipeline worker (default: off in production — use pipelineWorkerEntry + PM2)
+  if (process.env.RUN_EMBEDDED_PIPELINE_WORKER === "true") {
+    try {
+      const { startQuestionPipelineWorker } = require("./workers/questionPipelineWorker");
+      startQuestionPipelineWorker();
+      console.log("[Server] Embedded question pipeline worker enabled (RUN_EMBEDDED_PIPELINE_WORKER=true)");
+    } catch (e) {
+      console.warn("[Server] Embedded pipeline worker failed to start:", e.message);
+    }
+  } else {
+    console.log(
+      "[Server] Pipeline worker not embedded. Run `node src/pipelineWorkerEntry.js` or PM2 app `quizup-pipeline-worker` (see ecosystem.config.cjs)."
+    );
   }
 
   // 2. Attach Socket.io to the same HTTP server
