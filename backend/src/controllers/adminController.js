@@ -222,10 +222,33 @@ const generateQuestionsQueued = async (req, res) => {
     });
   } catch (err) {
     console.error("[Admin] generateQuestionsQueued error:", err);
-    if (String(err.message || "").includes("REDIS_URL")) {
-      return res.status(503).json({ error: "Queue unavailable (REDIS_URL)" });
+    const msg = String(err?.message || err || "");
+    const isRedis =
+      msg.includes("REDIS_URL") ||
+      msg.includes("ECONNREFUSED") ||
+      msg.includes("ENOTFOUND") ||
+      msg.includes("ETIMEDOUT") ||
+      msg.includes("WRONGPASS") ||
+      msg.includes("NOAUTH") ||
+      msg.includes("Redis") ||
+      msg.includes("Stream isn't writeable") ||
+      msg.includes("enableOfflineQueue");
+    if (isRedis) {
+      return res.status(503).json({
+        error:
+          "Cannot reach Redis for the job queue. Set REDIS_URL on the server. Redis Cloud often requires rediss:// (TLS) on port 6380.",
+      });
     }
-    return res.status(500).json({ error: "Server error" });
+    if (msg.includes("Cannot find module") || msg.includes("bullmq")) {
+      return res.status(503).json({
+        error: "Queue package missing on server. Run npm install in the backend folder and restart.",
+      });
+    }
+    const dev = process.env.NODE_ENV !== "production";
+    return res.status(500).json({
+      error: "Failed to queue generation",
+      ...(dev ? { detail: msg } : {}),
+    });
   }
 };
 

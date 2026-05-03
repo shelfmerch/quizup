@@ -122,14 +122,23 @@ export const adminService = {
     categoryId: string;
     count: number;
   }): Promise<GenerateQuestionsQueuedResponse> {
-    const res = await fetch(`${API_URL}/admin/generate-questions`, {
+    let res = await fetch(`${API_URL}/admin/generate-questions`, {
       method: "POST",
       headers: headers(),
       body: JSON.stringify(body),
     });
+    // Some deployments/proxies expect snake_case path
+    if (res.status === 404) {
+      res = await fetch(`${API_URL}/admin/generate_questions`, {
+        method: "POST",
+        headers: headers(),
+        body: JSON.stringify(body),
+      });
+    }
     if (!res.ok) {
       const data = await res.json().catch(() => ({}));
-      throw new Error(data.error || "Failed to queue generation");
+      const hint = [data.error, data.detail].filter(Boolean).join(" — ");
+      throw new Error(hint || "Failed to queue generation");
     }
     return res.json();
   },
