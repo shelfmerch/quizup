@@ -7,6 +7,7 @@ const {
   createCategory,
   listQuestions,
   createQuestion,
+  createBulkQuestions,
   generateQuestionsQueued,
 } = require("../controllers/adminController");
 const uploadQuestionImage = require("../middleware/uploadQuestionImage");
@@ -28,6 +29,7 @@ router.post("/upload-question-image", (req, res) => {
 router.get("/categories", listCategories);
 router.post("/categories", createCategory);
 router.get("/questions", listQuestions);
+router.post("/questions/bulk", createBulkQuestions);
 router.post("/questions", createQuestion);
 router.post("/generate-questions", generateQuestionsQueued);
 // Alias: some clients / proxies use snake_case

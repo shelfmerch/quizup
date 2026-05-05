@@ -1,9 +1,9 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { ArrowLeft, Sparkles } from "lucide-react";
+import { ArrowLeft, Sparkles, FileText } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { adminService, AdminCategory, AdminQuestion, GenerateQuestionsQueuedResponse } from "@/services/adminService";
+import { adminService, AdminCategory, AdminQuestion, GenerateQuestionsQueuedResponse, BulkCreateResponse } from "@/services/adminService";
 import { resolveQuestionImageUrl } from "@/lib/mediaUrl";
 import { toast } from "sonner";
 
@@ -31,6 +31,10 @@ const AdminPage: React.FC = () => {
 
   const [aiCount, setAiCount] = useState(10);
   const [aiGenerating, setAiGenerating] = useState(false);
+
+  const [bulkJson, setBulkJson] = useState("");
+  const [bulkSubmitting, setBulkSubmitting] = useState(false);
+  const [bulkResult, setBulkResult] = useState<BulkCreateResponse | null>(null);
 
   const refreshCategories = async () => {
     const list = await adminService.listCategories();
@@ -124,6 +128,54 @@ const AdminPage: React.FC = () => {
       toast.error(err instanceof Error ? err.message : "Queue failed");
     } finally {
       setAiGenerating(false);
+    }
+  };
+
+  const parseBulkJson = (raw: string) => {
+    try {
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed)) return parsed;
+      return null;
+    } catch {
+      return null;
+    }
+  };
+
+  const handleBulkImport = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedSlug) {
+      toast.error("Select a topic first");
+      return;
+    }
+    const parsed = parseBulkJson(bulkJson);
+    if (!parsed || parsed.length === 0) {
+      toast.error("Invalid JSON. Must be an array of question objects.");
+      return;
+    }
+    if (parsed.length > 200) {
+      toast.error("Maximum 200 questions per bulk request");
+      return;
+    }
+    setBulkSubmitting(true);
+    setBulkResult(null);
+    try {
+      const res = await adminService.createBulkQuestions({
+        categoryId: selectedSlug,
+        questions: parsed,
+      });
+      setBulkResult(res);
+      if (res.created > 0) {
+        toast.success(`${res.created} question(s) created${res.failed > 0 ? `, ${res.failed} failed` : ""}`);
+        const qs = await adminService.listQuestions(selectedSlug);
+        setQuestions(qs);
+        await refreshCategories();
+      } else {
+        toast.error(`All ${res.failed} question(s) failed validation`);
+      }
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Bulk import failed");
+    } finally {
+      setBulkSubmitting(false);
     }
   };
 
@@ -277,6 +329,63 @@ const AdminPage: React.FC = () => {
                     className="w-full h-11 rounded-lg bg-quizup-green/90 hover:bg-quizup-green text-quizup-dark font-display font-bold text-sm disabled:opacity-50 disabled:pointer-events-none"
                   >
                     {aiGenerating ? "QUEUING…" : "QUEUE AI GENERATION"}
+                  </button>
+                </form>
+              )}
+
+              {selectedSlug && (
+                <form onSubmit={handleBulkImport} className="space-y-3 bg-quizup-card p-4 rounded-lg border border-purple-500/30">
+                  <div className="flex items-center gap-2 text-purple-400">
+                    <FileText className="w-4 h-4 shrink-0" />
+                    <h3 className="font-display font-bold text-foreground text-sm">Bulk Import (JSON)</h3>
+                  </div>
+                  <p className="text-xs text-muted-foreground leading-relaxed">
+                    Paste a JSON array of questions. Each object needs:{" "}
+                    <code className="text-foreground/80">text</code>,{" "}
+                    <code className="text-foreground/80">options</code> (4 strings),{" "}
+                    <code className="text-foreground/80">correctIndex</code> (0–3).{" "}
+                    Optional: <code className="text-foreground/80">timeLimit</code> (default 10s),{" "}
+                    <code className="text-foreground/80">imageUrl</code>. Max 200 per batch.
+                  </p>
+                  <textarea
+                    value={bulkJson}
+                    onChange={(e) => { setBulkJson(e.target.value); setBulkResult(null); }}
+                    rows={8}
+                    className="w-full rounded-md bg-quizup-dark border border-border text-foreground px-3 py-2 text-xs font-mono placeholder:text-muted-foreground/50 focus:outline-none focus:ring-1 focus:ring-purple-500/50"
+                    placeholder={'[\n  {\n    "text": "What is the capital of France?",\n    "options": ["Berlin", "Madrid", "Paris", "Rome"],\n    "correctIndex": 2,\n    "timeLimit": 10\n  },\n  {\n    "text": "Which planet is closest to the Sun?",\n    "options": ["Venus", "Mercury", "Earth", "Mars"],\n    "correctIndex": 1\n  }\n]'}
+                  />
+                  {bulkJson.trim() && (
+                    <p className="text-xs text-muted-foreground">
+                      {(() => {
+                        const parsed = parseBulkJson(bulkJson);
+                        if (!parsed) return <span className="text-red-400">⚠ Invalid JSON</span>;
+                        return <span className="text-purple-400">✓ {parsed.length} question(s) parsed</span>;
+                      })()}
+                    </p>
+                  )}
+                  {bulkResult && (
+                    <div className="text-xs space-y-1 p-3 rounded-md bg-quizup-dark border border-border">
+                      <p className="text-foreground font-semibold">
+                        Result: <span className="text-green-400">{bulkResult.created} created</span>
+                        {bulkResult.failed > 0 && <>, <span className="text-red-400">{bulkResult.failed} failed</span></>}
+                      </p>
+                      {bulkResult.errors.length > 0 && (
+                        <ul className="mt-1 space-y-0.5 max-h-32 overflow-y-auto">
+                          {bulkResult.errors.map((err) => (
+                            <li key={err.index} className="text-red-400">
+                              #{err.index + 1} &ldquo;{err.text}&rdquo;: {err.error}
+                            </li>
+                          ))}
+                        </ul>
+                      )}
+                    </div>
+                  )}
+                  <button
+                    type="submit"
+                    disabled={bulkSubmitting || !bulkJson.trim()}
+                    className="w-full h-11 rounded-lg bg-purple-600/90 hover:bg-purple-600 text-foreground font-display font-bold text-sm disabled:opacity-50 disabled:pointer-events-none"
+                  >
+                    {bulkSubmitting ? "IMPORTING…" : "IMPORT BULK QUESTIONS"}
                   </button>
                 </form>
               )}
