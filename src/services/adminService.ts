@@ -38,6 +38,14 @@ export interface GenerateQuestionsQueuedResponse {
   message?: string;
 }
 
+export interface BulkCreateResponse {
+  created: number;
+  failed: number;
+  total: number;
+  results: { index: number; ok: boolean; id: string; text: string }[];
+  errors: { index: number; ok: boolean; text: string; error: string }[];
+}
+
 export const adminService = {
   async listCategories(): Promise<AdminCategory[]> {
     const res = await fetch(`${API_URL}/admin/categories`, { headers: headers() });
@@ -116,6 +124,28 @@ export const adminService = {
     }
     const data = await res.json();
     return data.question;
+  },
+
+  async createBulkQuestions(body: {
+    categoryId: string;
+    questions: {
+      text: string;
+      options: string[];
+      correctIndex: number;
+      timeLimit?: number;
+      imageUrl?: string | null;
+    }[];
+  }): Promise<BulkCreateResponse> {
+    const res = await fetch(`${API_URL}/admin/questions/bulk`, {
+      method: "POST",
+      headers: headers(),
+      body: JSON.stringify(body),
+    });
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({}));
+      throw new Error(data.error || "Bulk creation failed");
+    }
+    return res.json();
   },
 
   async generateQuestionsQueued(body: {

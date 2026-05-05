@@ -252,10 +252,107 @@ const generateQuestionsQueued = async (req, res) => {
   }
 };
 
+// POST /api/admin/questions/bulk
+// { categoryId, questions: [{ text, options, correctIndex, timeLimit?, imageUrl? }, ...] }
+const createBulkQuestions = async (req, res) => {
+  try {
+    const { categoryId, questions } = req.body;
+
+    if (!categoryId || typeof categoryId !== "string") {
+      return res.status(422).json({ error: "categoryId is required" });
+    }
+    if (!Array.isArray(questions) || questions.length === 0) {
+      return res.status(422).json({ error: "questions must be a non-empty array" });
+    }
+    if (questions.length > 200) {
+      return res.status(422).json({ error: "Maximum 200 questions per bulk request" });
+    }
+
+    const slug = categoryId.trim().toLowerCase();
+    const cat = await Category.findOne({ slug });
+    if (!cat) {
+      return res.status(404).json({ error: "Topic (category) not found" });
+    }
+
+    const results = [];
+    let successCount = 0;
+    const errors = [];
+
+    for (let i = 0; i < questions.length; i++) {
+      const raw = questions[i];
+      try {
+        // Validate text
+        if (!raw.text || typeof raw.text !== "string" || !raw.text.trim()) {
+          throw new Error("text is required");
+        }
+        // Validate options
+        if (!Array.isArray(raw.options) || raw.options.length !== 4) {
+          throw new Error("options must be an array of exactly 4 strings");
+        }
+        const opts = raw.options.map((o) => String(o).trim());
+        if (opts.some((o) => !o)) {
+          throw new Error("Each option must be non-empty");
+        }
+        // Validate correctIndex
+        const ci = Number(raw.correctIndex);
+        if (!Number.isInteger(ci) || ci < 0 || ci > 3) {
+          throw new Error("correctIndex must be 0, 1, 2, or 3");
+        }
+        // TimeLimit
+        const tl = Math.min(120, Math.max(5, Number(raw.timeLimit) || 10));
+        // ImageUrl
+        const imageUrl = normalizeImageUrl(raw.imageUrl);
+
+        const q = await Question.create({
+          categoryId: slug,
+          text: raw.text.trim(),
+          imageUrl,
+          options: opts,
+          correctIndex: ci,
+          timeLimit: tl,
+          isActive: true,
+          source: "MANUAL",
+        });
+
+        successCount++;
+        results.push({
+          index: i,
+          ok: true,
+          id: q._id.toString(),
+          text: q.text,
+        });
+      } catch (qErr) {
+        errors.push({
+          index: i,
+          ok: false,
+          text: raw.text || `(question #${i + 1})`,
+          error: qErr.message || "Validation failed",
+        });
+      }
+    }
+
+    if (successCount > 0) {
+      await syncQuestionCount(slug);
+    }
+
+    return res.status(201).json({
+      created: successCount,
+      failed: errors.length,
+      total: questions.length,
+      results,
+      errors,
+    });
+  } catch (err) {
+    console.error("[Admin] createBulkQuestions error:", err);
+    return res.status(500).json({ error: "Server error" });
+  }
+};
+
 module.exports = {
   listCategories,
   createCategory,
   listQuestions,
   createQuestion,
+  createBulkQuestions,
   generateQuestionsQueued,
 };
