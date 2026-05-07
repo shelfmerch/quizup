@@ -1,14 +1,22 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Bell, MessageCircle, Search, Settings } from "lucide-react";
+import { MessageCircle, Search, Settings, Swords, X } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { MOCK_CATEGORIES } from "@/data/mock-data";
 import { EXTRA_HOME_TOPICS } from "@/data/extraTopics";
-import { Category, LeaderboardEntry } from "@/types";
+import { Category, LeaderboardEntry, MatchFoundPayload } from "@/types";
 import { fetchFollowedCategories, fetchPublicCategories } from "@/services/categoryService";
 import { leaderboardService } from "@/services/leaderboardService";
 import { resolveMediaUrl } from "@/config/env";
 import Icons8Icon, { getCategoryIconSlug } from "@/components/Icons8Icon";
+import { getSocket } from "@/services/socketService";
+
+interface IncomingChallenge {
+  id: string;
+  from: { userId: string; username: string; avatarUrl: string };
+  categoryId: string;
+  categoryName: string;
+}
 
 const TILE_COLORS = ["#f65357", "#0dbf9d", "#20b7d5", "#ffc233", "#ff8d2c", "#8d65e7"];
 
@@ -107,10 +115,87 @@ const HomeLobby: React.FC = () => {
   const [followedTopics, setFollowedTopics] = useState<Category[]>([]);
   const [entries, setEntries] = useState<LeaderboardEntry[]>([]);
   const [loadingTopics, setLoadingTopics] = useState(true);
+  const [incomingChallenge, setIncomingChallenge] = useState<IncomingChallenge | null>(null);
+  const [challengeResponding, setChallengeResponding] = useState(false);
+  // keep latest phase ref so cleanup effect can read it
+  const challengeRef = useRef(incomingChallenge);
+  challengeRef.current = incomingChallenge;
 
   useEffect(() => {
     refreshUser();
   }, [refreshUser]);
+
+  // ── Challenge socket listeners ─────────────────────────────────────────────
+  useEffect(() => {
+    if (!user?.id) return;
+    let socket: ReturnType<typeof getSocket>;
+    try { socket = getSocket(); } catch { return; }
+
+    const onReceived = (ch: IncomingChallenge) => {
+      setIncomingChallenge(ch);
+      setChallengeResponding(false);
+    };
+
+    const onCancelled = ({ challengeId }: { challengeId: string }) => {
+      setIncomingChallenge((prev) => (prev?.id === challengeId ? null : prev));
+    };
+
+    const onMatchFound = (p: MatchFoundPayload) => {
+      setIncomingChallenge(null);
+      navigate("/battle", {
+        state: {
+          mode: "online" as const,
+          matchId: p.matchId,
+          mySeat: p.mySeat,
+          myUserId: p.myUserId,
+          opponentUserId: p.opponent.userId,
+          categoryId: p.categoryId,
+          categoryName: p.categoryName,
+          totalRounds: p.totalRounds,
+          me: {
+            userId: user.id,
+            username: user.username,
+            avatarUrl: user.avatarUrl,
+            score: 0,
+            answers: [],
+            level: user.level,
+          },
+          opponent: {
+            userId: p.opponent.userId,
+            username: p.opponent.username,
+            avatarUrl: p.opponent.avatarUrl,
+            score: 0,
+            answers: [],
+            level: p.opponent.level,
+          },
+        },
+      });
+    };
+
+    socket.on("challenge:received", onReceived);
+    socket.on("challenge:cancelled", onCancelled);
+    socket.on("match_found", onMatchFound);
+
+    return () => {
+      socket.off("challenge:received", onReceived);
+      socket.off("challenge:cancelled", onCancelled);
+      socket.off("match_found", onMatchFound);
+    };
+  }, [user?.id, user?.avatarUrl, user?.level, user?.username, navigate]);
+
+  const respondToChallenge = (action: "accept" | "reject") => {
+    const ch = incomingChallenge;
+    if (!ch || challengeResponding) return;
+    setChallengeResponding(true);
+    try {
+      getSocket().emit("challenge:respond", { challengeId: ch.id, action });
+    } catch { /* ignore */ }
+    if (action === "reject") {
+      setIncomingChallenge(null);
+      setChallengeResponding(false);
+    }
+    // On accept: wait for match_found which clears the banner and navigates
+  };
 
   useEffect(() => {
     let cancelled = false;
@@ -169,6 +254,104 @@ const HomeLobby: React.FC = () => {
 
   return (
     <div className="quizup-app">
+      {/* ── Incoming Challenge Banner ───────────────────────────────────────── */}
+      {incomingChallenge && (
+        <div
+          className="fixed inset-x-0 bottom-24 z-50 flex justify-center px-4"
+          style={{ animation: "slideUpIn 0.35s cubic-bezier(0.34,1.56,0.64,1) both" }}
+        >
+          <style>{`
+            @keyframes slideUpIn {
+              from { opacity: 0; transform: translateY(40px) scale(0.95); }
+              to   { opacity: 1; transform: translateY(0) scale(1); }
+            }
+          `}</style>
+          <div
+            className="w-full max-w-sm rounded-3xl overflow-hidden"
+            style={{
+              background: "linear-gradient(145deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%)",
+              boxShadow: "0 20px 60px rgba(0,0,0,0.5), 0 4px 20px rgba(246,83,87,0.25), inset 0 1px 0 rgba(255,255,255,0.08)",
+              border: "1px solid rgba(255,255,255,0.1)",
+            }}
+          >
+            {/* Header */}
+            <div className="flex items-center justify-between px-5 pt-4 pb-2">
+              <div className="flex items-center gap-2">
+                <Swords className="h-4 w-4 text-[#f65357]" />
+                <span className="text-[11px] font-black uppercase tracking-widest text-[#f65357]">Challenge Received</span>
+              </div>
+              <button
+                type="button"
+                onClick={() => respondToChallenge("reject")}
+                className="h-7 w-7 flex items-center justify-center rounded-full bg-white/10 text-white/50 hover:bg-white/20 transition-colors"
+                aria-label="Dismiss challenge"
+              >
+                <X className="h-3.5 w-3.5" />
+              </button>
+            </div>
+
+            {/* Challenger info */}
+            <div className="flex items-center gap-4 px-5 py-3">
+              <div className="relative shrink-0">
+                <img
+                  src={resolveMediaUrl(
+                    incomingChallenge.from.avatarUrl,
+                    `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(incomingChallenge.from.username)}`
+                  )}
+                  alt=""
+                  className="h-14 w-14 rounded-full border-2 object-cover"
+                  style={{ borderColor: "#f65357", boxShadow: "0 0 16px rgba(246,83,87,0.4)" }}
+                />
+                <span
+                  className="absolute -bottom-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full text-[10px]"
+                  style={{ background: "#f65357", boxShadow: "0 2px 6px rgba(246,83,87,0.5)" }}
+                >⚔️</span>
+              </div>
+              <div className="min-w-0 flex-1">
+                <p className="font-black text-base text-white truncate">{incomingChallenge.from.username}</p>
+                <p className="text-[11px] text-white/50 font-semibold mt-0.5">wants to battle you!</p>
+                <div className="mt-1.5 inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5"
+                  style={{ background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.12)" }}
+                >
+                  <span className="text-[10px] font-black text-white/70 uppercase tracking-wide">
+                    {incomingChallenge.categoryName}
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            {/* 3D Buttons */}
+            <div className="grid grid-cols-2 gap-3 px-5 pb-5 pt-2">
+              {/* Reject button */}
+              <button
+                type="button"
+                disabled={challengeResponding}
+                onClick={() => respondToChallenge("reject")}
+                className="relative h-12 rounded-2xl font-black text-sm text-white tracking-wide active:translate-y-[2px] transition-transform duration-75 disabled:opacity-60"
+                style={{
+                  background: "linear-gradient(to bottom, #6b6b6b, #3a3a3a)",
+                  boxShadow: "0 6px 0 #1a1a1a, 0 8px 16px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.15)",
+                }}
+              >
+                Decline
+              </button>
+              {/* Accept button */}
+              <button
+                type="button"
+                disabled={challengeResponding}
+                onClick={() => respondToChallenge("accept")}
+                className="relative h-12 rounded-2xl font-black text-sm text-white tracking-wide active:translate-y-[2px] transition-transform duration-75 disabled:opacity-60"
+                style={{
+                  background: "linear-gradient(to bottom, #ff6b6b, #f65357, #c0392b)",
+                  boxShadow: "0 6px 0 #8b1a1a, 0 8px 16px rgba(246,83,87,0.45), inset 0 1px 0 rgba(255,255,255,0.25)",
+                }}
+              >
+                {challengeResponding ? "Starting…" : "Accept ⚔️"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
       <div className="quizup-blackbar">
         <button onClick={() => navigate("/settings")} aria-label="Settings">
           <Settings className="h-5 w-5" />
