@@ -416,6 +416,7 @@ const ProfilePage: React.FC = () => {
               <div className="mt-3 flex items-center gap-2">
                 <img src={league.badgeUrl} alt="" className="h-8 w-8 object-contain drop-shadow" />
                 <span className="text-xs font-black uppercase tracking-wide text-white/85">{league.name}</span>
+                <span className="ml-1 rounded-full bg-white/15 px-2.5 py-0.5 text-[10px] font-black tracking-wide text-white/90">{typeof p.xp === "number" ? p.xp.toLocaleString() : 0} XP</span>
               </div>
             </div>
           </div>
