@@ -316,6 +316,22 @@ const BattlePage: React.FC = () => {
     };
   }, []);
 
+  // ─── Emit leave_match when navigating away from an active online battle ────
+  useEffect(() => {
+    if (!isOnline || !onlineInit) return;
+    return () => {
+      // Only fire if the match wasn't already finished normally
+      if (state?.phase !== "match_end") {
+        try {
+          getSocket().emit("leave_match", { matchId: onlineInit.matchId });
+        } catch {
+          // Socket may already be gone — ignore
+        }
+      }
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isOnline, onlineInit?.matchId]);
+
   // ─── Countdown SFX: play 6s after each question appears ────────────────────
   useEffect(() => {
     if (!state || state.phase !== "question") {

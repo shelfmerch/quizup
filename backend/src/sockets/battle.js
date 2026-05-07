@@ -137,6 +137,38 @@ const registerBattle = (socket, io) => {
     }
   });
 
+  // ── leave_match ───────────────────────────────────────────────────────────
+  // Emitted by the client when the user intentionally exits the battle screen.
+  // Unlike a socket disconnect (which has a 15s grace), this ends immediately.
+  socket.on("leave_match", async ({ matchId } = {}) => {
+    const mid = matchId || socket.currentMatchId;
+    if (!mid) return;
+
+    try {
+      const state = await getActiveMatch(mid);
+      if (!state || state.status === "finalizing" || state.status === "completed") return;
+
+      // Cancel any existing grace timer (prevents double-finalization)
+      cancelDisconnectTimer(mid, socket.userId);
+
+      console.log(`[Battle] ${socket.username} voluntarily left match ${mid} — ending immediately`);
+
+      // Override scores so the leaver loses: give opponent a guaranteed score advantage
+      const isP1 = state.player1.userId === socket.userId;
+      await updateActiveMatch(mid, (s) => {
+        if (isP1) {
+          return { ...s, player2: { ...s.player2, score: Math.max(s.player2.score, s.player1.score + 1) } };
+        } else {
+          return { ...s, player1: { ...s.player1, score: Math.max(s.player1.score, s.player2.score + 1) } };
+        }
+      });
+
+      await finalizeMatch(mid, io, "abandoned");
+    } catch (err) {
+      console.error("[Battle] leave_match error:", err);
+    }
+  });
+
   // ── reconnect_match ───────────────────────────────────────────────────────
   socket.on("reconnect_match", async () => {
     try {
