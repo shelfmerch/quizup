@@ -567,7 +567,7 @@ const BattlePage: React.FC = () => {
               className="flex flex-col flex-1"
             >
               {/* Question text first, then image (screenshot order) */}
-              <p className="text-center text-xl font-bold leading-snug text-slate-900 px-2 mb-6 tracking-tight">{question.text}</p>
+              <p className="text-center text-xl font-bold leading-snug text-white px-2 mb-6 tracking-tight">{question.text}</p>
 
               {questionImageSrc ? (
                 <div className="w-full rounded-[2.5rem] overflow-hidden bg-white shadow-xl border border-slate-100 mb-8 p-2">
