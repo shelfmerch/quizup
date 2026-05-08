@@ -79,9 +79,9 @@ const TopicTile: React.FC<{ category: Category; index: number; onClick: () => vo
       <span className="mt-1 block min-h-[24px] text-[10px] font-black leading-[11px] text-[#343434] line-clamp-2">
         {category.name}
       </span>
-      <span className="block text-[8px] font-black uppercase tracking-wide text-zinc-400">
+      {/* <span className="block text-[8px] font-black uppercase tracking-wide text-zinc-400">
         LVL {Math.max(1, Math.ceil((category.questionCount || 10) / 120))}
-      </span>
+      </span> */}
     </button>
   );
 };
@@ -406,7 +406,7 @@ const ProfilePage: React.FC = () => {
                   {p.displayName || p.username}
                 </h2>
                 <span className="h-2 w-2 rounded-full bg-[#20c997]" />
-                <span className="ml-auto font-display text-2xl font-light text-white/85">{p.level}</span>
+                {/* <span className="ml-auto font-display text-2xl font-light text-white/85">{p.level}</span> */}
               </div>
               {/* <p className="mt-0.5 text-sm font-semibold text-white/75">{playerRankLabel(p.level)}</p>
               <p className="mt-1 flex items-center gap-1 text-sm font-bold text-white/85">
@@ -416,15 +416,16 @@ const ProfilePage: React.FC = () => {
               <div className="mt-3 flex items-center gap-2">
                 <img src={league.badgeUrl} alt="" className="h-8 w-8 object-contain drop-shadow" />
                 <span className="text-xs font-black uppercase tracking-wide text-white/85">{league.name}</span>
-                <span className="ml-1 rounded-full bg-white/15 px-2.5 py-0.5 text-[10px] font-black tracking-wide text-white/90">{typeof p.xp === "number" ? p.xp.toLocaleString() : 0} XP</span>
+                {/* <span className="ml-1 rounded-full bg-white/15 px-2.5 py-0.5 text-[10px] font-black tracking-wide text-white/90">{typeof p.xp === "number" ? p.xp.toLocaleString() : 0} XP</span> */}
               </div>
             </div>
           </div>
 
           <div className="mt-5 grid grid-cols-3 divide-x divide-white/25 border-t border-white/10 pt-3 text-center">
             {[
-              { label: "Games", value: p.totalMatches ?? 0 },
+              // { label: "Games", value: p.totalMatches ?? 0 },
               { label: "Followers", value: p.followers ?? 0 },
+              { label: "XP", value: p.xp ?? 0 },
               { label: "Following", value: p.following ?? 0 },
             ].map((stat) => (
               <div key={stat.label}>
@@ -504,7 +505,8 @@ const ProfilePage: React.FC = () => {
           {displayAchievements.slice(0, 6).map((a) => (
             <div key={a.id} className={`w-[58px] shrink-0 text-center ${!a.isUnlocked ? "opacity-35 grayscale" : ""}`} title={a.description}>
               <span className="mx-auto flex h-12 w-12 items-center justify-center rounded-lg bg-white text-xl shadow-md border border-[#dddddd]">
-                {a.icon}
+                {/* {a.icon} */}
+                <img src={a.src} alt="" className="h-12 w-12 object-contain" />
               </span>
               <p className="mt-1 line-clamp-2 text-[9px] font-black leading-[10px] text-[#444]">{a.name}</p>
             </div>

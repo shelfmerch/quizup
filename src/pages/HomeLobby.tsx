@@ -254,110 +254,11 @@ const HomeLobby: React.FC = () => {
 
   return (
     <div className="quizup-app">
-      {/* ── Incoming Challenge Banner ───────────────────────────────────────── */}
-      {incomingChallenge && (
-        <div
-          className="fixed inset-x-0 bottom-24 z-50 flex justify-center px-4"
-          style={{ animation: "slideUpIn 0.35s cubic-bezier(0.34,1.56,0.64,1) both" }}
-        >
-          <style>{`
-            @keyframes slideUpIn {
-              from { opacity: 0; transform: translateY(40px) scale(0.95); }
-              to   { opacity: 1; transform: translateY(0) scale(1); }
-            }
-          `}</style>
-          <div
-            className="w-full max-w-sm rounded-3xl overflow-hidden"
-            style={{
-              background: "linear-gradient(145deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%)",
-              boxShadow: "0 20px 60px rgba(0,0,0,0.5), 0 4px 20px rgba(246,83,87,0.25), inset 0 1px 0 rgba(255,255,255,0.08)",
-              border: "1px solid rgba(255,255,255,0.1)",
-            }}
-          >
-            {/* Header */}
-            <div className="flex items-center justify-between px-5 pt-4 pb-2">
-              <div className="flex items-center gap-2">
-                <Swords className="h-4 w-4 text-[#f65357]" />
-                <span className="text-[11px] font-black uppercase tracking-widest text-[#f65357]">Challenge Received</span>
-              </div>
-              <button
-                type="button"
-                onClick={() => respondToChallenge("reject")}
-                className="h-7 w-7 flex items-center justify-center rounded-full bg-white/10 text-white/50 hover:bg-white/20 transition-colors"
-                aria-label="Dismiss challenge"
-              >
-                <X className="h-3.5 w-3.5" />
-              </button>
-            </div>
-
-            {/* Challenger info */}
-            <div className="flex items-center gap-4 px-5 py-3">
-              <div className="relative shrink-0">
-                <img
-                  src={resolveMediaUrl(
-                    incomingChallenge.from.avatarUrl,
-                    `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(incomingChallenge.from.username)}`
-                  )}
-                  alt=""
-                  className="h-14 w-14 rounded-full border-2 object-cover"
-                  style={{ borderColor: "#f65357", boxShadow: "0 0 16px rgba(246,83,87,0.4)" }}
-                />
-                <span
-                  className="absolute -bottom-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full text-[10px]"
-                  style={{ background: "#f65357", boxShadow: "0 2px 6px rgba(246,83,87,0.5)" }}
-                >⚔️</span>
-              </div>
-              <div className="min-w-0 flex-1">
-                <p className="font-black text-base text-white truncate">{incomingChallenge.from.username}</p>
-                <p className="text-[11px] text-white/50 font-semibold mt-0.5">wants to battle you!</p>
-                <div className="mt-1.5 inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5"
-                  style={{ background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.12)" }}
-                >
-                  <span className="text-[10px] font-black text-white/70 uppercase tracking-wide">
-                    {incomingChallenge.categoryName}
-                  </span>
-                </div>
-              </div>
-            </div>
-
-            {/* 3D Buttons */}
-            <div className="grid grid-cols-2 gap-3 px-5 pb-5 pt-2">
-              {/* Reject button */}
-              <button
-                type="button"
-                disabled={challengeResponding}
-                onClick={() => respondToChallenge("reject")}
-                className="relative h-12 rounded-2xl font-black text-sm text-white tracking-wide active:translate-y-[2px] transition-transform duration-75 disabled:opacity-60"
-                style={{
-                  background: "linear-gradient(to bottom, #6b6b6b, #3a3a3a)",
-                  boxShadow: "0 6px 0 #1a1a1a, 0 8px 16px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.15)",
-                }}
-              >
-                Decline
-              </button>
-              {/* Accept button */}
-              <button
-                type="button"
-                disabled={challengeResponding}
-                onClick={() => respondToChallenge("accept")}
-                className="relative h-12 rounded-2xl font-black text-sm text-white tracking-wide active:translate-y-[2px] transition-transform duration-75 disabled:opacity-60"
-                style={{
-                  background: "linear-gradient(to bottom, #ff6b6b, #f65357, #c0392b)",
-                  boxShadow: "0 6px 0 #8b1a1a, 0 8px 16px rgba(246,83,87,0.45), inset 0 1px 0 rgba(255,255,255,0.25)",
-                }}
-              >
-                {challengeResponding ? "Starting…" : "Accept ⚔️"}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
       <div className="quizup-blackbar">
         <button onClick={() => navigate("/settings")} aria-label="Settings">
           <Settings className="h-5 w-5" />
         </button>
         <button onClick={() => navigate("/profile")} className="flex items-center gap-2">
-          {/* <img src={avatarSrc} alt="" className="h-8 w-8 rounded-full border-2 border-white object-cover" /> */}
           <span className="font-display text-[17px] font-extrabold">QuizUp</span>
         </button>
         <div className="flex items-center gap-3">
@@ -371,9 +272,8 @@ const HomeLobby: React.FC = () => {
           <div className="flex items-center gap-3">
             <img src={avatarSrc} alt="" className="h-11 w-11 rounded-full border-2 border-white object-cover" />
             <div>
-              {/* <p className="text-[11px] uppercase tracking-wide text-white/55">League {user?.level || 1}</p> */}
               <p className="font-display text-sm font-extrabold">{user?.username || "Player"}</p>
-              <img src={leagueBadgeSrc(league.badgeUrl)} alt="" className="h-6 w-6 object-contain drop-shadow" />          
+              <img src={leagueBadgeSrc(league.badgeUrl)} alt="" className="h-6 w-6 object-contain drop-shadow" />
             </div>
           </div>
           <div className="grid grid-cols-3 gap-4 text-center text-[11px] font-bold">
@@ -395,6 +295,99 @@ const HomeLobby: React.FC = () => {
         </div>
         <div className="flex h-16 w-16 items-center justify-center rounded-full bg-white/20 text-4xl font-black">!</div>
       </button>
+
+      {/* ── Incoming Challenge Section (inline) ──────────────────────────────── */}
+      {incomingChallenge && (
+        <div
+          className="mx-3 mt-3 rounded-2xl overflow-hidden"
+          style={{
+            animation: "challengeSlideIn 0.3s cubic-bezier(0.34,1.56,0.64,1) both",
+            background: "linear-gradient(135deg, #1a1a2e 0%, #0f3460 100%)",
+            border: "1px solid rgba(246,83,87,0.35)",
+            boxShadow: "0 4px 24px rgba(246,83,87,0.15), inset 0 1px 0 rgba(255,255,255,0.07)",
+          }}
+        >
+          <style>{`
+            @keyframes challengeSlideIn {
+              from { opacity: 0; transform: translateY(-12px) scale(0.97); }
+              to   { opacity: 1; transform: translateY(0) scale(1); }
+            }
+          `}</style>
+
+          {/* Header row */}
+          <div className="flex items-center justify-between px-4 pt-3 pb-1">
+            <div className="flex items-center gap-1.5">
+              <Swords className="h-3.5 w-3.5 text-[#f65357]" />
+              <span className="text-[10px] font-black uppercase tracking-widest text-[#f65357]">Incoming Challenge</span>
+            </div>
+            <button
+              type="button"
+              onClick={() => respondToChallenge("reject")}
+              className="h-6 w-6 flex items-center justify-center rounded-full bg-white/10 text-white/40 hover:bg-white/20 transition-colors"
+              aria-label="Dismiss"
+            >
+              <X className="h-3 w-3" />
+            </button>
+          </div>
+
+          {/* Challenger info + buttons */}
+          <div className="flex items-center gap-3 px-4 pb-4 pt-2">
+            {/* Avatar */}
+            <div className="relative shrink-0">
+              <img
+                src={resolveMediaUrl(
+                  incomingChallenge.from.avatarUrl,
+                  `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(incomingChallenge.from.username)}`
+                )}
+                alt=""
+                className="h-12 w-12 rounded-full border-2 object-cover"
+                style={{ borderColor: "#f65357", boxShadow: "0 0 12px rgba(246,83,87,0.35)" }}
+              />
+              <span
+                className="absolute -bottom-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full text-[9px]"
+                style={{ background: "#f65357" }}
+              >⚔️</span>
+            </div>
+
+            {/* Name + category */}
+            <div className="min-w-0 flex-1">
+              <p className="font-black text-sm text-white truncate">{incomingChallenge.from.username}</p>
+              <p className="text-[10px] text-white/50 font-semibold">challenges you in</p>
+              <span className="mt-0.5 inline-block rounded-full bg-white/10 px-2 py-0.5 text-[9px] font-black uppercase tracking-wide text-white/70 border border-white/10">
+                {incomingChallenge.categoryName}
+              </span>
+            </div>
+
+            {/* 3D Buttons */}
+            <div className="flex flex-col gap-2 shrink-0">
+              <button
+                type="button"
+                disabled={challengeResponding}
+                onClick={() => respondToChallenge("reject")}
+                className="h-9 w-20 rounded-xl font-black text-xs text-white active:translate-y-[2px] transition-transform duration-75 disabled:opacity-50"
+                style={{
+                  background: "linear-gradient(to bottom, #555, #333)",
+                  boxShadow: "0 4px 0 #111, 0 6px 12px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.12)",
+                }}
+              >
+                Decline
+              </button>
+              <button
+                type="button"
+                disabled={challengeResponding}
+                onClick={() => respondToChallenge("accept")}
+                className="h-9 w-20 rounded-xl font-black text-xs text-white active:translate-y-[2px] transition-transform duration-75 disabled:opacity-50"
+                style={{
+                  background: "linear-gradient(to bottom, #ff6b6b, #f65357, #c0392b)",
+                  boxShadow: "0 4px 0 #7b1a1a, 0 6px 14px rgba(246,83,87,0.4), inset 0 1px 0 rgba(255,255,255,0.2)",
+                }}
+              >
+                {challengeResponding ? "…" : "Accept ⚔️"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {loadingTopics ? (
         <p className="py-12 text-center text-sm font-semibold text-zinc-400">Loading topics...</p>

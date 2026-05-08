@@ -15,7 +15,7 @@ const tabs: NavTab[] = [
   { path: "/home", label: "Feed", Icon: Newspaper },
   { path: "/leaderboard", label: "People", Icon: Users },
   { path: "/categories", label: "Quiz", isCenter: true },
-  { path: "/history", label: "Topics", Icon: Grid3X3 },
+  { path: "/categories", label: "Topics", Icon: Grid3X3 },
   { path: "/profile", label: "Activity", Icon: Bell },
 ];
 
