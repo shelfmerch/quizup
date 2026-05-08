@@ -86,6 +86,21 @@ const TopicTile: React.FC<{ category: Category; index: number; onClick: () => vo
   );
 };
 
+const AchievementBadge: React.FC<{ src: string; icon: string; alt: string }> = ({ src, icon, alt }) => {
+  const [errored, setErrored] = useState(false);
+  if (errored || !src) {
+    return <span className="text-2xl leading-none" aria-label={alt}>{icon}</span>;
+  }
+  return (
+    <img
+      src={src}
+      alt={alt}
+      className="h-12 w-12 object-contain"
+      onError={() => setErrored(true)}
+    />
+  );
+};
+
 const HistoryBubble: React.FC<{ match: MatchHistoryEntry; index: number }> = ({ match, index }) => {
   const isVictory = match.result === "win";
   const isDefeat = match.result === "loss";
@@ -505,8 +520,7 @@ const ProfilePage: React.FC = () => {
           {displayAchievements.slice(0, 6).map((a) => (
             <div key={a.id} className={`w-[58px] shrink-0 text-center ${!a.isUnlocked ? "opacity-35 grayscale" : ""}`} title={a.description}>
               <span className="mx-auto flex h-12 w-12 items-center justify-center rounded-lg bg-white text-xl shadow-md border border-[#dddddd]">
-                {/* {a.icon} */}
-                <img src={a.src} alt="" className="h-12 w-12 object-contain" />
+                <AchievementBadge src={a.src} icon={a.icon} alt={a.name} />
               </span>
               <p className="mt-1 line-clamp-2 text-[9px] font-black leading-[10px] text-[#444]">{a.name}</p>
             </div>
