@@ -157,6 +157,7 @@ const ProfilePage: React.FC = () => {
   const [recentMatches, setRecentMatches] = useState<MatchHistoryEntry[]>([]);
   const [categoriesLoading, setCategoriesLoading] = useState(false);
   const [categoriesError, setCategoriesError] = useState<string | null>(null);
+  const [followingUsers, setFollowingUsers] = useState<{ id: string; username: string; displayName: string; avatarUrl: string; level: number; country: string }[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const loadProfile = useCallback(async () => {
@@ -224,6 +225,19 @@ const ProfilePage: React.FC = () => {
       cancelled = true;
     };
   }, [targetId]);
+
+  useEffect(() => {
+    if (!isOwnProfile) return;
+    let cancelled = false;
+    profileService.getFollowingUsers()
+      .then((list) => {
+        if (!cancelled) setFollowingUsers(list);
+      })
+      .catch(() => {
+        if (!cancelled) setFollowingUsers([]);
+      });
+    return () => { cancelled = true; };
+  }, [isOwnProfile]);
 
   useEffect(() => {
     if (!user?.id) return;
@@ -499,18 +513,6 @@ const ProfilePage: React.FC = () => {
 
       <section className="quizup-section mt-2 px-4 py-4">
         <div className="mb-3 flex items-center justify-between">
-          <h3 className="quizup-section-title">Game History</h3>
-          <button className="quizup-see-all" onClick={() => navigate("/history")}>See all</button>
-        </div>
-        <div className="flex gap-4 overflow-x-auto pb-1">
-          {recentMatches.slice(0, 5).map((match, index) => (
-            <HistoryBubble key={match.matchId} match={match} index={index} />
-          ))}
-        </div>
-      </section>
-
-      <section className="quizup-section mt-2 px-4 py-4">
-        <div className="mb-3 flex items-center justify-between">
           <h3 className="quizup-section-title">Achievements</h3>
           <span className="text-[10px] font-black uppercase text-zinc-400">
             {displayAchievements.filter((a) => a.isUnlocked).length}/{displayAchievements.length}
@@ -527,6 +529,37 @@ const ProfilePage: React.FC = () => {
           ))}
         </div>
       </section>
+
+      {/* ── People You Follow ───────────────────────────────────────────────── */}
+      {isOwnProfile && followingUsers.length > 0 && (
+        <section className="quizup-section mt-2 px-4 py-4">
+          <div className="mb-3 flex items-center justify-between">
+            <h3 className="quizup-section-title">People You Follow</h3>
+            <span className="text-[10px] font-black uppercase text-zinc-400">{followingUsers.length}</span>
+          </div>
+          <div className="flex gap-4 overflow-x-auto pb-1">
+            {followingUsers.map((fu) => (
+              <button
+                key={fu.id}
+                type="button"
+                onClick={() => navigate(`/profile/${fu.id}`)}
+                className="w-[60px] shrink-0 text-center"
+              >
+                <img
+                  src={resolveMediaUrl(
+                    fu.avatarUrl,
+                    `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(fu.username)}`
+                  )}
+                  alt=""
+                  className="mx-auto h-12 w-12 rounded-full border-2 border-[#f65357] object-cover shadow-sm"
+                />
+                <p className="mt-1 truncate text-[10px] font-black text-[#444]">{fu.displayName || fu.username}</p>
+                <p className="text-[9px] font-bold text-zinc-400">Lv.{fu.level}</p>
+              </button>
+            ))}
+          </div>
+        </section>
+      )}
 
       {isOwnProfile && (
         <div className="grid grid-cols-2 gap-2 px-4 py-4">
