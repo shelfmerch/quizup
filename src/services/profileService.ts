@@ -1,4 +1,4 @@
-import { Profile, MatchHistoryEntry } from "@/types";
+import { Profile, MatchHistoryEntry, ProfileFollowUser } from "@/types";
 import { API_URL } from "@/config/env";
 
 const getAuthHeaders = () => {
@@ -36,6 +36,15 @@ export const profileService = {
     return Array.isArray(data.history) ? data.history : [];
   },
 
+  async getFollowers(userId: string): Promise<ProfileFollowUser[]> {
+    const response = await fetch(`${API_URL}/profile/${userId}/followers`, {
+      headers: getAuthHeaders(),
+    });
+    if (!response.ok) throw new Error("Failed to fetch followers");
+    const data = await response.json();
+    return Array.isArray(data.followers) ? data.followers : [];
+  },
+
   async updateProfile(updates: Partial<Profile>): Promise<Profile> {
     const response = await fetch(`${API_URL}/profile`, {
       method: "PATCH",
@@ -63,7 +72,7 @@ export const profileService = {
     if (!response.ok) throw new Error("Failed to unfollow user");
   },
 
-  async getFollowingUsers(): Promise<{ id: string; username: string; displayName: string; avatarUrl: string; level: number; country: string }[]> {
+  async getFollowingUsers(): Promise<ProfileFollowUser[]> {
     const response = await fetch(`${API_URL}/follow/following`, {
       headers: getAuthHeaders(),
     });

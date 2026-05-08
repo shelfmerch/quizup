@@ -169,10 +169,6 @@ const Leaderboard: React.FC = () => {
             <div className="flex-1 text-left min-w-0">
               <p className="text-[13px] font-bold text-slate-900 truncate">{entry.username}</p>
               <p className="text-[9px] font-semibold text-slate-500 mt-0.5 truncate">{entry.score} XP</p>
-            </div>
-            <div className="flex items-center gap-4 pl-2">
-              {/* <span className="font-display font-extrabold text-slate-700 text-md w-7 text-right">{entry.rank}</span> */}
-              <img src={getLeagueFromXp(entry.score).badgeUrl} alt={getLeagueFromXp(entry.score).name} className="w-5 h-5 object-cover" />
               <div className="w-3 flex justify-center">
                 {idx % 3 === 0 ? (
                   <span className="text-rose-500 text-xs">▼</span>
@@ -180,6 +176,10 @@ const Leaderboard: React.FC = () => {
                   <span className="text-emerald-500 text-xs">▲</span>
                 )}
               </div>
+            </div>
+            <div className="flex items-center gap-4 pl-2">
+              {/* <span className="font-display font-extrabold text-slate-700 text-md w-7 text-right">{entry.rank}</span> */}
+              <img src={getLeagueFromXp(entry.score).badgeUrl} alt={getLeagueFromXp(entry.score).name} className="w-5 h-5 object-cover" />
             </div>
           </button>
         ))}

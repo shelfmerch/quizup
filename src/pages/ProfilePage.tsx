@@ -23,7 +23,7 @@ import { resolveMediaUrl } from "@/config/env";
 import { fetchFollowedCategories, fetchPublicCategories } from "@/services/categoryService";
 import { getSocket } from "@/services/socketService";
 import { profileService } from "@/services/profileService";
-import { Category, MatchFoundPayload, MatchHistoryEntry, Profile } from "@/types";
+import { Category, MatchFoundPayload, MatchHistoryEntry, Profile, ProfileFollowUser } from "@/types";
 
 type LeagueKey =
   | "unranked"
@@ -138,6 +138,22 @@ const HistoryBubble: React.FC<{ match: MatchHistoryEntry; index: number }> = ({ 
   );
 };
 
+const FollowerTile: React.FC<{ person: ProfileFollowUser; onSelect: (id: string) => void }> = ({ person, onSelect }) => {
+  const src = resolveMediaUrl(
+    person.avatarUrl,
+    `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(person.username)}`
+  );
+  const label = person.displayName || person.username;
+  return (
+    <button type="button" onClick={() => onSelect(person.id)} className="w-[76px] shrink-0 text-center">
+      <span className="mx-auto flex h-12 w-12 items-center justify-center overflow-hidden rounded-full border-[3px] border-[#dddddd] bg-white shadow-md">
+        <img src={src} alt="" className="h-full w-full object-cover" />
+      </span>
+      <p className="mt-1 truncate text-[9px] font-black text-[#444]">{label}</p>
+    </button>
+  );
+};
+
 const ProfilePage: React.FC = () => {
   const { user, logout, refreshUser } = useAuth();
   const navigate = useNavigate();
@@ -155,6 +171,9 @@ const ProfilePage: React.FC = () => {
   const [allCategories, setAllCategories] = useState<Category[]>([]);
   const [followedTopics, setFollowedTopics] = useState<Category[]>([]);
   const [recentMatches, setRecentMatches] = useState<MatchHistoryEntry[]>([]);
+  const [followers, setFollowers] = useState<ProfileFollowUser[]>([]);
+  const [followersLoading, setFollowersLoading] = useState(false);
+  const [followersError, setFollowersError] = useState<string | null>(null);
   const [categoriesLoading, setCategoriesLoading] = useState(false);
   const [categoriesError, setCategoriesError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -224,6 +243,38 @@ const ProfilePage: React.FC = () => {
       cancelled = true;
     };
   }, [targetId]);
+
+  useEffect(() => {
+    const ownerId = targetId || userId || profile?.id;
+    if (!ownerId) {
+      setFollowers([]);
+      setFollowersLoading(false);
+      setFollowersError(null);
+      return;
+    }
+
+    let cancelled = false;
+    setFollowersLoading(true);
+    setFollowersError(null);
+    profileService
+      .getFollowers(ownerId)
+      .then((rows) => {
+        if (!cancelled) {
+          setFollowers(rows);
+          setFollowersLoading(false);
+        }
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setFollowers([]);
+          setFollowersError("Could not load followers");
+          setFollowersLoading(false);
+        }
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [targetId, userId, profile?.id, isFollowing]);
 
   useEffect(() => {
     if (!user?.id) return;
@@ -458,11 +509,10 @@ const ProfilePage: React.FC = () => {
             <button
               onClick={handleFollow}
               disabled={followLoading}
-              className={`flex h-12 items-center justify-center gap-2 rounded-lg text-sm font-black shadow-sm transition active:scale-[0.98] ${
-                isFollowing
-                  ? "border border-[#dddddd] bg-white text-slate-700"
-                  : "bg-[#f65357] text-white"
-              }`}
+              className={`flex h-12 items-center justify-center gap-2 rounded-lg text-sm font-black shadow-sm transition active:scale-[0.98] ${isFollowing
+                ? "border border-[#dddddd] bg-white text-slate-700"
+                : "bg-[#f65357] text-white"
+                }`}
             >
               {followLoading ? (
                 <Loader2 className="h-4 w-4 animate-spin" />
@@ -499,14 +549,29 @@ const ProfilePage: React.FC = () => {
 
       <section className="quizup-section mt-2 px-4 py-4">
         <div className="mb-3 flex items-center justify-between">
-          <h3 className="quizup-section-title">Game History</h3>
-          <button className="quizup-see-all" onClick={() => navigate("/history")}>See all</button>
+          <h3 className="quizup-section-title">Followers</h3>
+          <span className="text-[10px] font-black uppercase text-zinc-400">
+            {followersLoading ? "…" : `${followers.length}`}
+          </span>
         </div>
-        <div className="flex gap-4 overflow-x-auto pb-1">
-          {recentMatches.slice(0, 5).map((match, index) => (
-            <HistoryBubble key={match.matchId} match={match} index={index} />
-          ))}
-        </div>
+        {followersLoading && (
+          <div className="flex justify-center py-6">
+            <Loader2 className="h-6 w-6 animate-spin text-zinc-400" />
+          </div>
+        )}
+        {followersError && !followersLoading && (
+          <p className="py-2 text-center text-xs font-bold text-zinc-500">{followersError}</p>
+        )}
+        {!followersLoading && !followersError && followers.length === 0 && (
+          <p className="py-2 text-center text-xs font-bold text-zinc-400">No followers yet</p>
+        )}
+        {!followersLoading && !followersError && followers.length > 0 && (
+          <div className="flex gap-4 overflow-x-auto pb-1">
+            {followers.slice(0, 24).map((person) => (
+              <FollowerTile key={person.id} person={person} onSelect={(id) => navigate(`/profile/${id}`)} />
+            ))}
+          </div>
+        )}
       </section>
 
       <section className="quizup-section mt-2 px-4 py-4">
@@ -524,6 +589,18 @@ const ProfilePage: React.FC = () => {
               </span>
               <p className="mt-1 line-clamp-2 text-[9px] font-black leading-[10px] text-[#444]">{a.name}</p>
             </div>
+          ))}
+        </div>
+      </section>
+
+      <section className="quizup-section mt-2 px-4 py-4">
+        <div className="mb-3 flex items-center justify-between">
+          <h3 className="quizup-section-title">Game History</h3>
+          <button className="quizup-see-all" onClick={() => navigate("/history")}>See all</button>
+        </div>
+        <div className="flex gap-4 overflow-x-auto pb-1">
+          {recentMatches.slice(0, 5).map((match, index) => (
+            <HistoryBubble key={match.matchId} match={match} index={index} />
           ))}
         </div>
       </section>

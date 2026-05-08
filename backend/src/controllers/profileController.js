@@ -131,4 +131,35 @@ const getMatchHistory = async (req, res) => {
   }
 };
 
-module.exports = { getProfile, updateProfile, getMatchHistory };
+// GET /api/profile/:userId/followers
+const getFollowers = async (req, res) => {
+  try {
+    const { userId } = req.params;
+    if (!mongoose.Types.ObjectId.isValid(userId)) {
+      return res.status(400).json({ error: "Invalid user ID" });
+    }
+
+    const user = await User.findById(userId)
+      .select("followers")
+      .populate("followers", "_id username displayName avatarUrl level country")
+      .lean();
+
+    if (!user) return res.status(404).json({ error: "User not found" });
+
+    const followers = (user.followers || []).map((u) => ({
+      id: u._id.toString(),
+      username: u.username,
+      displayName: u.displayName || u.username,
+      avatarUrl: u.avatarUrl || `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(u.username)}`,
+      level: u.level || 1,
+      country: u.country || "",
+    }));
+
+    return res.json({ followers });
+  } catch (err) {
+    console.error("[Profile] getFollowers error:", err);
+    return res.status(500).json({ error: "Server error" });
+  }
+};
+
+module.exports = { getProfile, updateProfile, getMatchHistory, getFollowers };

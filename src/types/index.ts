@@ -6,6 +6,16 @@ export interface User {
   createdAt: string;
 }
 
+/** User row returned by followers / following list APIs */
+export interface ProfileFollowUser {
+  id: string;
+  username: string;
+  displayName: string;
+  avatarUrl: string;
+  level: number;
+  country: string;
+}
+
 export interface Profile extends User {
   role?: "user" | "admin";
   displayName: string;
