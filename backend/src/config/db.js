@@ -10,6 +10,10 @@ const connectDB = async () => {
   if (isConnecting) return;
   isConnecting = true;
 
+  // Prevent buffered operations from crashing the process before connection is ready.
+  // Individual requests will fail gracefully; the retry loop keeps trying to connect.
+  mongoose.set("bufferTimeoutMS", 60_000);
+
   let attempt = 0;
   // Keep retrying — don't crash the server (lets /health work and avoids connection refused).
   // Routes that need DB will naturally fail until connected.
@@ -20,7 +24,9 @@ const connectDB = async () => {
       const uri = process.env.MONGODB_URI || process.env.MONGO_URI;
       if (!uri) throw new Error("MONGODB_URI or MONGO_URI must be set");
       const conn = await mongoose.connect(uri, {
-        serverSelectionTimeoutMS: 5000,
+        serverSelectionTimeoutMS: 10_000,
+        connectTimeoutMS: 15_000,
+        socketTimeoutMS: 45_000,
       });
       isConnected = true;
       isConnecting = false;

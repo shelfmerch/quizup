@@ -143,6 +143,7 @@ export interface Achievement {
   id: string;
   name: string;
   description: string;
+  src: string;
   icon: string;
   unlockedAt?: string;
   isUnlocked: boolean;
