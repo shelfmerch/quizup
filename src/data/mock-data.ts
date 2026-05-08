@@ -547,15 +547,15 @@ export const MOCK_MATCH_HISTORY: MatchHistoryEntry[] = [
 ];
 
 export const MOCK_ACHIEVEMENTS: Achievement[] = [
-  { id: "a1", name: "First Victory", description: "Win your first match", src: "/uploads/achievements/first-victory.png", icon: "🏆", isUnlocked: false },
-  { id: "a2", name: "Win Streak 5", description: "Win 5 matches in a row", src: "/uploads/achievements/win-streak-5.png", icon: "🔥", isUnlocked: false },
-  { id: "a3", name: "Perfect Round", description: "Answer all questions correctly in a match", src: "/uploads/achievements/perfect-round.png", icon: "⭐", isUnlocked: false },
-  { id: "a4", name: "Category Master", description: "Win 10 matches in a single category", src: "/uploads/achievements/category-master.png", icon: "👑", isUnlocked: false },
-  { id: "a5", name: "Speed Demon", description: "Answer a question in under 2 seconds", src: "/uploads/achievements/speed-demon.png", icon: "⚡", isUnlocked: false },
-  { id: "a6", name: "Social Butterfly", description: "Follow 50 players", src: "/uploads/achievements/social-butterfly.png", icon: "🦋", isUnlocked: false },
-  { id: "a7", name: "Century Club", description: "Play 100 matches", src: "/uploads/achievements/century-club.png", icon: "💯", isUnlocked: false },
-  { id: "a8", name: "Global Player", description: "Play in all categories", src: "/uploads/achievements/global-player.png", icon: "🌎", isUnlocked: false },
-  { id: "a9", name: "Giant Slayer", description: "Defeat the Rank 1 player in a Topic", src: "/uploads/achievements/giant-slayer.png", icon: "🗡️", isUnlocked: false },
+  { id: "a1", name: "First Victory", description: "Win your first match", src: "/public/achievements/first-victory.png", icon: "🏆", isUnlocked: false },
+  { id: "a2", name: "Win Streak 5", description: "Win 5 matches in a row", src: "/public/achievements/win-streak-5.png", icon: "🔥", isUnlocked: false },
+  { id: "a3", name: "Perfect Round", description: "Answer all questions correctly in a match", src: "/public/achievements/perfect-round.png", icon: "⭐", isUnlocked: false },
+  { id: "a4", name: "Category Master", description: "Win 10 matches in a single category", src: "/public/achievements/category-master.png", icon: "👑", isUnlocked: false },
+  { id: "a5", name: "Speed Demon", description: "Answer a question in under 2 seconds", src: "/publics/achievements/speed-demon.png", icon: "⚡", isUnlocked: false },
+  { id: "a6", name: "Social Butterfly", description: "Follow 50 players", src: "/publics/achievements/social-butterfly.png", icon: "🦋", isUnlocked: false },
+  { id: "a7", name: "Century Club", description: "Play 100 matches", src: "/publics/achievements/century-club.png", icon: "💯", isUnlocked: false },
+  { id: "a8", name: "Global Player", description: "Play in all categories", src: "/publics/achievements/global-player.png", icon: "🌎", isUnlocked: false },
+  { id: "a9", name: "Giant Slayer", description: "Defeat the Rank 1 player in a Topic", src: "/publics/achievements/giant-slayer.png", icon: "🗡️", isUnlocked: false },
 ];
 
 export const MOCK_NOTIFICATIONS: Notification[] = [
