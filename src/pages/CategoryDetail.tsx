@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { motion } from "framer-motion";
-import { ArrowLeft, Play, Trophy, Star, Users, BookOpen } from "lucide-react";
+import { ArrowLeft, Play, Trophy, Star, Users, BookOpen, Search, MessageCircle } from "lucide-react";
 import { fetchPublicCategories } from "@/services/categoryService";
 import { leaderboardService } from "@/services/leaderboardService";
 import { MOCK_CATEGORIES } from "@/data/mock-data";
@@ -144,266 +144,157 @@ const CategoryDetail: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen flex flex-col max-w-md mx-auto">
+    <div className="min-h-[100dvh] flex flex-col max-w-md mx-auto bg-[#242424] text-white">
       {/* ── Header Bar ───────────────────────────────────────────────────────── */}
-      <div className={`${theme.header} px-4 py-3 flex items-center justify-between shrink-0 shadow-sm sticky top-0 z-50`}>
+      <div className={`${theme.header} px-4 h-14 flex items-center justify-between shrink-0 shadow-md sticky top-0 z-50`}>
         <button
           type="button"
           onClick={() => navigate(-1)}
-          className="text-white p-1 -ml-1 rounded-full active:bg-black/10"
+          className="text-white p-2 -ml-2 rounded-full active:bg-black/10"
           aria-label="Go back"
         >
-          <ArrowLeft className="w-5 h-5" />
+          <ArrowLeft className="w-6 h-6" />
         </button>
-        <h1 className="font-display font-bold text-white text-base tracking-tight">
+        <h1 className="font-display font-bold text-white text-lg tracking-wide">
           {category.name}
         </h1>
-        <div className="w-6" /> {/* spacer */}
+        <div className="flex items-center gap-3">
+           <button className="text-white p-1 rounded-full active:bg-black/10">
+              <Search className="w-6 h-6" />
+           </button>
+           <button className="text-white p-1 rounded-full active:bg-black/10 relative">
+              <MessageCircle className="w-6 h-6" />
+              <div className="absolute top-0 right-0 w-3.5 h-3.5 bg-black rounded-full flex items-center justify-center text-[8px] font-bold text-white border border-[#242424]">1</div>
+           </button>
+        </div>
       </div>
 
-      {/* ── Hero: Icon + Action Buttons ──────────────────────────────────────── */}
-      <div className="bg-white px-5 pt-7 pb-6 shadow-sm">
-        <div className="flex items-center gap-5">
-          {/* Big icon circle */}
-          <motion.div
-            initial={{ scale: 0.8, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            transition={{ type: "spring", stiffness: 260, damping: 20 }}
-            className="shrink-0 w-24 h-24 rounded-full flex items-center justify-center text-5xl"
-            style={{
-              background: `radial-gradient(circle at 35% 35%, ${theme.accent}55, ${theme.accent}22)`,
-              border: `2px solid ${theme.accent}66`,
-              boxShadow: `0 0 32px ${theme.glow}`,
-            }}
-          >
-            {category.icon}
-          </motion.div>
+      <div className="flex-1 overflow-y-auto pb-12 relative">
+        <div className="absolute inset-0 pointer-events-none opacity-5" style={{
+           backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M54.627 0l.83.83-1.66 1.66-.83-.83.83-.83zM27.83 34.485L25 31.657l-1.414 1.414 2.828 2.828 1.414-1.414zm25.456-11.314L50.458 26l-1.414-1.414 2.828-2.828 1.414 1.414zM4.343 7.172L7.172 4.343l-1.414-1.414L2.93 5.758l1.414 1.414zM16.485 54.627l.83.83-1.66 1.66-.83-.83.83-.83z' fill='%23ffffff' fill-opacity='1' fill-rule='evenodd'/%3E%3C/svg%3E")`,
+        }}></div>
 
-          {/* Action pills */}
-          <div className="flex flex-col gap-2.5 flex-1">
-            <motion.button
-              type="button"
-              initial={{ opacity: 0, x: 20 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: 0.05 }}
-              whileTap={{ scale: 0.96 }}
-              onClick={() => navigate(`/find-match/${category.id}`)}
-              className="flex items-center gap-2 px-4 py-2.5 rounded-full text-sm font-semibold text-white active:opacity-80"
-              style={{
-                background: `linear-gradient(135deg, ${theme.accent}, ${theme.accent}cc)`,
-                boxShadow: `0 4px 14px ${theme.glow}`,
-              }}
-            >
-              <Play className="w-4 h-4 fill-white" />
-              Play
-            </motion.button>
-
-            <motion.button
-              type="button"
-              initial={{ opacity: 0, x: 20 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: 0.1 }}
-              whileTap={{ scale: 0.96 }}
-              disabled={!isAuthenticated || followBusy}
-              onClick={async () => {
-                if (!categoryId || !isAuthenticated) return;
-                setFollowBusy(true);
-                try {
-                  if (isFollowed) {
-                    await unfollowCategory(categoryId);
-                    setIsFollowed(false);
-                  } else {
-                    await followCategory(categoryId);
-                    setIsFollowed(true);
-                  }
-                } finally {
-                  setFollowBusy(false);
-                }
-              }}
-              className={`flex items-center gap-2 px-4 py-2.5 rounded-full text-sm font-semibold border active:bg-slate-100 ${
-                isAuthenticated ? "bg-white text-slate-700 border-slate-200" : "bg-slate-50 text-slate-400 border-slate-100"
-              } ${followBusy ? "opacity-60" : ""}`}
-            >
-              <Star className={`w-4 h-4 ${isFollowed ? "text-amber-400 fill-amber-400" : "text-slate-300"}`} />
-              {isFollowed ? "Following" : "Follow"}
-            </motion.button>
-
-            <motion.button
-              type="button"
-              initial={{ opacity: 0, x: 20 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: 0.15 }}
-              whileTap={{ scale: 0.96 }}
-              onClick={() => navigate(`/leaderboard`)}
-              className="flex items-center gap-2 px-4 py-2.5 rounded-full text-sm font-semibold bg-white text-slate-700 border border-slate-200 active:bg-slate-50"
-            >
-              <Trophy className="w-4 h-4 text-amber-500" />
-              Rankings
-            </motion.button>
-          </div>
-        </div>
-
-        {/* Category title + description under the row */}
-        <div className="mt-5">
-          <p className="font-display font-extrabold text-slate-900 text-xl tracking-tight">
+        <div className="relative z-10 px-4 pt-8 pb-6 flex flex-col items-center">
+          <h2 className="text-[2.5rem] font-display font-extrabold text-white mb-1 drop-shadow-md tracking-tight leading-none text-center">
             {category.name}
-          </p>
-          {category.description && (
-            <p className="text-slate-500 text-sm mt-0.5">{category.description}</p>
-          )}
-        </div>
-      </div>
-
-      {/* ── Questions Completed Progress ──────────────────────────────────────── */}
-      <div className="bg-white/60 border-t border-slate-100 px-5 py-4">
-        <p className="text-[10px] uppercase tracking-widest text-slate-400 font-semibold mb-2">
-          Questions Completed
-        </p>
-        <div className="h-2.5 rounded-full bg-slate-100 overflow-hidden">
-          <div
-            className="h-full rounded-full"
-            style={{
-              width: "0%",
-              background: `linear-gradient(90deg, ${theme.accent}, ${theme.accent}88)`,
-            }}
-          />
-        </div>
-        <p className="text-[10px] text-slate-400 mt-1">0%</p>
-      </div>
-
-      {/* ── Stats Row ─────────────────────────────────────────────────────────── */}
-      <div className="bg-white border-t border-slate-100">
-        <div className="flex items-center divide-x divide-slate-100">
-          <div className="flex-1 py-4 text-center">
-            <p className="text-[9px] text-slate-400 uppercase tracking-wider mb-1">
-              Your Level
-            </p>
-            <p className="text-2xl font-display font-extrabold text-slate-900 leading-none">
-              {user?.level ?? 1}
-            </p>
-          </div>
-          <div className="flex-1 py-4 text-center">
-            <p className="text-[9px] text-slate-400 uppercase tracking-wider mb-1">
-              Followers
-            </p>
-            <p className="text-2xl font-display font-extrabold text-slate-900 leading-none">
-              {mockFollowers.toLocaleString()}
-            </p>
-          </div>
-          <div className="flex-1 py-4 text-center">
-            <p className="text-[9px] text-slate-400 uppercase tracking-wider mb-1">
-              Question Count
-            </p>
-            <p className="text-2xl font-display font-extrabold text-slate-900 leading-none">
-              {category.questionCount}
-            </p>
-          </div>
-        </div>
-      </div>
-      {/* ── Top 5 Players ─────────────────────────────────────────────────────── */}
-      <div className="flex-1 px-4 pt-5 pb-28">
-        <div className="flex items-center gap-2 mb-3">
-          <Trophy className="w-4 h-4 text-amber-500" />
-          <h2 className="font-display font-bold text-slate-800 text-sm uppercase tracking-wider">
-            Top Players
           </h2>
+          {category.description && (
+            <p className="text-slate-300 text-[15px] mb-6 text-center">{category.description}</p>
+          )}
+
+          <div className="flex w-full gap-4 max-w-[340px] mt-2">
+            {/* Big icon square */}
+            <div className="w-32 h-32 sm:w-[140px] sm:h-[140px] rounded-[1.5rem] bg-[#313131] flex items-center justify-center shrink-0 shadow-[0_4px_20px_rgba(0,0,0,0.5)] border border-white/5 relative overflow-hidden">
+              <div className="absolute inset-0 opacity-20" style={{ background: `radial-gradient(circle at top left, ${theme.accent}, transparent)` }} />
+              <span className="text-7xl sm:text-8xl relative z-10 drop-shadow-lg">{category.icon}</span>
+            </div>
+
+            {/* Action pills */}
+            <div className="flex flex-col justify-between flex-1 gap-2.5">
+              <button 
+                onClick={() => navigate(`/find-match/${category.id}`)}
+                className="bg-white rounded-xl flex-1 flex items-center gap-3 px-4 shadow-md font-bold active:scale-[0.98] transition-transform"
+                style={{ color: theme.accent }}
+              >
+                <div className={`w-6 h-6 rounded-full flex items-center justify-center text-white`} style={{ backgroundColor: theme.accent }}>
+                   <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20"><path d="M11.3 1.046A1 1 0 0112 2v5h4a1 1 0 01.82 1.573l-7 10A1 1 0 018 18v-5H4a1 1 0 01-.82-1.573l7-10a1 1 0 011.12-.38z" /></svg>
+                </div>
+                <span className="text-[15px]">Play</span>
+              </button>
+              
+              <button 
+                disabled={!isAuthenticated || followBusy}
+                onClick={async () => {
+                  if (!categoryId || !isAuthenticated) return;
+                  setFollowBusy(true);
+                  try {
+                    if (isFollowed) {
+                      await unfollowCategory(categoryId);
+                      setIsFollowed(false);
+                    } else {
+                      await followCategory(categoryId);
+                      setIsFollowed(true);
+                    }
+                  } finally {
+                    setFollowBusy(false);
+                  }
+                }}
+                className={`bg-white rounded-xl flex-1 flex items-center gap-3 px-4 shadow-md font-bold active:scale-[0.98] transition-transform ${followBusy ? "opacity-70" : ""}`}
+                style={{ color: '#00c853' }}
+              >
+                <div className="w-6 h-6 rounded-full bg-[#00c853] text-white flex items-center justify-center">
+                   <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="3" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" /></svg>
+                </div>
+                <span className="text-[15px]">{isFollowed ? "Following" : "Follow"}</span>
+              </button>
+
+              <button 
+                onClick={() => navigate(`/leaderboard`)}
+                className="bg-white rounded-xl flex-1 flex items-center gap-3 px-4 shadow-md font-bold active:scale-[0.98] transition-transform"
+                style={{ color: '#9c27b0' }}
+              >
+                <div className="w-6 h-6 rounded-full bg-[#9c27b0] text-white flex items-center justify-center">
+                   <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" /></svg>
+                </div>
+                <span className="text-[15px]">Rankings</span>
+              </button>
+            </div>
+          </div>
         </div>
 
-        {playersLoading ? (
-          <div className="space-y-2">
-            {[0, 1, 2].map((i) => (
-              <div
-                key={i}
-                className="h-16 rounded-2xl bg-white border border-slate-100 animate-pulse"
-              />
-            ))}
+        {/* Questions Completed */}
+        <div className="px-8 py-4 relative z-10 max-w-[360px] mx-auto w-full">
+          <p className="text-center text-[11px] font-bold text-white uppercase tracking-[0.15em] mb-2 drop-shadow">
+            Questions Completed
+          </p>
+          <div className="h-7 rounded-full border border-white/30 bg-[#151515] flex items-center justify-center relative overflow-hidden shadow-inner">
+             <div className="absolute left-0 top-0 bottom-0 w-0 bg-white/20"></div>
+             <span className="text-[13px] font-bold text-white relative z-10">0%</span>
           </div>
-        ) : topPlayers.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-10 gap-2">
-            <Users className="w-10 h-10 text-zinc-700" />
-            <p className="text-zinc-500 text-sm">No rankings yet — be the first to play!</p>
-            <motion.button
-              type="button"
-              whileTap={{ scale: 0.96 }}
-              onClick={() => navigate(`/find-match/${category.id}`)}
-              className="mt-2 px-5 py-2.5 rounded-full text-sm font-semibold text-white"
-              style={{
-                background: `linear-gradient(135deg, ${theme.accent}, ${theme.accent}aa)`,
-                boxShadow: `0 4px 12px ${theme.glow}`,
-              }}
-            >
-              Play now
-            </motion.button>
-          </div>
-        ) : (
-          <div className="space-y-2">
-            {topPlayers.map((player, idx) => (
-              <motion.button
-                key={player.userId}
-                initial={{ opacity: 0, y: 12 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: idx * 0.07 }}
-                type="button"
-                onClick={() => navigate(`/profile/${player.userId}`)}
-                className="relative w-full text-left flex items-center gap-3 bg-white border border-slate-100 rounded-2xl px-4 py-3 overflow-hidden shadow-sm hover:border-slate-200 active:scale-[0.99] transition"
-              >
-                {/* subtle rank glow strip on left */}
-                <div
-                  className="absolute left-0 top-0 bottom-0 w-1 rounded-l-2xl"
-                  style={{
-                    background:
-                      idx === 0
-                        ? "linear-gradient(180deg,#FFD700,#FFA500)"
-                        : idx === 1
-                        ? "linear-gradient(180deg,#C0C0C0,#A0A0A0)"
-                        : "linear-gradient(180deg,#CD7F32,#A0522D)",
-                  }}
-                />
-                <span className="text-xl shrink-0 ml-1">{idx < 3 ? MEDAL[idx] : `#${idx + 1}`}</span>
-                <img
-                  src={
-                    player.avatarUrl ||
-                    `https://api.dicebear.com/7.x/avataaars/svg?seed=${player.username}`
-                  }
-                  alt=""
-                  className="w-10 h-10 rounded-full bg-slate-50 border border-slate-100 shrink-0"
-                />
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-semibold text-slate-900 truncate">
-                    {player.username}
-                  </p>
-                  <p className="text-[10px] text-slate-400">
-                    Level {player.level} · {player.wins} wins
-                  </p>
-                </div>
-                <div className="text-right shrink-0">
-                  <p
-                    className="text-base font-display font-extrabold tabular-nums"
-                    style={{ color: theme.accent }}
-                  >
-                    {player.score.toLocaleString()}
-                  </p>
-                  <p className="text-[9px] text-slate-400 uppercase tracking-wide">pts</p>
-                </div>
-              </motion.button>
-            ))}
-          </div>
-        )}
+        </div>
 
-        {/* Play CTA at bottom */}
-        <motion.button
-          type="button"
-          whileTap={{ scale: 0.97 }}
-          onClick={() => navigate(`/find-match/${category.id}`)}
-          className="w-full mt-6 h-14 rounded-2xl text-white font-bold text-base flex items-center justify-center gap-2"
-          style={{
-            background: `linear-gradient(135deg, ${theme.accent}, ${theme.accent}cc)`,
-            boxShadow: `0 6px 20px ${theme.glow}`,
-          }}
-        >
-          <Play className="w-5 h-5 fill-white" />
-          Play {category.name}
-        </motion.button>
+        {/* Stats Row */}
+        <div className="flex items-center justify-center py-5 border-t border-b border-white/10 mt-3 px-2 relative z-10 bg-[#212121]/50 backdrop-blur-sm">
+          <div className="flex-1 text-center border-r border-white/10">
+            <p className="text-[10px] text-slate-400 uppercase tracking-widest mb-1 font-bold">Your Level</p>
+            <p className="text-[2.5rem] font-display font-extrabold text-white leading-none tracking-tight">{user?.level ?? 1}</p>
+          </div>
+          <div className="flex-1 text-center border-r border-white/10">
+            <p className="text-[10px] text-slate-400 uppercase tracking-widest mb-1 font-bold">Followers</p>
+            <p className="text-[2.5rem] font-display font-extrabold text-white leading-none tracking-tight">{mockFollowers}</p>
+          </div>
+          <div className="flex-1 text-center">
+            <p className="text-[10px] text-slate-400 uppercase tracking-widest mb-1 font-bold">Question Count</p>
+            <p className="text-[2.5rem] font-display font-extrabold text-white leading-none tracking-tight">{category.questionCount}</p>
+          </div>
+        </div>
+
+        {/* Mocked Discussion Post */}
+        <div className="mt-8 bg-white text-slate-900 shadow-md relative z-10 mx-auto max-w-full">
+          <div className="flex px-4 py-4 gap-3">
+             <div className="relative shrink-0">
+                <div className="w-12 h-12 rounded-full bg-slate-800 flex items-center justify-center border-[3px]" style={{ borderColor: theme.accent }}>
+                   <span className="text-2xl">💀</span>
+                </div>
+                <div className="absolute -bottom-1 -right-1 w-[22px] h-[22px] rounded-full bg-slate-100 border border-slate-300 flex items-center justify-center text-[10px] overflow-hidden">
+                   {category.icon}
+                </div>
+             </div>
+             <div className="flex-1 min-w-0">
+                <div className="flex justify-between items-start">
+                   <p className="text-[15px] font-semibold leading-tight">
+                      <span style={{ color: theme.accent }}>Haukur</span> <span className="text-slate-600 font-normal">posted in</span> <span style={{ color: theme.accent }}>{category.name}</span>
+                   </p>
+                   <p className="text-[11px] text-slate-500 font-bold ml-2 shrink-0">Yesterday</p>
+                </div>
+                <p className="text-base text-slate-800 mt-1">This is so unreal!</p>
+                <div className="flex justify-end mt-2">
+                   <p className="text-xs font-bold flex items-center gap-1" style={{ color: theme.accent }}>3 <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20"><path d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 17.657l-6.828-6.829a4 4 0 010-5.656z" /></svg></p>
+                </div>
+             </div>
+          </div>
+        </div>
+
       </div>
     </div>
   );
