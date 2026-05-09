@@ -6,15 +6,14 @@ import { fetchPublicCategories } from "@/services/categoryService";
 import { motion } from "framer-motion";
 import { useAuth } from "@/hooks/useAuth";
 import { getSocket } from "@/services/socketService";
+
 import { API_BASE } from "@/config/env";
 
 const FindMatch: React.FC = () => {
   const { categoryId } = useParams<{ categoryId: string }>();
   const navigate = useNavigate();
   const { user, isAuthenticated, isLoading } = useAuth();
-  const [found, setFound] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [payload, setPayload] = useState<MatchFoundPayload | null>(null);
 
   const [topicMeta, setTopicMeta] = useState(() => {
     const mock = MOCK_CATEGORIES.find((c) => c.id === categoryId);
@@ -62,38 +61,34 @@ const FindMatch: React.FC = () => {
 
     const onMatchFound = (p: MatchFoundPayload) => {
       if (cancelled) return;
-      setPayload(p);
-      setFound(true);
-      setTimeout(() => {
-        navigate("/battle", {
-          state: {
-            mode: "online" as const,
-            matchId: p.matchId,
-            mySeat: p.mySeat,
-            myUserId: p.myUserId,
-            opponentUserId: p.opponent.userId,
-            categoryId: p.categoryId,
-            categoryName: p.categoryName,
-            totalRounds: p.totalRounds,
-            me: {
-              userId: user.id,
-              username: user.username,
-              avatarUrl: user.avatarUrl,
-              score: 0,
-              answers: [],
-              level: user.level,
-            },
-            opponent: {
-              userId: p.opponent.userId,
-              username: p.opponent.username,
-              avatarUrl: p.opponent.avatarUrl,
-              score: 0,
-              answers: [],
-              level: p.opponent.level,
-            },
+      navigate("/battle", {
+        state: {
+          mode: "online" as const,
+          matchId: p.matchId,
+          mySeat: p.mySeat,
+          myUserId: p.myUserId,
+          opponentUserId: p.opponent.userId,
+          categoryId: p.categoryId,
+          categoryName: p.categoryName,
+          totalRounds: p.totalRounds,
+          me: {
+            userId: user.id,
+            username: user.username,
+            avatarUrl: user.avatarUrl,
+            score: 0,
+            answers: [],
+            level: user.level,
           },
-        });
-      }, 1500);
+          opponent: {
+            userId: p.opponent.userId,
+            username: p.opponent.username,
+            avatarUrl: p.opponent.avatarUrl,
+            score: 0,
+            answers: [],
+            level: p.opponent.level,
+          },
+        },
+      });
     };
 
     const onQueueError = (e: { message?: string }) => {
@@ -142,7 +137,7 @@ const FindMatch: React.FC = () => {
               Go back
             </button>
           </div>
-        ) : !found ? (
+        ) : (
           <>
             <p className="text-slate-900 font-display font-black text-2xl mb-2 tracking-tight">Finding Opponent</p>
             <p className="text-slate-400 text-sm mb-12 text-center font-medium">Searching the live matchmaking queue...</p>
@@ -169,49 +164,6 @@ const FindMatch: React.FC = () => {
               Cancel Search
             </button>
           </>
-        ) : (
-          <motion.div initial={{ scale: 0.8, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} className="text-center w-full">
-            <div className="glass-card p-8 rounded-[2.5rem] relative overflow-hidden">
-              <div className="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-green-400 to-emerald-500" />
-              <p className="text-emerald-600 font-display font-black text-2xl mb-8 tracking-tight">MATCH FOUND!</p>
-              
-              <div className="flex items-center justify-center gap-4">
-                <div className="flex-1 flex flex-col items-center gap-3">
-                  <div className="relative">
-                    <img
-                      src={user?.avatarUrl}
-                      alt=""
-                      className="w-20 h-20 rounded-full border-4 border-white shadow-xl object-cover"
-                    />
-                    <div className="absolute -bottom-1 -right-1 w-6 h-6 bg-green-500 rounded-full border-2 border-white flex items-center justify-center text-[10px] text-white font-bold">
-                      {user?.level}
-                    </div>
-                  </div>
-                  <p className="text-sm text-slate-900 font-black truncate max-w-[80px]">{user?.username}</p>
-                </div>
-
-                <div className="px-4">
-                   <div className="w-12 h-12 rounded-full bg-slate-100 flex items-center justify-center">
-                     <span className="text-lg font-display font-black text-slate-400">VS</span>
-                   </div>
-                </div>
-
-                <div className="flex-1 flex flex-col items-center gap-3">
-                  <div className="relative">
-                    <img
-                      src={payload?.opponent.avatarUrl}
-                      alt=""
-                      className="w-20 h-20 rounded-full border-4 border-white shadow-xl object-cover"
-                    />
-                    <div className="absolute -bottom-1 -right-1 w-6 h-6 bg-red-500 rounded-full border-2 border-white flex items-center justify-center text-[10px] text-white font-bold">
-                      {payload?.opponent.level}
-                    </div>
-                  </div>
-                  <p className="text-sm text-slate-900 font-black truncate max-w-[80px]">{payload?.opponent.username}</p>
-                </div>
-              </div>
-            </div>
-          </motion.div>
         )}
       </div>
     </div>

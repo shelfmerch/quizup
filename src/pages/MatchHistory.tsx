@@ -50,26 +50,36 @@ const MatchHistory: React.FC = () => {
         <button><Search className="w-5 h-5 text-slate-500" /></button>
       </div>
 
-      <div className="px-4 py-3 space-y-2">
-        {history.map((match) => (
-          <div key={match.matchId} className="bg-white border border-slate-100 rounded-xl p-4 flex items-center gap-3 shadow-sm">
-            <div className={`w-10 h-10 rounded-full flex items-center justify-center text-white font-bold text-sm ${
-              match.result === "win" ? "quizup-answer-green" : match.result === "loss" ? "quizup-answer-red" : "quizup-header-teal shadow-md"
-            }`}>
-              {match.result === "win" ? "W" : match.result === "loss" ? "L" : "D"}
+      <div className="px-4 py-3 space-y-3">
+        {history.map((match) => {
+          const isWin = match.result === "win";
+          const isLoss = match.result === "loss";
+          
+          const bgColor = isWin ? "bg-emerald-50" : isLoss ? "bg-red-50" : "bg-slate-50";
+          const borderColor = isWin ? "border-emerald-100" : isLoss ? "border-red-100" : "border-slate-200";
+          const textColor = isWin ? "text-emerald-600" : isLoss ? "text-red-500" : "text-slate-500";
+          const iconClass = isWin ? "quizup-answer-green" : isLoss ? "quizup-answer-red" : "bg-slate-400";
+          const label = isWin ? "Victory" : isLoss ? "Lost" : "Draw";
+
+          return (
+            <div key={match.matchId} className={`${bgColor} border ${borderColor} rounded-2xl p-3 flex items-center gap-3 shadow-sm transition-transform active:scale-[0.98]`}>
+              <div className={`w-11 h-11 rounded-full flex items-center justify-center text-white font-black text-lg shadow-md shrink-0 ${iconClass}`}>
+                {match.result === "win" ? "W" : match.result === "loss" ? "L" : "D"}
+              </div>
+              <img src={match.opponentAvatar} alt="" className="w-11 h-11 rounded-full border-2 border-white shadow-sm shrink-0 object-cover" />
+              <div className="flex-1 min-w-0 flex flex-col justify-center">
+                <p className={`text-[10px] font-black uppercase tracking-wider mb-0.5 ${textColor}`}>{label}</p>
+                <p className="text-[15px] font-bold text-slate-900 truncate leading-tight">{match.opponentName}</p>
+                <p className="text-[11px] font-semibold text-slate-500 truncate">{match.categoryName}</p>
+              </div>
+              <div className="text-right shrink-0">
+                <p className={`text-2xl font-display font-black tracking-tighter ${textColor}`}>
+                  {match.playerScore} <span className="text-slate-400 text-sm font-bold mx-0.5">-</span> {match.opponentScore}
+                </p>
+              </div>
             </div>
-            <img src={match.opponentAvatar} alt="" className="w-10 h-10 rounded-full border border-slate-100" />
-            <div className="flex-1 min-w-0">
-              <p className="text-sm font-semibold text-slate-900">{match.opponentName}</p>
-              <p className="text-[10px] text-slate-500">{match.categoryName}</p>
-            </div>
-            <div className="text-right">
-              <p className="text-lg font-display font-extrabold text-slate-900">
-                {match.playerScore} - {match.opponentScore}
-              </p>
-            </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
     </div>
   );

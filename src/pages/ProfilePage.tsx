@@ -611,7 +611,7 @@ const ProfilePage: React.FC = () => {
           <button onClick={() => navigate("/categories")} className="h-11 rounded-lg bg-[#f65357] text-sm font-black text-white shadow-md">
             Play Now
           </button>
-          <button onClick={async () => { await logout(); navigate("/"); }} className="h-11 rounded-lg border border-[#dddddd] bg-white text-sm font-black text-[#f65357] shadow-sm">
+          <button onClick={async () => { await logout(); navigate("/"); }} className="h-11 rounded-lg border border-[#dddddd] bg-black text-sm font-black text-white shadow-sm">
             Log Out
           </button>
         </div>

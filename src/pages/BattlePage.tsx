@@ -573,10 +573,10 @@ const BattlePage: React.FC = () => {
                <p className="text-3xl font-bold text-white drop-shadow-sm tracking-tight truncate">{state.match.player1.username}</p>
                <p className="text-sm text-white/95 font-semibold drop-shadow-sm truncate">{playerTagline(state.match.player1)}</p>
                <p className="text-sm text-white/95 font-semibold drop-shadow-sm">Level {state.match.player1.level || 1}</p>
-               <div className="flex items-center gap-2 mt-1.5">
+               {/* <div className="flex items-center gap-2 mt-1.5">
                   <span className="text-base leading-none drop-shadow-sm">🌍</span>
                   <span className="text-xs font-bold text-white tracking-wide drop-shadow-sm">Global</span>
-               </div>
+               </div> */}
             </div>
           </div>
         </motion.div>
@@ -618,10 +618,10 @@ const BattlePage: React.FC = () => {
           className="absolute top-1/2 left-0 right-0 h-1 bg-white z-20 -translate-y-1/2 shadow-[0_0_10px_rgba(0,0,0,0.3)] origin-center" 
         />
         <motion.div 
-          initial={{ scale: 0, opacity: 0 }} 
-          animate={{ scale: 1, opacity: 1 }} 
+          initial={{ scale: 0, opacity: 0, x: "-50%", y: "-50%" }} 
+          animate={{ scale: 1, opacity: 1, x: "-50%", y: "-50%" }} 
           transition={{ type: "spring", bounce: 0.4, delay: 0.6 }}
-          className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-32 h-32 rounded-full border-[6px] border-white bg-black flex items-center justify-center z-30 shadow-[0_4px_20px_rgba(0,0,0,0.5)]"
+          className="absolute top-1/2 left-1/2 w-32 h-32 rounded-full border-[6px] border-white bg-black flex items-center justify-center z-30 shadow-[0_4px_20px_rgba(0,0,0,0.5)]"
         >
           <svg className="w-14 h-14 fill-white drop-shadow-[0_0_8px_rgba(255,255,255,0.5)]" viewBox="0 0 20 20">
              <path d="M11.3 1.046A1 1 0 0112 2v5h4a1 1 0 01.82 1.573l-7 10A1 1 0 018 18v-5H4a1 1 0 01-.82-1.573l7-10a1 1 0 011.12-.38z" />
