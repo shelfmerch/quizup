@@ -17,6 +17,7 @@ import {
 } from "lucide-react";
 import { toast } from "@/components/ui/sonner";
 import Icons8Icon, { getCategoryIconSlug } from "@/components/Icons8Icon";
+import BottomNav from "@/components/BottomNav";
 import { useAuth } from "@/hooks/useAuth";
 import { MOCK_ACHIEVEMENTS, MOCK_CATEGORIES, MOCK_MATCH_HISTORY } from "@/data/mock-data";
 import { resolveMediaUrl } from "@/config/env";
@@ -545,7 +546,7 @@ const ProfilePage: React.FC = () => {
             {displayAchievements.filter((a) => a.isUnlocked).length}/{displayAchievements.length}
           </span>
         </div>
-        <div className="flex gap-3 pb-1">
+        <div className="flex gap-3 overflow-x-auto pb-1">
           {displayAchievements.slice(0, 6).map((a) => (
             <div key={a.id} className={`w-[58px] shrink-0 text-center ${!a.isUnlocked ? "opacity-35 grayscale" : ""}`} title={a.description}>
               <span className="mx-auto flex h-12 w-12 items-center justify-center rounded-lg bg-white text-xl shadow-md border border-[#dddddd]">
@@ -576,7 +577,7 @@ const ProfilePage: React.FC = () => {
           <p className="py-2 text-center text-xs font-bold text-zinc-400">No followers yet</p>
         )}
         {!followersLoading && !followersError && followers.length > 0 && (
-          <div className="flex gap-2 pb-1">
+          <div className="flex gap-2 overflow-x-auto pb-1">
             {followers.slice(0, 5).map((person) => (
               <FollowerTile key={person.id} person={person} onSelect={(id) => navigate(`/profile/${id}`)} />
             ))}
@@ -586,7 +587,7 @@ const ProfilePage: React.FC = () => {
 
       <section className="quizup-section px-4 py-4 mt-2">
         <h3 className="quizup-section-title mb-3">Followed Topics</h3>
-        <div className="flex gap-3  pb-1">
+        <div className="flex gap-3 overflow-x-auto pb-1">
           {topicsToShow.map((cat, index) => (
             <TopicTile key={cat.id} category={cat} index={index} onClick={() => navigate(`/category/${cat.id}`)} />
           ))}
@@ -598,7 +599,7 @@ const ProfilePage: React.FC = () => {
           <h3 className="quizup-section-title">Game History</h3>
           <button className="quizup-see-all" onClick={() => navigate("/history")}>See all</button>
         </div>
-        <div className="flex gap-4  pb-1">
+        <div className="flex gap-4 overflow-x-auto pb-1">
           {recentMatches.slice(0, 5).map((match, index) => (
             <HistoryBubble key={match.matchId} match={match} index={index} />
           ))}
@@ -676,6 +677,8 @@ const ProfilePage: React.FC = () => {
           </div>
         </div>
       )}
+      
+      <BottomNav />
     </div>
   );
 };
