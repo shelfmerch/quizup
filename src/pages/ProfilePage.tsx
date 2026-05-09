@@ -538,16 +538,26 @@ const ProfilePage: React.FC = () => {
         </div>
       )}
 
-      <section className="quizup-section px-4 py-4">
-        <h3 className="quizup-section-title mb-3">Followed Topics</h3>
-        <div className="flex gap-3 overflow-x-auto pb-1">
-          {topicsToShow.map((cat, index) => (
-            <TopicTile key={cat.id} category={cat} index={index} onClick={() => navigate(`/category/${cat.id}`)} />
+      <section className="quizup-section mt-2 px-4 py-4">
+        <div className="mb-3 flex items-center justify-between">
+          <h3 className="quizup-section-title">Achievements</h3>
+          <span className="text-[10px] font-black uppercase text-zinc-400">
+            {displayAchievements.filter((a) => a.isUnlocked).length}/{displayAchievements.length}
+          </span>
+        </div>
+        <div className="flex gap-3 pb-1">
+          {displayAchievements.slice(0, 6).map((a) => (
+            <div key={a.id} className={`w-[58px] shrink-0 text-center ${!a.isUnlocked ? "opacity-35 grayscale" : ""}`} title={a.description}>
+              <span className="mx-auto flex h-12 w-12 items-center justify-center rounded-lg bg-white text-xl shadow-md border border-[#dddddd]">
+                <img src={a.src} alt={a.name} />
+              </span>
+              <p className="mt-1 line-clamp-2 text-[9px] font-black leading-[10px] text-[#444]">{a.name}</p>
+            </div>
           ))}
         </div>
       </section>
 
-      <section className="quizup-section mt-2 px-4 py-4">
+      <section className="quizup-section mt-2 px-4 py-2">
         <div className="mb-3 flex items-center justify-between">
           <h3 className="quizup-section-title">Followers</h3>
           <span className="text-[10px] font-black uppercase text-zinc-400">
@@ -566,29 +576,19 @@ const ProfilePage: React.FC = () => {
           <p className="py-2 text-center text-xs font-bold text-zinc-400">No followers yet</p>
         )}
         {!followersLoading && !followersError && followers.length > 0 && (
-          <div className="flex gap-4 overflow-x-auto pb-1">
-            {followers.slice(0, 24).map((person) => (
+          <div className="flex gap-2 pb-1">
+            {followers.slice(0, 5).map((person) => (
               <FollowerTile key={person.id} person={person} onSelect={(id) => navigate(`/profile/${id}`)} />
             ))}
           </div>
         )}
       </section>
 
-      <section className="quizup-section mt-2 px-4 py-4">
-        <div className="mb-3 flex items-center justify-between">
-          <h3 className="quizup-section-title">Achievements</h3>
-          <span className="text-[10px] font-black uppercase text-zinc-400">
-            {displayAchievements.filter((a) => a.isUnlocked).length}/{displayAchievements.length}
-          </span>
-        </div>
-        <div className="flex gap-3 overflow-x-auto pb-1">
-          {displayAchievements.slice(0, 6).map((a) => (
-            <div key={a.id} className={`w-[58px] shrink-0 text-center ${!a.isUnlocked ? "opacity-35 grayscale" : ""}`} title={a.description}>
-              <span className="mx-auto flex h-12 w-12 items-center justify-center rounded-lg bg-white text-xl shadow-md border border-[#dddddd]">
-                <img src={a.src} alt={a.name} />
-              </span>
-              <p className="mt-1 line-clamp-2 text-[9px] font-black leading-[10px] text-[#444]">{a.name}</p>
-            </div>
+      <section className="quizup-section px-4 py-4 mt-2">
+        <h3 className="quizup-section-title mb-3">Followed Topics</h3>
+        <div className="flex gap-3  pb-1">
+          {topicsToShow.map((cat, index) => (
+            <TopicTile key={cat.id} category={cat} index={index} onClick={() => navigate(`/category/${cat.id}`)} />
           ))}
         </div>
       </section>
@@ -598,7 +598,7 @@ const ProfilePage: React.FC = () => {
           <h3 className="quizup-section-title">Game History</h3>
           <button className="quizup-see-all" onClick={() => navigate("/history")}>See all</button>
         </div>
-        <div className="flex gap-4 overflow-x-auto pb-1">
+        <div className="flex gap-4  pb-1">
           {recentMatches.slice(0, 5).map((match, index) => (
             <HistoryBubble key={match.matchId} match={match} index={index} />
           ))}
