@@ -577,7 +577,7 @@ const ProfilePage: React.FC = () => {
           <p className="py-2 text-center text-xs font-bold text-zinc-400">No followers yet</p>
         )}
         {!followersLoading && !followersError && followers.length > 0 && (
-          <div className="flex gap-2 overflow-x-auto pb-1">
+          <div className="flex overflow-x-auto pb-1">
             {followers.slice(0, 5).map((person) => (
               <FollowerTile key={person.id} person={person} onSelect={(id) => navigate(`/profile/${id}`)} />
             ))}
