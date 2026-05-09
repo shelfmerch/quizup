@@ -187,18 +187,18 @@ const CategoryDetail: React.FC = () => {
 
           <div className="flex w-full gap-4 max-w-[340px] mt-2">
             {/* Big icon square */}
-            <div className="w-36 h-36 sm:w-[160px] sm:h-[160px] rounded-[1.5rem] bg-[#313131] flex items-center justify-center shrink-0 shadow-[0_4px_20px_rgba(0,0,0,0.5)] border border-white/5 relative overflow-hidden">
-              <div className="absolute inset-0 opacity-20" style={{ background: `radial-gradient(circle at top left, ${theme.accent}, transparent)` }} />
-              <span className="text-8xl sm:text-9xl relative z-10 drop-shadow-lg">
+            <div 
+              className="quizup-topic-tile w-36 h-36 sm:w-[160px] sm:h-[160px] shrink-0"
+              style={{ backgroundColor: theme.accent }}
+            >
               <Icons8Icon
                 name={slug}
                 fallback={fallback}
-                size={64}
+                size={96}
                 style="fluency"
-                className="h-full w-full object-contain"
+                className="h-24 w-24 sm:h-32 sm:w-32 object-contain"
                 alt=""
               />
-              </span>
             </div>
 
             {/* Action pills */}
@@ -285,7 +285,7 @@ const CategoryDetail: React.FC = () => {
       <div className="flex-1 px-4 pt-5 pb-28">
         <div className="flex items-center gap-2 mb-3">
           {/* <Trophy className="w-4 h-4 text-amber-500" /> */}
-          <h2 className="font-display font-bold text-slate-800 text-sm uppercase tracking-wider">
+          <h2 className="font-display font-bold text-slate-400 text-sm uppercase tracking-wider">
             Top Players
           </h2>
         </div>

@@ -122,15 +122,15 @@ const HistoryBubble: React.FC<{ match: MatchHistoryEntry; index: number }> = ({ 
           className="h-9 w-9 rounded-full object-cover"
         />
       </span>
-      <span
+      {/* <span
         className="absolute right-1 top-8 flex h-6 w-6 items-center justify-center rounded-md text-white shadow"
         style={{ backgroundColor: badgeBg }}
       >
         <ResultIcon className="h-3.5 w-3.5" />
-      </span>
-      {/* <p className="mt-2 rounded-full px-1 py-0.5 text-[8px] font-black uppercase tracking-wide text-white" style={{ backgroundColor: resultColor }}>
+      </span> */}
+      <p className="mt-2 rounded-full px-1 py-0.5 text-[8px] font-black uppercase tracking-wide text-white" style={{ backgroundColor: resultColor }}>
         {resultLabel}
-      </p> */}
+      </p>
       <p className="mt-1 truncate text-[9px] font-black text-[#444]">{match.opponentName}</p>
       <p className="text-[8px] font-bold uppercase" style={{ color: resultColor }}>
         {match.playerScore}-{match.opponentScore}
