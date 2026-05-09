@@ -172,6 +172,77 @@ function getLeagueFromXp(xpRaw: unknown) {
   return LEAGUES[LEAGUES.length - 1];
 }
 
+function ScoreBox({ label1, label2, value, borderColor, textColor }: { label1: string, label2: string, value: React.ReactNode, borderColor: string, textColor: string }) {
+  return (
+    <div className="flex flex-col items-center flex-1 min-w-0 px-0.5">
+      <div className="text-[9px] sm:text-[10px] font-bold text-slate-300 uppercase leading-tight text-center h-8 flex flex-col justify-end pb-1 whitespace-nowrap">
+        <span>{label1}</span>
+        <span>{label2}</span>
+      </div>
+      <div className={`border-2 rounded-lg py-1.5 sm:py-2 w-full text-center text-sm sm:text-lg font-bold ${borderColor} ${textColor}`}>
+        {value}
+      </div>
+    </div>
+  );
+}
+
+function CircleProgress({ level, xpGained, xpToNext }: { level: number, xpGained: number, xpToNext: number }) {
+  const radius = 70;
+  const stroke = 20;
+  const normalizedRadius = radius - stroke * 0.5;
+  const circumference = normalizedRadius * 2 * Math.PI;
+  const progress = 30; // 30% remaining (white)
+  const strokeDashoffset = circumference - (progress / 100) * circumference;
+
+  return (
+    <div className="relative flex justify-center items-center mt-8 mb-6 max-w-[320px] mx-auto w-full">
+      {/* XP TO LEVEL - Top Left */}
+      <div className="absolute top-[-16px] left-[-10px] flex items-end">
+         <div className="text-right mr-1.5">
+            <div className="text-[9px] font-bold text-slate-300 uppercase tracking-widest">XP TO LEVEL {level + 1}</div>
+            <div className="text-xl font-bold text-white leading-none mt-1">{xpToNext}</div>
+         </div>
+         <div className="w-8 h-px bg-slate-400 mb-2"></div>
+      </div>
+
+      {/* XP GAINED - Bottom Right */}
+      <div className="absolute bottom-[-16px] right-[-10px] flex items-start">
+         <div className="w-8 h-px bg-slate-400 mt-2"></div>
+         <div className="text-left ml-1.5">
+            <div className="text-[9px] font-bold text-slate-300 uppercase tracking-widest">XP GAINED</div>
+            <div className="text-xl font-bold text-white leading-none mt-1">{xpGained}</div>
+         </div>
+      </div>
+
+      <svg height={radius * 2} width={radius * 2} className="transform -rotate-90">
+        <circle
+          stroke="#b392ff"
+          fill="transparent"
+          strokeWidth={stroke}
+          r={normalizedRadius}
+          cx={radius}
+          cy={radius}
+        />
+        <circle
+          stroke="#ffffff"
+          fill="transparent"
+          strokeWidth={stroke}
+          strokeDasharray={circumference + ' ' + circumference}
+          style={{ strokeDashoffset }}
+          strokeLinecap="butt"
+          r={normalizedRadius}
+          cx={radius}
+          cy={radius}
+        />
+      </svg>
+      <div className="absolute flex flex-col items-center justify-center bg-[#2a2a2a] rounded-full" style={{ width: radius * 2 - stroke * 2 - 2, height: radius * 2 - stroke * 2 - 2 }}>
+        <span className="text-[10px] font-bold text-slate-300 tracking-widest mt-1">LEVEL</span>
+        <span className="text-4xl font-black text-white leading-none mt-1">{level}</span>
+      </div>
+    </div>
+  );
+}
+
 const BattlePage: React.FC = () => {
   const location = useLocation();
   const navigate = useNavigate();
@@ -392,84 +463,85 @@ const BattlePage: React.FC = () => {
       );
     }
 
+    const finishBonus = 40;
+    const victoryBonus = winner === 'player' ? 50 : 0;
+    const totalXp = state.match.player1.score + finishBonus + victoryBonus;
+    const p1Color = winner === 'player' ? 'border-[#1dd15d]' : winner === 'opponent' ? 'border-[#f24242]' : 'border-slate-500';
+    const p2Color = winner === 'opponent' ? 'border-[#1dd15d]' : winner === 'player' ? 'border-[#f24242]' : 'border-slate-500';
+
     return (
-      <div className="h-[100dvh] overflow-hidden flex flex-col max-w-md mx-auto">
-        <div className="pt-10 pb-6 flex flex-col items-center flex-shrink-0 relative overflow-hidden">
-          <div className="absolute inset-0 bg-gradient-to-b from-white to-transparent pointer-events-none" />
-          <Icons8Icon
-            name={winner === "player" ? "trophy" : winner === "opponent" ? "crying" : "handshake"}
-            fallback={winner === "player" ? "🏆" : winner === "opponent" ? "😢" : "🤝"}
-            size={110}
-            style="animated-fluency"
-          />
-          <h1
-            className={`text-4xl font-display font-black tracking-tight mt-6 ${
-              winner === "player" ? "text-emerald-600" : winner === "opponent" ? "text-red-600" : "text-slate-600"
-            }`}
-          >
-            {winner === "player" ? "You Won!" : winner === "opponent" ? "Defeat" : "Draw!"}
+      <div className="h-[100dvh] overflow-y-auto bg-[#2a2a2a] flex flex-col max-w-md mx-auto relative z-20">
+        <div className="pt-8 pb-4 text-center shrink-0">
+          <h1 className="text-5xl font-display font-black text-white tracking-widest uppercase drop-shadow-md">
+            {winner === "player" ? "YOU WIN!" : winner === "opponent" ? "YOU LOSE!" : "DRAW!"}
           </h1>
         </div>
 
-        <div className="flex px-4 gap-4 pb-8 relative z-10 flex-shrink-0">
-          <div className="flex-1 rounded-3xl glass-card p-5 text-center relative overflow-hidden">
-            {winner === "player" && <div className="absolute inset-0 bg-emerald-500/5" />}
-            <div className="relative inline-block">
-              <img src={state.match.player1.avatarUrl} alt="" className="w-20 h-20 rounded-full mx-auto mb-3 border-4 border-white shadow-lg" />
-              {winner === "player" && <span className="absolute -top-1 -right-1 text-2xl">👑</span>}
-            </div>
-            <p className="text-sm font-black truncate text-slate-900 relative z-10">{state.match.player1.username}</p>
-            <p className="text-4xl font-display font-black text-emerald-500 mt-2 relative z-10 drop-shadow-sm">{state.match.player1.score}</p>
+        <div className="flex justify-center items-start gap-4 px-4 mt-2 shrink-0">
+          <div className="flex flex-col items-center flex-1">
+            <img src={state.match.player1.avatarUrl} alt="" className={`w-20 h-20 sm:w-24 sm:h-24 rounded-full object-cover border-[5px] ${p1Color} shadow-lg`} />
+            <p className="mt-4 text-base sm:text-lg font-bold text-white text-center leading-tight">{state.match.player1.username}</p>
+            <p className="text-xs sm:text-sm text-slate-400 mt-1">{playerTagline(state.match.player1)}</p>
           </div>
-          <div className="flex-1 rounded-3xl glass-card p-5 text-center relative overflow-hidden">
-            {winner === "opponent" && <div className="absolute inset-0 bg-red-500/5" />}
-            <div className="relative inline-block">
-              <img src={state.match.player2.avatarUrl} alt="" className="w-20 h-20 rounded-full mx-auto mb-3 border-4 border-white shadow-lg" />
-              {winner === "opponent" && <span className="absolute -top-1 -right-1 text-2xl">👑</span>}
-            </div>
-            <p className="text-sm font-black truncate text-slate-900 relative z-10">{state.match.player2.username}</p>
-            <p className="text-4xl font-display font-black text-red-500 mt-2 relative z-10 drop-shadow-sm">{state.match.player2.score}</p>
+
+          <div className="flex items-center justify-center pt-8 sm:pt-10">
+             <svg className="w-5 h-5 text-white/50" fill="currentColor" viewBox="0 0 20 20"><path d="M11.3 1.046A1 1 0 0112 2v5h4a1 1 0 01.82 1.573l-7 10A1 1 0 018 18v-5H4a1 1 0 01-.82-1.573l7-10a1 1 0 011.12-.38z" /></svg>
+          </div>
+
+          <div className="flex flex-col items-center flex-1">
+            <img src={state.match.player2.avatarUrl} alt="" className={`w-20 h-20 sm:w-24 sm:h-24 rounded-full object-cover border-[5px] ${p2Color} shadow-lg`} />
+            <p className="mt-4 text-base sm:text-lg font-bold text-white text-center leading-tight">{state.match.player2.username}</p>
+            <p className="text-xs sm:text-sm text-slate-400 mt-1">{playerTagline(state.match.player2)}</p>
           </div>
         </div>
 
-        {unlockedAchievements.length > 0 && (
-          <div className="px-6 pb-6 animate-in fade-in slide-in-from-bottom-4 duration-500 flex-shrink-0 relative z-10">
-            <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] text-center mb-4">
-              Achievements Unlocked
-            </p>
-            <div className="flex flex-wrap justify-center gap-3">
-              {unlockedAchievements.map(ach => (
-                <div key={ach.id} className="bg-white/90 rounded-[1.2rem] px-5 py-2.5 border border-white flex items-center gap-3 shadow-md">
-                  <span className="text-2xl drop-shadow-sm">{ach.icon}</span>
-                  <span className="font-bold text-sm text-slate-800">{ach.name}</span>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
+        <div className="flex justify-between gap-1 sm:gap-2 px-4 sm:px-6 mt-8 shrink-0">
+          <ScoreBox label1="MATCH" label2="SCORE" value={state.match.player1.score} borderColor="border-[#00bcd4]" textColor="text-[#00bcd4]" />
+          <ScoreBox label1="FINISH" label2="BONUS" value={`+${finishBonus}`} borderColor="border-[#ffc107]" textColor="text-[#ffc107]" />
+          <ScoreBox label1="VICTORY" label2="BONUS" value={`+${victoryBonus}`} borderColor="border-[#4caf50]" textColor="text-[#4caf50]" />
+          <ScoreBox label1="POWER UP" label2="BONUS" value="x1" borderColor="border-[#ffc107]" textColor="text-[#ffc107]" />
+          <ScoreBox label1="TOTAL" label2="XP" value={totalXp} borderColor="border-[#b392ff]" textColor="text-[#b392ff]" />
+        </div>
 
-        <div className="flex-1 px-6 pb-10 flex flex-col justify-end gap-4 relative z-10">
-          <button
-            type="button"
-            onClick={() => {
+        <div className="shrink-0 flex-1 flex flex-col justify-center min-h-[160px]">
+          <CircleProgress level={state.match.player1.level || 1} xpGained={totalXp} xpToNext={33} />
+        </div>
+
+        <div className="grid grid-cols-2 gap-3 px-6 pb-8 mt-auto shrink-0">
+          <button onClick={() => {
               stopVictorySfx();
               stopDefeatSfx();
               navigate(`/find-match/${match.categoryId}`);
-            }}
-            className="w-full h-16 rounded-2xl btn-gradient-purple text-white font-black text-lg shadow-xl shadow-purple-500/20"
-          >
-            Play Again
+            }} className="bg-white rounded-xl py-3 px-4 flex items-center justify-between shadow-sm active:scale-95 transition-transform">
+            <span className="text-red-500 font-bold text-sm sm:text-base">Rematch</span>
+            <div className="w-6 h-6 rounded-full border-2 border-red-500 flex items-center justify-center text-red-500">
+               <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20"><path d="M11.3 1.046A1 1 0 0112 2v5h4a1 1 0 01.82 1.573l-7 10A1 1 0 018 18v-5H4a1 1 0 01-.82-1.573l7-10a1 1 0 011.12-.38z" /></svg>
+            </div>
           </button>
-          <button
-            type="button"
-            onClick={() => {
+          
+          <button onClick={() => {
               stopVictorySfx();
               stopDefeatSfx();
               navigate("/home");
-            }}
-            className="w-full h-16 rounded-2xl bg-white/80 backdrop-blur-md text-slate-700 font-bold text-lg border border-slate-200 shadow-sm"
-          >
-            Lobby
+            }} className="bg-white rounded-xl py-3 px-4 flex items-center justify-between shadow-sm active:scale-95 transition-transform">
+            <span className="text-orange-400 font-bold text-sm sm:text-base">Play Another</span>
+            <div className="w-6 h-6 rounded-full border-2 border-orange-400 flex items-center justify-center text-orange-400">
+               <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20"><path d="M11.3 1.046A1 1 0 0112 2v5h4a1 1 0 01.82 1.573l-7 10A1 1 0 018 18v-5H4a1 1 0 01-.82-1.573l7-10a1 1 0 011.12-.38z" /></svg>
+            </div>
+          </button>
+
+          <button className="bg-white rounded-xl py-3 px-4 flex items-center justify-between shadow-sm active:scale-95 transition-transform">
+            <span className="text-[#00bcd4] font-bold text-sm sm:text-base">Chat</span>
+            <div className="w-6 h-6 rounded-full border-2 border-[#00bcd4] flex items-center justify-center text-[#00bcd4] text-[10px] font-black">
+               Hi
+            </div>
+          </button>
+
+          <button className="bg-white rounded-xl py-3 px-4 flex items-center justify-between shadow-sm active:scale-95 transition-transform">
+            <span className="text-slate-800 font-bold text-sm sm:text-base">Share</span>
+            <div className="w-6 h-6 flex items-center justify-center text-slate-800">
+               <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" /></svg>
+            </div>
           </button>
         </div>
       </div>
