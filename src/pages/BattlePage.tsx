@@ -551,41 +551,81 @@ const BattlePage: React.FC = () => {
   // Intro
   if (state.phase === "intro") {
     return (
-      <div className="h-[100dvh] overflow-hidden flex flex-col items-center justify-center max-w-md mx-auto px-8">
-        <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} className="text-center w-full glass-card p-10 rounded-[3rem]">
-          <div className="flex justify-between items-center gap-4 mb-12">
-            <div className="flex-1 flex flex-col items-center gap-3">
-              <img
-                src={state.match.player1.avatarUrl}
-                alt=""
-                className="w-20 h-20 rounded-full shadow-xl border-4 border-white"
-              />
-              <div className="min-w-0">
-                <p className="font-black text-sm text-slate-900 truncate">{state.match.player1.username}</p>
-                <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">{playerTagline(state.match.player1)}</p>
+      <div className="h-[100dvh] overflow-hidden flex flex-col max-w-md mx-auto relative bg-black font-sans">
+        {/* Top Half */}
+        <motion.div 
+          initial={{ y: "-100%" }} 
+          animate={{ y: 0 }} 
+          transition={{ type: "spring", bounce: 0, duration: 0.8 }}
+          className="flex-1 relative overflow-hidden flex items-center"
+          style={{ background: "linear-gradient(135deg, #f5a6b1, #b598d6, #7a94d8)" }}
+        >
+          <div className="absolute inset-0 bg-white/10 backdrop-blur-2xl" />
+          
+          <div className="relative z-10 w-full px-8 flex items-center gap-5">
+            <div className="relative shrink-0">
+              <img src={state.match.player1.avatarUrl} alt="" className="w-24 h-24 rounded-full border-4 border-white object-cover shadow-[0_8px_16px_rgba(0,0,0,0.15)]" />
+              <div className="absolute bottom-0 -right-2 w-7 h-7 rounded-full bg-white text-slate-800 text-[11px] font-black flex items-center justify-center shadow-md">
+                 {state.match.player1.level || 1}
               </div>
             </div>
-            
-            <div className="px-4">
-              <span className="text-2xl font-display font-black text-slate-300">VS</span>
-            </div>
-
-            <div className="flex-1 flex flex-col items-center gap-3">
-              <img
-                src={state.match.player2.avatarUrl}
-                alt=""
-                className="w-20 h-20 rounded-full shadow-xl border-4 border-white"
-              />
-              <div className="min-w-0">
-                <p className="font-black text-sm text-slate-900 truncate">{state.match.player2.username}</p>
-                <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">{playerTagline(state.match.player2)}</p>
-              </div>
+            <div className="flex-1 min-w-0">
+               <p className="text-3xl font-bold text-white drop-shadow-sm tracking-tight truncate">{state.match.player1.username}</p>
+               <p className="text-sm text-white/95 font-semibold drop-shadow-sm truncate">{playerTagline(state.match.player1)}</p>
+               <p className="text-sm text-white/95 font-semibold drop-shadow-sm">Level {state.match.player1.level || 1}</p>
+               <div className="flex items-center gap-2 mt-1.5">
+                  <span className="text-base leading-none drop-shadow-sm">🌍</span>
+                  <span className="text-xs font-bold text-white tracking-wide drop-shadow-sm">Global</span>
+               </div>
             </div>
           </div>
-          <p className="text-3xl font-display font-black tracking-tight text-slate-900">Get Ready!</p>
-          <p className="text-slate-500 font-bold text-sm mt-3 px-4">
-             {state.match.categoryName} · {state.match.totalRounds} rounds
-          </p>
+        </motion.div>
+
+        {/* Bottom Half */}
+        <motion.div 
+          initial={{ y: "100%" }} 
+          animate={{ y: 0 }} 
+          transition={{ type: "spring", bounce: 0, duration: 0.8 }}
+          className="flex-1 relative overflow-hidden flex items-center"
+          style={{ background: "radial-gradient(circle at 70% 30%, #e05e26, #a11f3c, #142145)" }}
+        >
+          <div className="absolute inset-0 bg-black/20 backdrop-blur-2xl" />
+          
+          <div className="relative z-10 w-full px-8 flex flex-row-reverse items-center gap-5 text-right">
+            <div className="relative shrink-0">
+              <img src={state.match.player2.avatarUrl} alt="" className="w-24 h-24 rounded-full border-4 border-white object-cover shadow-[0_8px_16px_rgba(0,0,0,0.25)]" />
+              <div className="absolute bottom-0 -right-2 w-7 h-7 rounded-full bg-white text-slate-800 text-[11px] font-black flex items-center justify-center shadow-md">
+                 {state.match.player2.level || 1}
+              </div>
+            </div>
+            <div className="flex-1 min-w-0">
+               <p className="text-3xl font-bold text-white drop-shadow-md tracking-tight truncate">{state.match.player2.username}</p>
+               <p className="text-sm text-white/95 font-semibold drop-shadow-md truncate">{playerTagline(state.match.player2)}</p>
+               <p className="text-sm text-white/95 font-semibold drop-shadow-md">Level {state.match.player2.level || 1}</p>
+               <div className="flex items-center justify-end gap-2 mt-1.5">
+                  <span className="text-base leading-none drop-shadow-md">🌍</span>
+                  <span className="text-xs font-bold text-white tracking-wide drop-shadow-md">Global</span>
+               </div>
+            </div>
+          </div>
+        </motion.div>
+
+        {/* Divider Line & Lightning Bolt */}
+        <motion.div 
+          initial={{ scaleX: 0 }} 
+          animate={{ scaleX: 1 }} 
+          transition={{ delay: 0.4, duration: 0.5 }}
+          className="absolute top-1/2 left-0 right-0 h-1 bg-white z-20 -translate-y-1/2 shadow-[0_0_10px_rgba(0,0,0,0.3)] origin-center" 
+        />
+        <motion.div 
+          initial={{ scale: 0, opacity: 0 }} 
+          animate={{ scale: 1, opacity: 1 }} 
+          transition={{ type: "spring", bounce: 0.4, delay: 0.6 }}
+          className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-32 h-32 rounded-full border-[6px] border-white bg-black flex items-center justify-center z-30 shadow-[0_4px_20px_rgba(0,0,0,0.5)]"
+        >
+          <svg className="w-14 h-14 fill-white drop-shadow-[0_0_8px_rgba(255,255,255,0.5)]" viewBox="0 0 20 20">
+             <path d="M11.3 1.046A1 1 0 0112 2v5h4a1 1 0 01.82 1.573l-7 10A1 1 0 018 18v-5H4a1 1 0 01-.82-1.573l7-10a1 1 0 011.12-.38z" />
+          </svg>
         </motion.div>
       </div>
     );
