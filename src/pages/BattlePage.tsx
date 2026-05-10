@@ -264,8 +264,7 @@ const BattlePage: React.FC = () => {
   useEffect(() => {
     if (state?.phase !== "match_end") return;
     if (!user?.id) return;
-    const beforeXp = xpBeforeMatchRef.current;
-    if (beforeXp === null) return;
+    if (levelBeforeMatchRef.current === null) return;
 
     let cancelled = false;
     (async () => {

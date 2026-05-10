@@ -49,6 +49,8 @@ const LEAGUES: Array<{ key: LeagueKey; name: string; minLevel: number; minXpIncl
   { key: "unranked", name: "Unranked", minLevel: 0, minXpInclusive: 0,     badgeUrl: "/leagues/unranked.png" },
 ];
 
+const TILE_COLORS = ["#f65357", "#1fb7c9", "#ffca32", "#f65357", "#8d65e7", "#15b78f"];
+
 function getLeagueFromLevel(levelRaw: unknown) {
   const level = typeof levelRaw === "number" && Number.isFinite(levelRaw) ? Math.floor(levelRaw) : 0;
   for (const league of LEAGUES) {
