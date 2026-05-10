@@ -457,11 +457,13 @@ const BattlePage: React.FC = () => {
     // ── Result breakdown ───────────────────────────────────────────────────
     // Online: use server-computed values.  Local/offline: derive from raw score.
     const rawScore   = state.match.player1.score;
-    const levelBonus = myMatchResult?.levelBonus  ?? 0;
+    const levelBonus = myMatchResult?.levelBonus ?? 0;
     const finalPts   = myMatchResult?.finalPoints ?? (rawScore + levelBonus);
-    const xpGained   = myMatchResult?.xpGained    ?? Math.floor(finalPts * 0.10);
-    const xpPenalty  = myMatchResult?.xpPenalty   ?? 0;
-    const netXp      = myMatchResult?.netXp        ?? xpGained;
+    // Loser earns 0 XP from the match; winner/draw earn 10% of finalPoints
+    const xpGained   = myMatchResult?.xpGained ?? (winner === 'opponent' ? 0 : Math.floor(finalPts * 0.10));
+    const xpPenalty  = myMatchResult?.xpPenalty ?? 0;
+    // Loser's netXp is always negative (0 gained − penalty); winner's is +xpGained
+    const netXp      = myMatchResult?.netXp ?? (winner === 'opponent' ? -xpPenalty : xpGained);
     const p1Color = winner === 'player' ? 'border-[#1dd15d]' : winner === 'opponent' ? 'border-[#f24242]' : 'border-slate-500';
     const p2Color = winner === 'opponent' ? 'border-[#1dd15d]' : winner === 'player' ? 'border-[#f24242]' : 'border-slate-500';
 
@@ -502,6 +504,7 @@ const BattlePage: React.FC = () => {
                 <span className="text-lg font-black text-[#00bcd4] tabular-nums">{rawScore}</span>
               </div>
 
+              {/* WINNER-only rows */}
               {winner === 'player' && levelBonus > 0 && (
                 <div className="flex justify-between items-center">
                   <span className="text-sm font-bold text-slate-300">Level Bonus</span>
@@ -516,13 +519,17 @@ const BattlePage: React.FC = () => {
                 </div>
               )}
 
-              <div className={`flex justify-between items-center ${winner === 'player' && levelBonus === 0 ? 'pt-3 border-t border-white/5' : ''}`}>
-                <span className="text-sm font-bold text-slate-300">XP Earned <span className="text-[10px] font-semibold text-slate-500">(10%)</span></span>
-                <span className="text-lg font-black text-slate-200 tabular-nums">+{xpGained}</span>
-              </div>
+              {/* XP Earned — winner/draw only; loser earns 0 so row is hidden */}
+              {winner !== 'opponent' && (
+                <div className={`flex justify-between items-center ${levelBonus === 0 ? 'pt-3 border-t border-white/5' : ''}`}>
+                  <span className="text-sm font-bold text-slate-300">XP Earned <span className="text-[10px] font-semibold text-slate-500">(10%)</span></span>
+                  <span className="text-lg font-black text-slate-200 tabular-nums">+{xpGained}</span>
+                </div>
+              )}
 
-              {winner !== 'player' && xpPenalty > 0 && (
-                <div className="flex justify-between items-center">
+              {/* Defeat Penalty — loser only */}
+              {winner === 'opponent' && xpPenalty > 0 && (
+                <div className="flex justify-between items-center pt-3 border-t border-white/5">
                   <span className="text-sm font-bold text-slate-300">Defeat Penalty</span>
                   <span className="text-lg font-black text-[#f24242] tabular-nums">-{xpPenalty}</span>
                 </div>

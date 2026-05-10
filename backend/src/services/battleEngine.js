@@ -250,30 +250,33 @@ const finalizeMatch = async (matchId, io, endReason = "completed") => {
   const p1FinalPoints = p1Score + p1LevelBonus;
   const p2FinalPoints = p2Score + p2LevelBonus;
 
-  // XP is NOT equal to points — players earn 10% of their final points as XP
-  const p1XpGained = Math.floor(p1FinalPoints * 0.10);
-  const p2XpGained = Math.floor(p2FinalPoints * 0.10);
+  // Winner earns 10 % of their final points as XP.
+  // Loser earns 0 XP from the match — only the defeat penalty is applied.
+  // Draw earns 10% of their raw match score as XP.
+  const p1XpGained = result1 === "loss" ? 0 : Math.floor(p1FinalPoints * 0.10);
+  const p2XpGained = result2 === "loss" ? 0 : Math.floor(p2FinalPoints * 0.10);
 
   // ── Defeat penalty ────────────────────────────────────────────────────────
-  // Formula:
-  //   pointsDiff   = |winnerScore - loserScore|
-  //   levelDiff    = max(0, loserLevel - winnerLevel)  [only hurts if loser was higher]
-  //   penalty      = floor(pointsDiff × 0.10 × (1 + levelDiff))
+  // Deducted from the loser's ACCUMULATED XP (not match XP, since loser gets 0).
   //
-  // Same level  → 1× 10% of diff
-  // Loser 1 lvl higher than winner → 2× 10% of diff
-  // Loser 2 lvl higher            → 3× 10% of diff
+  //   basePenalty  = floor(|winnerScore − loserScore| × 0.10)
+  //   levelDiff    = max(0, loserLevel − winnerLevel)   ← only stings if loser outranked winner
+  //   penalty      = basePenalty × (1 + levelDiff)
   //
-  // Penalty is subtracted from the loser's ACCUMULATED XP (not from this match's XP gain).
+  // Examples (scoreDiff=200, basePenalty=20):
+  //   Same level            → 1×20 = 20 XP deducted
+  //   Loser 1 level higher  → 2×20 = 40 XP deducted
+  //   Loser 2 levels higher → 3×20 = 60 XP deducted
   const pointsDiff = Math.abs(p1Score - p2Score);
+  const basePenalty = Math.floor(pointsDiff * 0.10);
   let p1Penalty = 0, p2Penalty = 0;
 
   if (result1 === "loss") {
     const levelDiff = Math.max(0, level1 - level2);
-    p1Penalty = Math.floor(pointsDiff * 0.10 * (1 + levelDiff));
+    p1Penalty = basePenalty * (1 + levelDiff);
   } else if (result2 === "loss") {
     const levelDiff = Math.max(0, level2 - level1);
-    p2Penalty = Math.floor(pointsDiff * 0.10 * (1 + levelDiff));
+    p2Penalty = basePenalty * (1 + levelDiff);
   }
 
   // Persist match to MongoDB
