@@ -540,7 +540,11 @@ const BattlePage: React.FC = () => {
         </div>
 
         <div className="shrink-0 flex-1 flex flex-col justify-center min-h-[160px]">
-          <CircleProgress level={state.match.player1.level || 1} xpGained={netXp} xpToNext={33} />
+          <CircleProgress 
+            level={user?.level || state.match.player1.level || 1} 
+            xpGained={netXp} 
+            xpToNext={user?.xpToNextLevel ? Math.max(0, user.xpToNextLevel - (user?.xp || 0)) : 0} 
+          />
         </div>
 
         <div className="grid grid-cols-2 gap-3 px-6 pb-8 mt-auto shrink-0">
