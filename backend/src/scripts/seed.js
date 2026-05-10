@@ -18,6 +18,7 @@ const CATEGORIES = [
   { slug: "literature", name: "Literature", icon: "📚", color: "30 70% 50%", description: "Books, authors, poetry", questionCount: 7 },
   { slug: "gaming", name: "Gaming", icon: "🎮", color: "280 80% 55%", description: "Video games, esports, retro", questionCount: 7 },
   { slug: "food", name: "Food & Drink", icon: "🍕", color: "15 85% 55%", description: "Cuisine, recipes, beverages", questionCount: 50 },
+  { slug: "flags", name: "Flags", icon: "🎌", color: "10 80% 50%", description: "Identify flags from around the world", questionCount: 7 },
   { slug: "name-the-animal", name: "Name the Animal", icon: "🐾", color: "98 60% 45%", description: "Identify animals and fun facts", questionCount: 30 },
   { slug: "name-the-celebrity", name: "Name the Celebrity", icon: "⭐", color: "45 90% 55%", description: "Recognize faces from film, music, and pop culture", questionCount: 28 },
   { slug: "nature", name: "Nature", icon: "🌿", color: "140 70% 40%", description: "Animals, plants, ecosystems", questionCount: 7 },

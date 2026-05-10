@@ -10,6 +10,7 @@ export const MOCK_CATEGORIES: Category[] = [
   { id: "technology", name: "Technology", icon: "💻", color: "200 80% 50%", questionCount: 290, description: "Gadgets, coding, innovation" },
   { id: "literature", name: "Literature", icon: "📚", color: "30 70% 50%", questionCount: 310, description: "Books, authors, poetry" },
   { id: "gaming", name: "Gaming", icon: "🎮", color: "280 80% 55%", questionCount: 275, description: "Video games, esports, retro" },
+  { id: "flags", name: "Flags", icon: "🎌", color: "10 80% 50%", questionCount: 7, description: "Identify flags from around the world" },
   { id: "food", name: "Food & Drink", icon: "🍕", color: "15 85% 55%", questionCount: 275, description: "Cuisine, recipes, beverages" },
   { id: "name-the-animal", name: "Name the Animal", icon: "🐾", color: "98 60% 45%", questionCount: 30, description: "Identify animals and fun facts" },
   { id: "name-the-celebrity", name: "Name the Celebrity", icon: "⭐", color: "45 90% 55%", questionCount: 28, description: "Recognize faces from film, music, and pop culture" },
