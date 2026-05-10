@@ -487,55 +487,77 @@ const BattlePage: React.FC = () => {
           </div>
         </div>
 
-        <div className="px-6 mt-6 shrink-0 w-full">
-          <div className="bg-[#1f1f1f] rounded-3xl p-5 border border-white/5 shadow-2xl relative overflow-hidden">
-            <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-white/10 to-transparent"></div>
-            <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.25em] mb-4 text-center">Match Summary</h3>
+        <div className="px-2 sm:px-6 mt-8 shrink-0 w-full overflow-hidden">
+          <div className="flex flex-wrap justify-center gap-x-3 gap-y-5 px-2">
             
-            <div className="flex flex-col gap-3">
-              <div className="flex justify-between items-center">
-                <span className="text-sm font-bold text-slate-300">Match Score</span>
-                <span className="text-lg font-black text-[#00bcd4] tabular-nums">{rawScore}</span>
-              </div>
-
-              {/* WINNER-only rows */}
-              {winner === 'player' && levelBonus > 0 && (
-                <div className="flex justify-between items-center">
-                  <span className="text-sm font-bold text-slate-300">Level Bonus</span>
-                  <span className="text-lg font-black text-[#ff9800] tabular-nums">+{levelBonus}</span>
-                </div>
-              )}
-
-              {winner === 'player' && levelBonus > 0 && (
-                <div className="flex justify-between items-center pt-3 border-t border-white/5">
-                  <span className="text-sm font-bold text-slate-300">Total Points</span>
-                  <span className="text-lg font-black text-[#4caf50] tabular-nums">{finalPts}</span>
-                </div>
-              )}
-
-              {/* XP Earned — winner/draw only; loser earns 0 so row is hidden */}
-              {winner !== 'opponent' && (
-                <div className={`flex justify-between items-center ${levelBonus === 0 ? 'pt-3 border-t border-white/5' : ''}`}>
-                  <span className="text-sm font-bold text-slate-300">XP Earned <span className="text-[10px] font-semibold text-slate-500">(10%)</span></span>
-                  <span className="text-lg font-black text-slate-200 tabular-nums">+{xpGained}</span>
-                </div>
-              )}
-
-              {/* Defeat Penalty — loser only */}
-              {winner === 'opponent' && xpPenalty > 0 && (
-                <div className="flex justify-between items-center pt-3 border-t border-white/5">
-                  <span className="text-sm font-bold text-slate-300">Deducted <span className="text-[10px] font-semibold text-slate-500">(winner's XP)</span></span>
-                  <span className="text-lg font-black text-[#f24242] tabular-nums">-{xpPenalty}</span>
-                </div>
-              )}
-            </div>
-
-            <div className="mt-4 pt-4 border-t-2 border-white/10 flex justify-between items-center">
-              <span className="text-[11px] font-black text-white uppercase tracking-widest">Net XP</span>
-              <span className={`text-3xl font-display font-black tabular-nums drop-shadow-md ${netXp >= 0 ? 'text-[#b392ff]' : 'text-[#f24242]'}`}>
-                {netXp >= 0 ? `+${netXp}` : `${netXp}`}
+            {/* MATCH SCORE */}
+            <div className="flex flex-col items-center min-w-[72px] sm:min-w-[84px]">
+              <span className="text-[10px] sm:text-xs font-bold text-slate-100 uppercase tracking-widest text-center h-8 flex items-end justify-center mb-1.5 leading-tight">
+                Match<br/>Score
               </span>
+              <div className="w-full h-12 sm:h-14 px-2 rounded-xl border-2 border-[#00bcd4] text-[#00bcd4] flex items-center justify-center font-display font-black text-xl sm:text-2xl tabular-nums shadow-[0_4px_12px_rgba(0,188,212,0.15)] bg-[#1f1f1f]">
+                {rawScore}
+              </div>
             </div>
+
+            {/* FINISH/LEVEL BONUS */}
+            {winner === 'player' && levelBonus > 0 && (
+              <div className="flex flex-col items-center min-w-[72px] sm:min-w-[84px]">
+                <span className="text-[10px] sm:text-xs font-bold text-slate-100 uppercase tracking-widest text-center h-8 flex items-end justify-center mb-1.5 leading-tight">
+                  Finish<br/>Bonus
+                </span>
+                <div className="w-full h-12 sm:h-14 px-2 rounded-xl border-2 border-[#ffc107] text-[#ffc107] flex items-center justify-center font-display font-black text-xl sm:text-2xl tabular-nums shadow-[0_4px_12px_rgba(255,193,7,0.15)] bg-[#1f1f1f]">
+                  +{levelBonus}
+                </div>
+              </div>
+            )}
+
+            {/* TOTAL POINTS */}
+            {winner === 'player' && levelBonus > 0 && (
+              <div className="flex flex-col items-center min-w-[72px] sm:min-w-[84px]">
+                <span className="text-[10px] sm:text-xs font-bold text-slate-100 uppercase tracking-widest text-center h-8 flex items-end justify-center mb-1.5 leading-tight">
+                  Total<br/>Points
+                </span>
+                <div className="w-full h-12 sm:h-14 px-2 rounded-xl border-2 border-[#4caf50] text-[#4caf50] flex items-center justify-center font-display font-black text-xl sm:text-2xl tabular-nums shadow-[0_4px_12px_rgba(76,175,80,0.15)] bg-[#1f1f1f]">
+                  {finalPts}
+                </div>
+              </div>
+            )}
+
+            {/* XP EARNED */}
+            {winner !== 'opponent' && (
+              <div className="flex flex-col items-center min-w-[72px] sm:min-w-[84px]">
+                <span className="text-[10px] sm:text-xs font-bold text-slate-100 uppercase tracking-widest text-center h-8 flex items-end justify-center mb-1.5 leading-tight">
+                  XP<br/>Earned
+                </span>
+                <div className="w-full h-12 sm:h-14 px-2 rounded-xl border-2 border-[#8bc34a] text-[#8bc34a] flex items-center justify-center font-display font-black text-xl sm:text-2xl tabular-nums shadow-[0_4px_12px_rgba(139,195,74,0.15)] bg-[#1f1f1f]">
+                  +{xpGained}
+                </div>
+              </div>
+            )}
+
+            {/* DEDUCTED */}
+            {winner === 'opponent' && xpPenalty > 0 && (
+              <div className="flex flex-col items-center min-w-[72px] sm:min-w-[84px]">
+                <span className="text-[10px] sm:text-xs font-bold text-slate-100 uppercase tracking-widest text-center h-8 flex items-end justify-center mb-1.5 leading-tight">
+                  XP<br/>Lost
+                </span>
+                <div className="w-full h-12 sm:h-14 px-2 rounded-xl border-2 border-[#f24242] text-[#f24242] flex items-center justify-center font-display font-black text-xl sm:text-2xl tabular-nums shadow-[0_4px_12px_rgba(242,66,66,0.15)] bg-[#1f1f1f]">
+                  -{xpPenalty}
+                </div>
+              </div>
+            )}
+
+            {/* TOTAL XP / NET XP */}
+            <div className="flex flex-col items-center min-w-[72px] sm:min-w-[84px]">
+              <span className="text-[10px] sm:text-xs font-bold text-slate-100 uppercase tracking-widest text-center h-8 flex items-end justify-center mb-1.5 leading-tight">
+                Total<br/>XP
+              </span>
+              <div className={`w-full h-12 sm:h-14 px-2 rounded-xl border-2 flex items-center justify-center font-display font-black text-xl sm:text-2xl tabular-nums bg-[#1f1f1f] ${netXp >= 0 ? 'border-[#b392ff] text-[#b392ff] shadow-[0_4px_12px_rgba(179,146,255,0.15)]' : 'border-[#f24242] text-[#f24242] shadow-[0_4px_12px_rgba(242,66,66,0.15)]'}`}>
+                {netXp >= 0 ? `+${netXp}` : `${netXp}`}
+              </div>
+            </div>
+
           </div>
         </div>
 
