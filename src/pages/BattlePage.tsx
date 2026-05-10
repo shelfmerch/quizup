@@ -552,10 +552,15 @@ const BattlePage: React.FC = () => {
               stopVictorySfx();
               stopDefeatSfx();
               navigate(`/find-match/${match.categoryId}`);
-            }} className="bg-white rounded-xl py-3 px-4 flex items-center justify-between shadow-sm active:scale-95 transition-transform">
-            <span className="text-red-500 font-bold text-sm sm:text-base">Rematch</span>
-            <div className="w-6 h-6 rounded-full border-2 border-red-500 flex items-center justify-center text-red-500">
-               <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20"><path d="M11.3 1.046A1 1 0 0112 2v5h4a1 1 0 01.82 1.573l-7 10A1 1 0 018 18v-5H4a1 1 0 01-.82-1.573l7-10a1 1 0 011.12-.38z" /></svg>
+            }} 
+            className="h-14 rounded-2xl font-black text-sm sm:text-base text-white active:translate-y-[4px] active:shadow-[0_0px_0_#7b1a1a] transition-all duration-75 flex items-center justify-between px-4"
+            style={{
+              background: "linear-gradient(to bottom, #ff6b6b, #f65357, #c0392b)",
+              boxShadow: "0 4px 0 #7b1a1a, 0 8px 16px rgba(246,83,87,0.4), inset 0 1px 0 rgba(255,255,255,0.2)",
+            }}>
+            <span className="drop-shadow-md">Rematch</span>
+            <div className="w-7 h-7 rounded-full bg-white/20 flex items-center justify-center shadow-inner border border-white/20">
+               <svg className="w-3.5 h-3.5 drop-shadow-sm" fill="currentColor" viewBox="0 0 20 20"><path d="M11.3 1.046A1 1 0 0112 2v5h4a1 1 0 01.82 1.573l-7 10A1 1 0 018 18v-5H4a1 1 0 01-.82-1.573l7-10a1 1 0 011.12-.38z" /></svg>
             </div>
           </button>
           
@@ -563,24 +568,41 @@ const BattlePage: React.FC = () => {
               stopVictorySfx();
               stopDefeatSfx();
               navigate("/home");
-            }} className="bg-white rounded-xl py-3 px-4 flex items-center justify-between shadow-sm active:scale-95 transition-transform">
-            <span className="text-orange-400 font-bold text-sm sm:text-base">Play Another</span>
-            <div className="w-6 h-6 rounded-full border-2 border-orange-400 flex items-center justify-center text-orange-400">
-               <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20"><path d="M11.3 1.046A1 1 0 0112 2v5h4a1 1 0 01.82 1.573l-7 10A1 1 0 018 18v-5H4a1 1 0 01-.82-1.573l7-10a1 1 0 011.12-.38z" /></svg>
+            }} 
+            className="h-14 rounded-2xl font-black text-sm sm:text-base text-white active:translate-y-[4px] active:shadow-[0_0px_0_#a23900] transition-all duration-75 flex items-center justify-between px-4"
+            style={{
+              background: "linear-gradient(to bottom, #ffc107, #ff9800, #e65100)",
+              boxShadow: "0 4px 0 #a23900, 0 8px 16px rgba(255,152,0,0.4), inset 0 1px 0 rgba(255,255,255,0.3)",
+            }}>
+            <span className="drop-shadow-md">Play New</span>
+            <div className="w-7 h-7 rounded-full bg-white/20 flex items-center justify-center shadow-inner border border-white/30">
+               <svg className="w-3.5 h-3.5 drop-shadow-sm" fill="currentColor" viewBox="0 0 20 20"><path d="M11.3 1.046A1 1 0 0112 2v5h4a1 1 0 01.82 1.573l-7 10A1 1 0 018 18v-5H4a1 1 0 01-.82-1.573l7-10a1 1 0 011.12-.38z" /></svg>
             </div>
           </button>
 
-          <button className="bg-white rounded-xl py-3 px-4 flex items-center justify-between shadow-sm active:scale-95 transition-transform">
-            <span className="text-[#00bcd4] font-bold text-sm sm:text-base">Chat</span>
-            <div className="w-6 h-6 rounded-full border-2 border-[#00bcd4] flex items-center justify-center text-[#00bcd4] text-[10px] font-black">
+          <button 
+            className="h-14 rounded-2xl font-black text-sm sm:text-base text-[#00bcd4] active:translate-y-[4px] active:shadow-[0_0px_0_#0a0a0a] transition-all duration-75 flex items-center justify-between px-4"
+            style={{
+              background: "linear-gradient(to bottom, #2a2a2a, #1a1a1a)",
+              boxShadow: "0 4px 0 #0a0a0a, 0 8px 16px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.05)",
+              border: "1px solid rgba(0, 188, 212, 0.2)"
+            }}>
+            <span>Chat</span>
+            <div className="w-7 h-7 rounded-full bg-[#00bcd4]/10 flex items-center justify-center text-[10px] tracking-wide border border-[#00bcd4]/30 shadow-inner">
                Hi
             </div>
           </button>
 
-          <button className="bg-white rounded-xl py-3 px-4 flex items-center justify-between shadow-sm active:scale-95 transition-transform">
-            <span className="text-slate-800 font-bold text-sm sm:text-base">Share</span>
-            <div className="w-6 h-6 flex items-center justify-center text-slate-800">
-               <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" /></svg>
+          <button 
+            className="h-14 rounded-2xl font-black text-sm sm:text-base text-slate-300 active:translate-y-[4px] active:shadow-[0_0px_0_#111] transition-all duration-75 flex items-center justify-between px-4"
+            style={{
+              background: "linear-gradient(to bottom, #333, #222)",
+              boxShadow: "0 4px 0 #111, 0 8px 16px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.05)",
+              border: "1px solid rgba(255, 255, 255, 0.05)"
+            }}>
+            <span>Share</span>
+            <div className="w-7 h-7 rounded-full bg-white/5 flex items-center justify-center border border-white/10 shadow-inner">
+               <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" /></svg>
             </div>
           </button>
         </div>
