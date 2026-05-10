@@ -345,7 +345,10 @@ const AdminPage: React.FC = () => {
                     <code className="text-foreground/80">options</code> (4 strings),{" "}
                     <code className="text-foreground/80">correctIndex</code> (0–3).{" "}
                     Optional: <code className="text-foreground/80">timeLimit</code> (default 10s),{" "}
-                    <code className="text-foreground/80">imageUrl</code>. Max 200 per batch.
+                    <code className="text-foreground/80">imageUrl</code>. If{" "}
+                    <code className="text-foreground/80">imageUrl</code> is empty or omitted, the server picks a
+                    related photo from Pexels when <code className="text-foreground/80">PEXELS_API_KEY</code> (or{" "}
+                    <code className="text-foreground/80">PEXELS_API</code>) is set on the backend. Max 200 per batch.
                   </p>
                   <textarea
                     value={bulkJson}

@@ -1,6 +1,7 @@
 const Category = require("../models/Category");
 const Question = require("../models/Question");
 const { syncQuestionCount } = require("../services/categoryQuestionCount");
+const { resolveEmptyImageFromPexels } = require("../services/pexelsSearch");
 
 const normalizeImageUrl = (raw) => {
   if (raw == null) return null;
@@ -161,8 +162,12 @@ const createQuestion = async (req, res) => {
       return res.status(404).json({ error: "Topic (category) not found" });
     }
 
-    const imageUrl = normalizeImageUrl(imageUrlRaw);
-    if (imageUrlRaw && imageUrlRaw !== "" && !imageUrl) {
+    const rawImageTrimmed = imageUrlRaw == null ? "" : String(imageUrlRaw).trim();
+    let imageUrl = normalizeImageUrl(imageUrlRaw);
+    if (!imageUrl && rawImageTrimmed === "") {
+      imageUrl = await resolveEmptyImageFromPexels(text.trim(), opts[ci]);
+    }
+    if (rawImageTrimmed && !imageUrl) {
       return res.status(422).json({
         error: "imageUrl must be a valid http(s) URL or /uploads/... path from upload",
       });
@@ -300,8 +305,11 @@ const createBulkQuestions = async (req, res) => {
         }
         // TimeLimit
         const tl = Math.min(120, Math.max(5, Number(raw.timeLimit) || 10));
-        // ImageUrl
-        const imageUrl = normalizeImageUrl(raw.imageUrl);
+        // ImageUrl — empty/missing uses Pexels when PEXELS_API_KEY (or PEXELS_API) is set
+        let imageUrl = normalizeImageUrl(raw.imageUrl);
+        if (!imageUrl) {
+          imageUrl = await resolveEmptyImageFromPexels(raw.text.trim(), opts[ci]);
+        }
 
         const q = await Question.create({
           categoryId: slug,
