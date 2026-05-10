@@ -463,7 +463,7 @@ const BattlePage: React.FC = () => {
 
     return (
       <div className="h-[100dvh] overflow-y-auto bg-[#2a2a2a] flex flex-col max-w-md mx-auto relative z-20">
-        <div className="pt-8 pb-4 text-center shrink-0">
+        <div className="pt-6 pb-2 text-center shrink-0">
           <h1 className="text-5xl font-display font-black text-white tracking-widest uppercase drop-shadow-md">
             {winner === "player" ? "YOU WIN!" : winner === "opponent" ? "YOU LOSE!" : "DRAW!"}
           </h1>
@@ -603,28 +603,26 @@ const BattlePage: React.FC = () => {
           </button>
 
           <button 
-            className="h-14 rounded-2xl font-black text-sm sm:text-base text-[#00bcd4] active:translate-y-[4px] active:shadow-[0_0px_0_#0a0a0a] transition-all duration-75 flex items-center justify-between px-4"
+            className="h-14 rounded-2xl font-black text-sm sm:text-base text-white active:translate-y-[4px] active:shadow-[0_0px_0_#008699] transition-all duration-75 flex items-center justify-between px-4"
             style={{
-              background: "linear-gradient(to bottom, #2a2a2a, #1a1a1a)",
-              boxShadow: "0 4px 0 #0a0a0a, 0 8px 16px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.05)",
-              border: "1px solid rgba(0, 188, 212, 0.2)"
+              background: "linear-gradient(to bottom, #4dd0e1, #00bcd4, #0097a7)",
+              boxShadow: "0 4px 0 #008699, 0 8px 16px rgba(0,188,212,0.4), inset 0 1px 0 rgba(255,255,255,0.3)",
             }}>
-            <span>Chat</span>
-            <div className="w-7 h-7 rounded-full bg-[#00bcd4]/10 flex items-center justify-center text-[10px] tracking-wide border border-[#00bcd4]/30 shadow-inner">
+            <span className="drop-shadow-md">Chat</span>
+            <div className="w-7 h-7 rounded-full bg-white/20 flex items-center justify-center text-[10px] tracking-wide border border-white/30 shadow-inner">
                Hi
             </div>
           </button>
 
           <button 
-            className="h-14 rounded-2xl font-black text-sm sm:text-base text-slate-300 active:translate-y-[4px] active:shadow-[0_0px_0_#111] transition-all duration-75 flex items-center justify-between px-4"
+            className="h-14 rounded-2xl font-black text-sm sm:text-base text-white active:translate-y-[4px] active:shadow-[0_0px_0_#338a3e] transition-all duration-75 flex items-center justify-between px-4"
             style={{
-              background: "linear-gradient(to bottom, #333, #222)",
-              boxShadow: "0 4px 0 #111, 0 8px 16px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.05)",
-              border: "1px solid rgba(255, 255, 255, 0.05)"
+              background: "linear-gradient(to bottom, #81c784, #4caf50, #388e3c)",
+              boxShadow: "0 4px 0 #338a3e, 0 8px 16px rgba(76,175,80,0.4), inset 0 1px 0 rgba(255,255,255,0.3)",
             }}>
-            <span>Share</span>
-            <div className="w-7 h-7 rounded-full bg-white/5 flex items-center justify-center border border-white/10 shadow-inner">
-               <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" /></svg>
+            <span className="drop-shadow-md">Share</span>
+            <div className="w-7 h-7 rounded-full bg-white/20 flex items-center justify-center border border-white/30 shadow-inner">
+               <svg className="w-4 h-4 drop-shadow-sm" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" /></svg>
             </div>
           </button>
         </div>
