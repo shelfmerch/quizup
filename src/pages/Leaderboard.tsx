@@ -16,24 +16,22 @@ type LeagueKey =
   | "titan"
   | "legend";
 
-const LEAGUES: Array<{ key: LeagueKey; name: string; minXpInclusive: number; badgeUrl: string }> = [
-  { key: "legend", name: "Legend", minXpInclusive: 20000, badgeUrl: "/leagues/legend.svg" },
-  { key: "titan", name: "Titan", minXpInclusive: 15000, badgeUrl: "/leagues/titan.png" },
-  { key: "champion", name: "Champion", minXpInclusive: 13000, badgeUrl: "/leagues/champion.png" },
-  { key: "master", name: "Master", minXpInclusive: 10000, badgeUrl: "/leagues/master.png" },
-  { key: "crystal", name: "Crystal", minXpInclusive: 7000, badgeUrl: "/leagues/crystal.png" },
-  { key: "gold", name: "Gold", minXpInclusive: 5000, badgeUrl: "/leagues/gold.png" },
-  { key: "silver", name: "Silver", minXpInclusive: 2000, badgeUrl: "/leagues/silver.png" },
-  { key: "bronze", name: "Bronze", minXpInclusive: 1000, badgeUrl: "/leagues/bronze.png" },
-  { key: "unranked", name: "Unranked", minXpInclusive: 0, badgeUrl: "/leagues/unranked.png" },
+const LEAGUES: Array<{ key: LeagueKey; name: string; minLevel: number; minXpInclusive: number; badgeUrl: string }> = [
+  { key: "legend",   name: "Legend",   minLevel: 9, minXpInclusive: 20000, badgeUrl: "/leagues/legend.svg" },
+  { key: "titan",    name: "Titan",    minLevel: 7, minXpInclusive: 15000, badgeUrl: "/leagues/titan.png" },
+  { key: "champion", name: "Champion", minLevel: 6, minXpInclusive: 13000, badgeUrl: "/leagues/champion.png" },
+  { key: "master",   name: "Master",   minLevel: 5, minXpInclusive: 10000, badgeUrl: "/leagues/master.png" },
+  { key: "crystal",  name: "Crystal",  minLevel: 4, minXpInclusive: 7000,  badgeUrl: "/leagues/crystal.png" },
+  { key: "gold",     name: "Gold",     minLevel: 3, minXpInclusive: 5000,  badgeUrl: "/leagues/gold.png" },
+  { key: "silver",   name: "Silver",   minLevel: 2, minXpInclusive: 2000,  badgeUrl: "/leagues/silver.png" },
+  { key: "bronze",   name: "Bronze",   minLevel: 1, minXpInclusive: 1000,  badgeUrl: "/leagues/bronze.png" },
+  { key: "unranked", name: "Unranked", minLevel: 0, minXpInclusive: 0,     badgeUrl: "/leagues/unranked.png" },
 ];
 
-const TILE_COLORS = ["#f65357", "#1fb7c9", "#ffca32", "#f65357", "#8d65e7", "#15b78f"];
-
-function getLeagueFromXp(xpRaw: unknown) {
-  const xp = typeof xpRaw === "number" && Number.isFinite(xpRaw) ? xpRaw : 0;
+function getLeagueFromLevel(levelRaw: unknown) {
+  const level = typeof levelRaw === "number" && Number.isFinite(levelRaw) ? Math.floor(levelRaw) : 0;
   for (const league of LEAGUES) {
-    if (xp >= league.minXpInclusive) return league;
+    if (level >= league.minLevel) return league;
   }
   return LEAGUES[LEAGUES.length - 1];
 }
@@ -179,7 +177,7 @@ const Leaderboard: React.FC = () => {
               </div>
             <div className="flex items-center gap-4 pl-2">
               {/* <span className="font-display font-extrabold text-slate-700 text-md w-7 text-right">{entry.rank}</span> */}
-              <img src={getLeagueFromXp(entry.score).badgeUrl} alt={getLeagueFromXp(entry.score).name} className="w-5 h-5 object-cover" />
+              <img src={getLeagueFromLevel(entry.level).badgeUrl} alt={getLeagueFromLevel(entry.level).name} className="w-5 h-5 object-cover" />
             </div>
           </button>
         ))}
