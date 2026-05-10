@@ -250,34 +250,15 @@ const finalizeMatch = async (matchId, io, endReason = "completed") => {
   const p1FinalPoints = p1Score + p1LevelBonus;
   const p2FinalPoints = p2Score + p2LevelBonus;
 
-  // Winner earns 10 % of their final points as XP.
-  // Loser earns 0 XP from the match — only the defeat penalty is applied.
-  // Draw earns 10% of their raw match score as XP.
+  // Winner earns 10% of their final points as XP; loser earns 0 from the match.
   const p1XpGained = result1 === "loss" ? 0 : Math.floor(p1FinalPoints * 0.10);
   const p2XpGained = result2 === "loss" ? 0 : Math.floor(p2FinalPoints * 0.10);
 
-  // ── Defeat penalty ────────────────────────────────────────────────────────
-  // Deducted from the loser's ACCUMULATED XP (not match XP, since loser gets 0).
-  //
-  //   basePenalty  = floor(|winnerScore − loserScore| × 0.10)
-  //   levelDiff    = max(0, loserLevel − winnerLevel)   ← only stings if loser outranked winner
-  //   penalty      = basePenalty × (1 + levelDiff)
-  //
-  // Examples (scoreDiff=200, basePenalty=20):
-  //   Same level            → 1×20 = 20 XP deducted
-  //   Loser 1 level higher  → 2×20 = 40 XP deducted
-  //   Loser 2 levels higher → 3×20 = 60 XP deducted
-  const pointsDiff = Math.abs(p1Score - p2Score);
-  const basePenalty = Math.floor(pointsDiff * 0.10);
+  // ── Defeat penalty: loser loses exactly what the winner just gained ──────────────
+  // e.g. winner gains 127 XP → 127 XP is deducted from the loser's total.
   let p1Penalty = 0, p2Penalty = 0;
-
-  if (result1 === "loss") {
-    const levelDiff = Math.max(0, level1 - level2);
-    p1Penalty = basePenalty * (1 + levelDiff);
-  } else if (result2 === "loss") {
-    const levelDiff = Math.max(0, level2 - level1);
-    p2Penalty = basePenalty * (1 + levelDiff);
-  }
+  if (result1 === "loss") p1Penalty = p2XpGained;
+  if (result2 === "loss") p2Penalty = p1XpGained;
 
   // Persist match to MongoDB
   await Match.findByIdAndUpdate(matchId, {

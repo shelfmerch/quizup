@@ -530,7 +530,7 @@ const BattlePage: React.FC = () => {
               {/* Defeat Penalty — loser only */}
               {winner === 'opponent' && xpPenalty > 0 && (
                 <div className="flex justify-between items-center pt-3 border-t border-white/5">
-                  <span className="text-sm font-bold text-slate-300">Defeat Penalty</span>
+                  <span className="text-sm font-bold text-slate-300">Deducted <span className="text-[10px] font-semibold text-slate-500">(winner's XP)</span></span>
                   <span className="text-lg font-black text-[#f24242] tabular-nums">-{xpPenalty}</span>
                 </div>
               )}
