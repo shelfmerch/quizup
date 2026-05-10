@@ -15,6 +15,16 @@ export interface OnlineBattleInit {
   totalRounds: number;
 }
 
+/** Per-player result breakdown sent by the server in match_end. */
+export interface MatchResultData {
+  matchScore: number;     // raw in-game points scored
+  levelBonus: number;     // extra points for beating a higher-level opponent
+  finalPoints: number;    // matchScore + levelBonus
+  xpGained: number;       // 10% of finalPoints (added to accumulated XP)
+  xpPenalty: number;      // XP deducted from accumulated total (losers only)
+  netXp: number;          // xpGained - xpPenalty (display value; actual floored at 0)
+}
+
 function serverQuestionToClient(q: {
   id: string;
   text: string;
@@ -72,6 +82,7 @@ function initialOnlineState(i: OnlineBattleInit): BattleState {
 
 export function useOnlineBattle(init: OnlineBattleInit | null) {
   const [state, setState] = useState<BattleState | null>(() => (init ? initialOnlineState(init) : null));
+  const [myMatchResult, setMyMatchResult] = useState<MatchResultData | null>(null);
   const winnerIdRef = useRef<string | null>(null);
   const initRef = useRef(init);
   const timerEndsAtRef = useRef<number | null>(null);
@@ -85,6 +96,7 @@ export function useOnlineBattle(init: OnlineBattleInit | null) {
 
     winnerIdRef.current = null;
     timerEndsAtRef.current = null;
+    setMyMatchResult(null);
     setState(initialOnlineState(init));
 
     const socket = getSocket();
@@ -171,11 +183,40 @@ export function useOnlineBattle(init: OnlineBattleInit | null) {
 
     const onMatchEnd = (payload: {
       winnerId: string | null;
-      player1: { userId: string; score: number };
-      player2: { userId: string; score: number };
+      player1: {
+        userId: string;
+        score: number;
+        levelBonus: number;
+        finalPoints: number;
+        xpGained: number;
+        xpPenalty: number;
+        netXp: number;
+      };
+      player2: {
+        userId: string;
+        score: number;
+        levelBonus: number;
+        finalPoints: number;
+        xpGained: number;
+        xpPenalty: number;
+        netXp: number;
+      };
     }) => {
       timerEndsAtRef.current = null;
       winnerIdRef.current = payload.winnerId;
+
+      // Determine which server slot belongs to the local user
+      const cur = initRef.current;
+      const mySlot = cur?.mySeat === "player1" ? payload.player1 : payload.player2;
+      setMyMatchResult({
+        matchScore: mySlot.score,
+        levelBonus: mySlot.levelBonus,
+        finalPoints: mySlot.finalPoints,
+        xpGained: mySlot.xpGained,
+        xpPenalty: mySlot.xpPenalty,
+        netXp: mySlot.netXp,
+      });
+
       setState((prev) => {
         if (!prev) return prev;
         return {
@@ -252,5 +293,5 @@ export function useOnlineBattle(init: OnlineBattleInit | null) {
 
   const startNextRound = useCallback(() => {}, []);
 
-  return { state, startNextRound, submitAnswer, proceedToNext, getWinner };
+  return { state, startNextRound, submitAnswer, proceedToNext, getWinner, myMatchResult };
 }

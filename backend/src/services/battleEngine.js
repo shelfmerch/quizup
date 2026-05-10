@@ -223,29 +223,57 @@ const finalizeMatch = async (matchId, io, endReason = "completed") => {
     result1 = result2 = "draw";
   }
 
-  let p1Penalty = 0;
-  let p2Penalty = 0;
+  // ── Level differential bonus (winner only) ────────────────────────────────
+  // If the winner beats a higher-level opponent they earn +10% of their match
+  // score per level of difference.  E.g. beating someone 2 levels above gives
+  // an extra 20% of the winner's raw score on top.
+  let level1 = 1, level2 = 1;
+  try {
+    const [u1, u2] = await Promise.all([
+      User.findById(state.player1.userId).select('level'),
+      User.findById(state.player2.userId).select('level'),
+    ]);
+    level1 = u1 ? u1.level : 1;
+    level2 = u2 ? u2.level : 1;
+  } catch (e) {
+    console.error("[BattleEngine] Error fetching player levels:", e.message);
+  }
 
-  if (result1 === "win" || result1 === "loss") {
-    try {
-      const user1 = await User.findById(state.player1.userId).select('level');
-      const user2 = await User.findById(state.player2.userId).select('level');
-      const level1 = user1 ? user1.level : 1;
-      const level2 = user2 ? user2.level : 1;
-      const scoreDiff = Math.abs(p1Score - p2Score);
+  let p1LevelBonus = 0, p2LevelBonus = 0;
+  if (result1 === "win" && level2 > level1) {
+    p1LevelBonus = Math.floor(p1Score * (level2 - level1) * 0.10);
+  } else if (result2 === "win" && level1 > level2) {
+    p2LevelBonus = Math.floor(p2Score * (level1 - level2) * 0.10);
+  }
 
-      if (result1 === "loss") {
-        let scaling = 1 + (level1 - level2) * 0.1;
-        scaling = Math.max(0.2, Math.min(scaling, 2.5));
-        p1Penalty = Math.floor(scoreDiff * scaling);
-      } else {
-        let scaling = 1 + (level2 - level1) * 0.1;
-        scaling = Math.max(0.2, Math.min(scaling, 2.5));
-        p2Penalty = Math.floor(scoreDiff * scaling);
-      }
-    } catch (e) {
-      console.error("[BattleEngine] Error calculating dynamic penalty:", e.message);
-    }
+  // Final points = match score + level bonus
+  const p1FinalPoints = p1Score + p1LevelBonus;
+  const p2FinalPoints = p2Score + p2LevelBonus;
+
+  // XP is NOT equal to points — players earn 10% of their final points as XP
+  const p1XpGained = Math.floor(p1FinalPoints * 0.10);
+  const p2XpGained = Math.floor(p2FinalPoints * 0.10);
+
+  // ── Defeat penalty ────────────────────────────────────────────────────────
+  // Formula:
+  //   pointsDiff   = |winnerScore - loserScore|
+  //   levelDiff    = max(0, loserLevel - winnerLevel)  [only hurts if loser was higher]
+  //   penalty      = floor(pointsDiff × 0.10 × (1 + levelDiff))
+  //
+  // Same level  → 1× 10% of diff
+  // Loser 1 lvl higher than winner → 2× 10% of diff
+  // Loser 2 lvl higher            → 3× 10% of diff
+  //
+  // Penalty is subtracted from the loser's ACCUMULATED XP (not from this match's XP gain).
+  const pointsDiff = Math.abs(p1Score - p2Score);
+  let p1Penalty = 0, p2Penalty = 0;
+
+  if (result1 === "loss") {
+    const levelDiff = Math.max(0, level1 - level2);
+    p1Penalty = Math.floor(pointsDiff * 0.10 * (1 + levelDiff));
+  } else if (result2 === "loss") {
+    const levelDiff = Math.max(0, level2 - level1);
+    p2Penalty = Math.floor(pointsDiff * 0.10 * (1 + levelDiff));
   }
 
   // Persist match to MongoDB
@@ -258,8 +286,8 @@ const finalizeMatch = async (matchId, io, endReason = "completed") => {
   });
 
   // Update user stats for both players
-  await updateUserStats(state.player1.userId, result1, state.player1.score, state.categoryId, p1Penalty);
-  await updateUserStats(state.player2.userId, result2, state.player2.score, state.categoryId, p2Penalty);
+  await updateUserStats(state.player1.userId, result1, state.player1.score, state.categoryId, p1XpGained, p1Penalty);
+  await updateUserStats(state.player2.userId, result2, state.player2.score, state.categoryId, p2XpGained, p2Penalty);
 
   // Evaluate achievements
   await evaluatePostMatchAchievements(state.player1.userId, state.player2.userId, state, result1, state.player1.score, state.categoryId, io);
@@ -274,12 +302,28 @@ const finalizeMatch = async (matchId, io, endReason = "completed") => {
     console.error("[BattleEngine] recordMatchQuestionExposure:", e.message);
   }
 
-  // Emit match_end to the room
+  // Emit match_end to the room — include full XP breakdown so the UI can render it
   io.to(matchId).emit("match_end", {
     matchId,
     winnerId,
-    player1: { userId: state.player1.userId, score: p1Score },
-    player2: { userId: state.player2.userId, score: p2Score },
+    player1: {
+      userId: state.player1.userId,
+      score: p1Score,
+      levelBonus: p1LevelBonus,
+      finalPoints: p1FinalPoints,
+      xpGained: p1XpGained,
+      xpPenalty: p1Penalty,             // deducted from accumulated XP (0 for winner)
+      netXp: p1XpGained - p1Penalty,    // can be negative (display only; floor applied in DB)
+    },
+    player2: {
+      userId: state.player2.userId,
+      score: p2Score,
+      levelBonus: p2LevelBonus,
+      finalPoints: p2FinalPoints,
+      xpGained: p2XpGained,
+      xpPenalty: p2Penalty,
+      netXp: p2XpGained - p2Penalty,
+    },
     endReason,
   });
 
@@ -291,32 +335,38 @@ const finalizeMatch = async (matchId, io, endReason = "completed") => {
 
 /**
  * Update a user's stats after a match completes.
+ * @param {string} userId
+ * @param {'win'|'loss'|'draw'} result
+ * @param {number} score      - raw in-game match score
+ * @param {string} categoryId
+ * @param {number} xpGained   - pre-computed XP to ADD (10% of finalPoints)
+ * @param {number} penalty    - XP to DEDUCT from accumulated total (losers only)
  */
-const updateUserStats = async (userId, result, score, categoryId, penalty = 0) => {
+const updateUserStats = async (userId, result, score, categoryId, xpGained = 0, penalty = 0) => {
   try {
     const user = await User.findById(userId);
     if (!user) return;
 
     user.totalMatches += 1;
-    const XP_WIN = 100, XP_LOSS = 20, XP_DRAW = 50;
 
     if (result === "win") {
       user.wins += 1;
       user.winStreak += 1;
       if (user.winStreak > user.bestWinStreak) user.bestWinStreak = user.winStreak;
-      user.addXP(XP_WIN + Math.floor(score / 10));
     } else if (result === "loss") {
       user.losses += 1;
       user.winStreak = 0;
-      user.addXP(XP_LOSS);
-      if (penalty > 0) {
-        user.xp -= penalty;
-        if (user.xp < 0) user.xp = 0; // Prevent negative XP (Level Floor mechanic)
-      }
     } else {
       user.draws += 1;
       user.winStreak = 0;
-      user.addXP(XP_DRAW);
+    }
+
+    // Step 1: credit the XP earned this match (10% of finalPoints for everyone)
+    user.addXP(xpGained);
+
+    // Step 2: for losers, deduct the defeat penalty from accumulated XP
+    if (result === "loss" && penalty > 0) {
+      user.xp = Math.max(0, user.xp - penalty);
     }
 
     if (!user.favoriteCategory) user.favoriteCategory = categoryId;

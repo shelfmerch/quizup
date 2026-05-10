@@ -172,19 +172,7 @@ function getLeagueFromXp(xpRaw: unknown) {
   return LEAGUES[LEAGUES.length - 1];
 }
 
-function ScoreBox({ label1, label2, value, borderColor, textColor }: { label1: string, label2: string, value: React.ReactNode, borderColor: string, textColor: string }) {
-  return (
-    <div className="flex flex-col items-center flex-1 min-w-0 px-0.5">
-      <div className="text-[9px] sm:text-[10px] font-bold text-slate-300 uppercase leading-tight text-center h-8 flex flex-col justify-end pb-1 whitespace-nowrap">
-        <span>{label1}</span>
-        <span>{label2}</span>
-      </div>
-      <div className={`border-2 rounded-lg py-1.5 sm:py-2 w-full text-center text-sm sm:text-lg font-bold ${borderColor} ${textColor}`}>
-        {value}
-      </div>
-    </div>
-  );
-}
+
 
 function CircleProgress({ level, xpGained, xpToNext }: { level: number, xpGained: number, xpToNext: number }) {
   const radius = 70;
@@ -258,6 +246,9 @@ const BattlePage: React.FC = () => {
   const endSfxPlayedRef = useRef(false);
   const countdownTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const matchMusicStartedRef = useRef(false);
+
+  // Result breakdown from the server (online only; null until match_end received)
+  const { myMatchResult } = isOnline ? onlineBattle : { myMatchResult: null };
 
   const [unlockedAchievements, setUnlockedAchievements] = useState<{ id: string; name: string; icon: string }[]>([]);
   const [showDedicatedAchievements, setShowDedicatedAchievements] = useState(false);
@@ -463,9 +454,14 @@ const BattlePage: React.FC = () => {
       );
     }
 
-    const finishBonus = 40;
-    const victoryBonus = winner === 'player' ? 50 : 0;
-    const totalXp = state.match.player1.score + finishBonus + victoryBonus;
+    // ── Result breakdown ───────────────────────────────────────────────────
+    // Online: use server-computed values.  Local/offline: derive from raw score.
+    const rawScore   = state.match.player1.score;
+    const levelBonus = myMatchResult?.levelBonus  ?? 0;
+    const finalPts   = myMatchResult?.finalPoints ?? (rawScore + levelBonus);
+    const xpGained   = myMatchResult?.xpGained    ?? Math.floor(finalPts * 0.10);
+    const xpPenalty  = myMatchResult?.xpPenalty   ?? 0;
+    const netXp      = myMatchResult?.netXp        ?? xpGained;
     const p1Color = winner === 'player' ? 'border-[#1dd15d]' : winner === 'opponent' ? 'border-[#f24242]' : 'border-slate-500';
     const p2Color = winner === 'opponent' ? 'border-[#1dd15d]' : winner === 'player' ? 'border-[#f24242]' : 'border-slate-500';
 
@@ -495,16 +491,55 @@ const BattlePage: React.FC = () => {
           </div>
         </div>
 
-        <div className="flex justify-between gap-1 sm:gap-2 px-4 sm:px-6 mt-8 shrink-0">
-          <ScoreBox label1="MATCH" label2="SCORE" value={state.match.player1.score} borderColor="border-[#00bcd4]" textColor="text-[#00bcd4]" />
-          <ScoreBox label1="FINISH" label2="BONUS" value={`+${finishBonus}`} borderColor="border-[#ffc107]" textColor="text-[#ffc107]" />
-          <ScoreBox label1="VICTORY" label2="BONUS" value={`+${victoryBonus}`} borderColor="border-[#4caf50]" textColor="text-[#4caf50]" />
-          <ScoreBox label1="POWER UP" label2="BONUS" value="x1" borderColor="border-[#ffc107]" textColor="text-[#ffc107]" />
-          <ScoreBox label1="TOTAL" label2="XP" value={totalXp} borderColor="border-[#b392ff]" textColor="text-[#b392ff]" />
+        <div className="px-6 mt-6 shrink-0 w-full">
+          <div className="bg-[#1f1f1f] rounded-3xl p-5 border border-white/5 shadow-2xl relative overflow-hidden">
+            <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-white/10 to-transparent"></div>
+            <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.25em] mb-4 text-center">Match Summary</h3>
+            
+            <div className="flex flex-col gap-3">
+              <div className="flex justify-between items-center">
+                <span className="text-sm font-bold text-slate-300">Match Score</span>
+                <span className="text-lg font-black text-[#00bcd4] tabular-nums">{rawScore}</span>
+              </div>
+
+              {winner === 'player' && levelBonus > 0 && (
+                <div className="flex justify-between items-center">
+                  <span className="text-sm font-bold text-slate-300">Level Bonus</span>
+                  <span className="text-lg font-black text-[#ff9800] tabular-nums">+{levelBonus}</span>
+                </div>
+              )}
+
+              {winner === 'player' && levelBonus > 0 && (
+                <div className="flex justify-between items-center pt-3 border-t border-white/5">
+                  <span className="text-sm font-bold text-slate-300">Total Points</span>
+                  <span className="text-lg font-black text-[#4caf50] tabular-nums">{finalPts}</span>
+                </div>
+              )}
+
+              <div className={`flex justify-between items-center ${winner === 'player' && levelBonus === 0 ? 'pt-3 border-t border-white/5' : ''}`}>
+                <span className="text-sm font-bold text-slate-300">XP Earned <span className="text-[10px] font-semibold text-slate-500">(10%)</span></span>
+                <span className="text-lg font-black text-slate-200 tabular-nums">+{xpGained}</span>
+              </div>
+
+              {winner !== 'player' && xpPenalty > 0 && (
+                <div className="flex justify-between items-center">
+                  <span className="text-sm font-bold text-slate-300">Defeat Penalty</span>
+                  <span className="text-lg font-black text-[#f24242] tabular-nums">-{xpPenalty}</span>
+                </div>
+              )}
+            </div>
+
+            <div className="mt-4 pt-4 border-t-2 border-white/10 flex justify-between items-center">
+              <span className="text-[11px] font-black text-white uppercase tracking-widest">Net XP</span>
+              <span className={`text-3xl font-display font-black tabular-nums drop-shadow-md ${netXp >= 0 ? 'text-[#b392ff]' : 'text-[#f24242]'}`}>
+                {netXp >= 0 ? `+${netXp}` : `${netXp}`}
+              </span>
+            </div>
+          </div>
         </div>
 
         <div className="shrink-0 flex-1 flex flex-col justify-center min-h-[160px]">
-          <CircleProgress level={state.match.player1.level || 1} xpGained={totalXp} xpToNext={33} />
+          <CircleProgress level={state.match.player1.level || 1} xpGained={netXp} xpToNext={33} />
         </div>
 
         <div className="grid grid-cols-2 gap-3 px-6 pb-8 mt-auto shrink-0">
