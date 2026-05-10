@@ -548,15 +548,17 @@ const BattlePage: React.FC = () => {
               </div>
             )}
 
-            {/* TOTAL XP / NET XP */}
-            <div className="flex flex-col items-center min-w-[72px] sm:min-w-[84px]">
-              <span className="text-[10px] sm:text-xs font-bold text-slate-100 uppercase tracking-widest text-center h-8 flex items-end justify-center mb-1.5 leading-tight">
-                Total<br/>XP
-              </span>
-              <div className={`w-full h-12 sm:h-14 px-2 rounded-xl border-2 flex items-center justify-center font-display font-black text-xl sm:text-2xl tabular-nums bg-[#1f1f1f] ${netXp >= 0 ? 'border-[#b392ff] text-[#b392ff] shadow-[0_4px_12px_rgba(179,146,255,0.15)]' : 'border-[#f24242] text-[#f24242] shadow-[0_4px_12px_rgba(242,66,66,0.15)]'}`}>
-                {netXp >= 0 ? `+${netXp}` : `${netXp}`}
+            {/* TOTAL XP (Loser Only) */}
+            {winner === 'opponent' && (
+              <div className="flex flex-col items-center min-w-[72px] sm:min-w-[84px]">
+                <span className="text-[10px] sm:text-xs font-bold text-slate-100 uppercase tracking-widest text-center h-8 flex items-end justify-center mb-1.5 leading-tight">
+                  Total<br/>XP
+                </span>
+                <div className="w-full h-12 sm:h-14 px-2 rounded-xl border-2 flex items-center justify-center font-display font-black text-xl sm:text-2xl tabular-nums bg-[#1f1f1f] border-[#b392ff] text-[#b392ff] shadow-[0_4px_12px_rgba(179,146,255,0.15)]">
+                  {user?.xp || 0}
+                </div>
               </div>
-            </div>
+            )}
 
           </div>
         </div>
