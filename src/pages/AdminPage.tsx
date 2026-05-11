@@ -17,6 +17,7 @@ const AdminPage: React.FC = () => {
   const [topicName, setTopicName] = useState("");
   const [topicSlug, setTopicSlug] = useState("");
   const [topicIcon, setTopicIcon] = useState("🎯");
+  const [topicIconUploading, setTopicIconUploading] = useState(false);
   const [topicDescription, setTopicDescription] = useState("");
 
   const [qText, setQText] = useState("");
@@ -257,7 +258,50 @@ const AdminPage: React.FC = () => {
                       value={topicIcon}
                       onChange={(e) => setTopicIcon(e.target.value)}
                       className="mt-1 bg-quizup-dark border-border text-foreground"
+                      placeholder="Emoji, URL, or upload"
                     />
+                    <div className="mt-2 flex flex-wrap items-center gap-2">
+                      <label className="text-xs text-quizup-green font-semibold cursor-pointer">
+                        <input
+                          type="file"
+                          accept="image/jpeg,image/png,image/gif,image/webp,image/svg+xml"
+                          className="hidden"
+                          disabled={topicIconUploading}
+                          onChange={async (e) => {
+                            const file = e.target.files?.[0];
+                            e.target.value = "";
+                            if (!file) return;
+                            setTopicIconUploading(true);
+                            try {
+                              const url = await adminService.uploadQuestionImage(file);
+                              setTopicIcon(url);
+                              toast.success("Icon uploaded");
+                            } catch (err) {
+                              toast.error(err instanceof Error ? err.message : "Upload failed");
+                            } finally {
+                              setTopicIconUploading(false);
+                            }
+                          }}
+                        />
+                        {topicIconUploading ? "Uploading…" : "Upload icon"}
+                      </label>
+                      {topicIcon && topicIcon !== "🎯" ? (
+                        <button
+                          type="button"
+                          onClick={() => setTopicIcon("🎯")}
+                          className="text-xs text-muted-foreground underline"
+                        >
+                          Reset icon
+                        </button>
+                      ) : null}
+                    </div>
+                    {topicIcon && (topicIcon.startsWith("http") || topicIcon.startsWith("/") || topicIcon.startsWith("data:")) && resolveQuestionImageUrl(topicIcon) ? (
+                      <img
+                        src={resolveQuestionImageUrl(topicIcon)}
+                        alt=""
+                        className="mt-2 w-12 h-12 object-contain rounded-md border border-border bg-quizup-dark"
+                      />
+                    ) : null}
                   </div>
                   <div>
                     <Label className="text-xs text-muted-foreground">Description</Label>
