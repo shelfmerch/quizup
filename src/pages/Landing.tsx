@@ -1,132 +1,220 @@
-import React from "react";
+import React, { useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { ArrowRight, LogIn, ChevronRight, Play, User } from "lucide-react";
+import { ChevronRight, Play, User, Zap } from "lucide-react";
 
-const LOGO_SRC = "/branding/quizup-icon.png";
+const TILE_BACKGROUNDS = [
+  "#14b8a6",
+  "#14532d",
+  "#fbcfe8",
+  "#ea580c",
+  "#27272a",
+  "#7c3aed",
+  "#dc2626",
+  "#eab308",
+  "#0d9488",
+  "#166534",
+  "#f9a8d4",
+  "#c2410c",
+  "#18181b",
+  "#9333ea",
+  "#b91c1c",
+  "#ca8a04",
+  "#2dd4bf",
+  "#15803d",
+  "#fda4af",
+  "#f97316",
+  "#3f3f46",
+  "#a855f7",
+  "#ef4444",
+  "#fde047",
+];
+
+const TILE_ICONS = [
+  "🎬",
+  "⌨️",
+  "🌍",
+  "🐞",
+  "🚌",
+  "🎠",
+  "⚡",
+  "⚛️",
+  "🧭",
+  "🎵",
+  "🎮",
+  "🎥",
+  "🧭",
+  "👤",
+  "🐻",
+  "👑",
+  "💀",
+  "🎯",
+  "📷",
+  "🎨",
+  "🔬",
+  "🎪",
+  "🌟",
+  "🎸",
+];
+
+const GRID_COLS = 14;
+const GRID_ROWS = 22;
+
+function LandingIconGrid() {
+  const tiles = useMemo(() => {
+    const total = GRID_COLS * GRID_ROWS;
+    return Array.from({ length: total }, (_, i) => {
+      const bg = TILE_BACKGROUNDS[(i * 7 + i % 3) % TILE_BACKGROUNDS.length];
+      const icon = TILE_ICONS[(i * 11) % TILE_ICONS.length];
+      return { bg, icon, key: i };
+    });
+  }, []);
+
+  return (
+    <div
+      className="absolute inset-0 min-h-[100dvh] grid gap-[2px] bg-neutral-950/80 p-[2px]"
+      style={{
+        gridTemplateColumns: `repeat(${GRID_COLS}, minmax(0, 1fr))`,
+        gridTemplateRows: `repeat(${GRID_ROWS}, minmax(0, 1fr))`,
+      }}
+      aria-hidden
+    >
+      {tiles.map(({ bg, icon, key }) => (
+        <div
+          key={key}
+          className="flex min-h-0 min-w-0 items-center justify-center text-[clamp(0.65rem,2.8vw,0.95rem)] leading-none shadow-[inset_0_0_0_1px_rgba(0,0,0,0.12)]"
+          style={{ backgroundColor: bg }}
+        >
+          <span className="select-none drop-shadow-[0_1px_1px_rgba(0,0,0,0.35)]">{icon}</span>
+        </div>
+      ))}
+    </div>
+  );
+}
 
 const Landing: React.FC = () => {
   const navigate = useNavigate();
 
   return (
-    <div 
-      className="min-h-screen w-full flex flex-col items-center justify-center px-8 bg-cover bg-center bg-no-repeat"
-      style={{ backgroundImage: `url('/images/quizup-landing.png')` }}
-    >
-      <div className="max-w-md w-full min-h-screen flex flex-col items-center">
-        {/* <motion.div
-        initial={{ scale: 0 }}
-        animate={{ scale: 1 }}
-        transition={{ type: "spring", stiffness: 200, damping: 15 }}
-        className="mb-8 p-1 rounded-[2rem] bg-gradient-to-br from-white to-slate-200 shadow-2xl"
-      >
-        <img
-          src={LOGO_SRC}
-          alt="QuizUp"
-          className="w-28 h-28 rounded-[1.8rem] shadow-inner object-cover select-none"
-          width={112}
-          height={112}
-          draggable={false}
-        />
-      </motion.div> */}
+    <div className="relative min-h-[100dvh] w-full overflow-hidden font-display">
+      <LandingIconGrid />
 
-      {/* <motion.h1
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.2 }}
-        className="text-5xl font-display font-black text-slate-900 text-center mb-2 tracking-tight"
-      >
-        QuizUp
-      </motion.h1> */}
+      {/* Dim overlay so foreground stays legible on busy grid */}
+      <div
+        className="pointer-events-none absolute inset-0 bg-gradient-to-b from-black/55 via-black/50 to-black/60"
+        aria-hidden
+      />
 
-      {/* <motion.p
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.3 }}
-        className="text-slate-500 font-medium text-center mb-12 text-base max-w-[240px]"
-      >
-        Real-time 1v1 quiz battles with players worldwide
-      </motion.p> */}
-
-      {/* <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.4 }}
-        className="mt-40 w-full rounded-[1.65rem] border border-white/35 bg-black/25 p-2 shadow-2xl shadow-black/35 backdrop-blur-md"
-      >
-        <div className="grid grid-cols-2 gap-2">
-          <button
-            onClick={() => navigate("/signup")}
-            className="group flex h-14 min-w-0 items-center justify-center gap-2 rounded-[1.15rem] bg-[#f65357] px-3 font-display text-[15px] font-extrabold text-white shadow-lg shadow-black/25 transition-all hover:bg-[#ff6266] active:scale-[0.97]"
+      <div className="relative z-10 mx-auto flex min-h-[100dvh] w-full max-w-md flex-col px-7 pb-[max(1.5rem,env(safe-area-inset-bottom))] pt-[max(1.25rem,env(safe-area-inset-top))]">
+        <div className="flex flex-1 flex-col items-center justify-center text-center">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.92 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ type: "spring", stiffness: 260, damping: 22 }}
+            className="relative mb-7"
           >
-            <span className="truncate">Get Started</span>
-            <ArrowRight className="h-4 w-4 shrink-0 transition-transform group-hover:translate-x-0.5" />
-          </button>
-          <button
-            onClick={() => navigate("/login")}
-            className="flex h-14 min-w-0 items-center justify-center gap-2 rounded-[1.15rem] border border-white/60 bg-white/92 px-3 font-display text-[15px] font-extrabold text-[#242424] shadow-lg shadow-black/15 transition-all bg-white active:scale-[0.97]"
+            <span
+              className="absolute -left-1 -top-2 text-lg text-sky-300 drop-shadow-md"
+              aria-hidden
+            >
+              ✦
+            </span>
+            <span
+              className="absolute -right-2 top-3 text-sm text-amber-300 drop-shadow-md"
+              aria-hidden
+            >
+              ✧
+            </span>
+            <span
+              className="absolute -bottom-1 left-1/2 text-xs text-pink-300 drop-shadow-md"
+              aria-hidden
+            >
+              ·✦·
+            </span>
+            <div className="flex h-[7.25rem] w-[7.25rem] items-center justify-center rounded-full border-[5px] border-white bg-gradient-to-b from-[#ff4d4d] to-[#d91a1a] shadow-[0_12px_40px_rgba(0,0,0,0.45),0_0_0_1px_rgba(255,255,255,0.15)_inset]">
+              <Zap
+                className="h-[3.35rem] w-[3.35rem] fill-white text-white"
+                strokeWidth={1.75}
+                aria-hidden
+              />
+            </div>
+          </motion.div>
+
+          <motion.h1
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.08 }}
+            className="text-[2.65rem] font-black tracking-tight text-white drop-shadow-[0_4px_14px_rgba(0,0,0,0.55)]"
           >
-            <LogIn className="h-4 w-4 shrink-0 text-[#f65357]" />
-            <span className="truncate">Sign In</span>
-          </button>
+            QuizUp
+          </motion.h1>
+
+          <motion.div
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.14 }}
+            className="mt-4 max-w-[17.5rem] space-y-1 text-[0.95rem] font-semibold leading-snug text-white/95 drop-shadow-[0_2px_10px_rgba(0,0,0,0.45)]"
+          >
+            <p>The biggest trivia community.</p>
+            <p>Millions of topics. Endless fun.</p>
+          </motion.div>
         </div>
-      </motion.div> */}
 
-       <main className="flex w-full flex-1 flex-col items-center justify-end pb-8 text-center">
-            {/* <motion.div
-              initial={{ scale: 0.9, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              transition={{ type: "spring", stiffness: 160, damping: 14 }}
-              className="flex w-full flex-col items-center"
-            >
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.22 }}
+          className="flex w-full flex-col items-stretch gap-4"
+        >
+          <button
+            type="button"
+            onClick={() => navigate("/signup")}
+            className="group relative grid h-[4.25rem] w-full grid-cols-[auto_1fr_auto] items-center gap-2 rounded-full px-5 text-[1.15rem] font-black text-white shadow-[0_0_28px_rgba(248,113,113,0.55),0_14px_36px_rgba(0,0,0,0.35)] transition-transform active:scale-[0.98]"
+            style={{
+              background: "linear-gradient(90deg, #ff6b5b 0%, #ff5a6d 45%, #ff4d8d 100%)",
+            }}
+          >
+            <span className="flex h-11 w-11 items-center justify-center justify-self-start rounded-full bg-white text-[#e11d48] shadow-inner">
+              <Play className="ml-0.5 h-5 w-5 fill-current" aria-hidden />
+            </span>
+            <span className="text-center">Play Now</span>
+            <ChevronRight
+              className="h-8 w-8 justify-self-end stroke-[2.5] opacity-95"
+              aria-hidden
+            />
+          </button>
 
-              <p className="mt-8 max-w-[20rem] text-[25px] font-semibold leading-tight text-white drop-shadow-[0_3px_5px_rgba(0,0,0,0.55)]">
-                The biggest trivia community. Millions of topics. Endless fun.
-              </p>
-            </motion.div> */}
+          <button
+            type="button"
+            onClick={() => navigate("/login")}
+            className="grid h-[4.25rem] w-full grid-cols-[auto_1fr_auto] items-center gap-2 rounded-full border border-white/85 bg-white/20 px-5 text-[1.15rem] font-black text-white shadow-[0_12px_40px_rgba(0,0,0,0.28)] backdrop-blur-[14px] transition-transform active:scale-[0.98]"
+          >
+            <span className="flex h-11 w-11 items-center justify-center justify-self-start rounded-full bg-white text-neutral-700 shadow-sm">
+              <User className="h-6 w-6" strokeWidth={2.25} aria-hidden />
+            </span>
+            <span className="text-center">Continue</span>
+            <ChevronRight
+              className="h-8 w-8 justify-self-end stroke-[2.5] opacity-95"
+              aria-hidden
+            />
+          </button>
+        </motion.div>
 
-            <motion.div
-              initial={{ opacity: 0, y: 24 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.25 }}
-              className="flex w-full flex-col items-center gap-4"
-            >
-              <button
-                onClick={() => navigate("/signup")}
-                className="relative flex h-20 w-[94%] overflow-hidden gap-4 items-center justify-between rounded-full bg-[#f65357] px-6 font-display text-[20px] font-black text-white shadow-[0_-5px_22px_rgba(255,222,84,0.34),0_9px_0_rgba(175,38,57,0.78),0_22px_42px_rgba(246,83,87,0.58),inset_0_3px_0_rgba(255,255,255,0.28),inset_0_-8px_16px_rgba(152,15,45,0.2)] active:translate-y-1 active:scale-[0.99] active:shadow-[0_-3px_16px_rgba(255,222,84,0.28),0_5px_0_rgba(175,38,57,0.74),0_14px_30px_rgba(246,83,87,0.48),inset_0_2px_0_rgba(255,255,255,0.24),inset_0_-5px_12px_rgba(152,15,45,0.18)]"
-                style={{
-                  background: "linear-gradient(180deg, #ff6258 0%, #f65357 54%, #e84252 100%)",
-                }}
-              >
-                <span className="pointer-events-none absolute left-10 right-10 top-0 h-[5px] rounded-b-full bg-gradient-to-r from-transparent via-[#ffe66d] to-transparent opacity-95 shadow-[0_0_16px_rgba(255,226,95,0.78)]" />
-                <span className="flex h-10 w-10 items-center justify-center rounded-full bg-white text-[#f65357]">
-                  <Play className="h-4 w-4 fill-current" />
-                </span>
-                <span>Play Now</span>
-                <ChevronRight className="h-10 w-10 stroke-[2]" />
-              </button>
-
-              <button
-                onClick={() => navigate("/login")}
-                className="flex mb-40 h-16 w-[94%] gap-2 items-center justify-between rounded-full border-[3px] border-white/90 bg-black/30 px-6 font-display text-[20px] font-black text-white shadow-[0_0_22px_rgba(255,255,255,0.24),0_16px_38px_rgba(0,0,0,0.5)] backdrop-blur-md active:scale-[0.98]"
-              >
-                <span className="flex h-10 w-10 items-center justify-center rounded-full bg-white text-[#14784f]">
-                  <User className="h-7 w-7 fill-current" />
-                </span>
-                <span>Continue</span>
-                <ChevronRight className="h-9 w-9 stroke-[2]" />
-              </button>
-            </motion.div>
-
-            {/* <div className="mt-10 pb-7 text-center text-[23px] font-semibold">
-              <span className="text-white/95">Already have an account?</span>
-              <button onClick={() => navigate("/login")} className="ml-5 border-b-2 border-white pb-0.5 font-black text-white">
-                Sign In
-              </button>
-            </div> */}
-
-            <div className="mx-auto h-1.5 w-36 rounded-full bg-white" />
-          </main>
+        <motion.p
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.3 }}
+          className="mt-8 text-center text-[0.95rem] font-semibold text-white/95 drop-shadow-[0_2px_8px_rgba(0,0,0,0.4)]"
+        >
+          <span>Already have an account? </span>
+          <button
+            type="button"
+            onClick={() => navigate("/login")}
+            className="border-b border-white pb-0.5 font-black text-white underline decoration-white underline-offset-4 transition-opacity hover:opacity-90"
+          >
+            Sign In
+          </button>
+        </motion.p>
       </div>
     </div>
   );
