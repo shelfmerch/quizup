@@ -4,7 +4,7 @@ import { motion } from "framer-motion";
 import { ChevronRight, Play, User } from "lucide-react";
 
 const BANNER_SRC = "/images/default_banner.png";
-const BRAND_SRC = "/images/quizup.png";
+const BRAND_SRC = "/images/quiz.png";
 
 const Landing: React.FC = () => {
   const navigate = useNavigate();
@@ -46,7 +46,7 @@ const Landing: React.FC = () => {
         </div>
 
         <motion.div
-          initial={{ opacity: 0, y: 20 }}
+          initial={{ opacity: 0, y: 5 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.22 }}
           className="flex w-full flex-col items-stretch gap-4"
