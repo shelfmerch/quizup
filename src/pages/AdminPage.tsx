@@ -36,6 +36,8 @@ const AdminPage: React.FC = () => {
   const [bulkJson, setBulkJson] = useState("");
   const [bulkSubmitting, setBulkSubmitting] = useState(false);
   const [bulkResult, setBulkResult] = useState<BulkCreateResponse | null>(null);
+  const [bulkAutoImageProvider, setBulkAutoImageProvider] = useState<"serpapi" | "custom">("serpapi");
+  const [bulkCustomImageApiUrl, setBulkCustomImageApiUrl] = useState("");
 
   const refreshCategories = async () => {
     const list = await adminService.listCategories();
@@ -157,11 +159,30 @@ const AdminPage: React.FC = () => {
       toast.error("Maximum 200 questions per bulk request");
       return;
     }
+    if (bulkAutoImageProvider === "custom") {
+      const t = bulkCustomImageApiUrl.trim();
+      if (!t) {
+        toast.error("Enter your custom image API URL (with {query})");
+        return;
+      }
+      if (!t.includes("{query}")) {
+        toast.error("Custom API URL must include the placeholder {query}");
+        return;
+      }
+      if (!/^https:\/\//i.test(t)) {
+        toast.error("Custom API URL must start with https://");
+        return;
+      }
+    }
     setBulkSubmitting(true);
     setBulkResult(null);
     try {
       const res = await adminService.createBulkQuestions({
         categoryId: selectedSlug,
+        autoImageProvider: bulkAutoImageProvider,
+        ...(bulkAutoImageProvider === "custom"
+          ? { customImageApiUrl: bulkCustomImageApiUrl.trim() }
+          : {}),
         questions: parsed,
       });
       setBulkResult(res);
@@ -390,10 +411,70 @@ const AdminPage: React.FC = () => {
                     <code className="text-foreground/80">correctIndex</code> (0–3).{" "}
                     Optional: <code className="text-foreground/80">timeLimit</code> (default 10s),{" "}
                     <code className="text-foreground/80">imageUrl</code>. If{" "}
-                    <code className="text-foreground/80">imageUrl</code> is empty or omitted, the server picks a
-                    related photo from Pexels when <code className="text-foreground/80">PEXELS_API_KEY</code> (or{" "}
-                    <code className="text-foreground/80">PEXELS_API</code>) is set on the backend. Max 200 per batch.
+                    <code className="text-foreground/80">imageUrl</code> is empty or omitted, the server fills it using
+                    the source below: <strong>SerpAPI</strong> (needs <code className="text-foreground/80">SERP_API_KEY</code> on the
+                    server) or your <strong>custom HTTPS</strong> URL that includes the placeholder{" "}
+                    <code className="text-foreground/80">{"{query}"}</code> (URL-encoded search text from the question + correct
+                    option). Custom APIs should return JSON with <code className="text-foreground/80">url</code>,{" "}
+                    <code className="text-foreground/80">imageUrl</code>, or <code className="text-foreground/80">link</code>, or a
+                    plain <code className="text-foreground/80">https://…</code> image URL as the body. Max 200 per batch.
                   </p>
+                  <fieldset className="space-y-2 rounded-md border border-border/80 bg-quizup-dark/40 p-3">
+                    <legend className="px-1 text-[11px] font-bold uppercase tracking-wide text-foreground/80">
+                      Auto image when <code className="text-foreground/70">imageUrl</code> omitted
+                    </legend>
+                    <label className="flex cursor-pointer items-start gap-2 text-xs">
+                      <input
+                        type="radio"
+                        name="bulk-auto-image"
+                        className="mt-0.5 accent-purple-500"
+                        checked={bulkAutoImageProvider === "serpapi"}
+                        onChange={() => {
+                          setBulkAutoImageProvider("serpapi");
+                          setBulkResult(null);
+                        }}
+                      />
+                      <span>
+                        <span className="font-semibold text-foreground">SerpAPI</span>{" "}
+                        <span className="text-muted-foreground">(default — Google Images via serpapi.com)</span>
+                      </span>
+                    </label>
+                    <label className="flex cursor-pointer items-start gap-2 text-xs">
+                      <input
+                        type="radio"
+                        name="bulk-auto-image"
+                        className="mt-0.5 accent-purple-500"
+                        checked={bulkAutoImageProvider === "custom"}
+                        onChange={() => {
+                          setBulkAutoImageProvider("custom");
+                          setBulkResult(null);
+                        }}
+                      />
+                      <span>
+                        <span className="font-semibold text-foreground">Custom API</span>{" "}
+                        <span className="text-muted-foreground">(HTTPS GET; your server returns an image URL)</span>
+                      </span>
+                    </label>
+                    {bulkAutoImageProvider === "custom" && (
+                      <div className="pt-1">
+                        <Label htmlFor="bulk-custom-image-api" className="text-[11px] text-muted-foreground">
+                          URL template — must include <code className="text-foreground/80">{"{query}"}</code>
+                        </Label>
+                        <Input
+                          id="bulk-custom-image-api"
+                          type="url"
+                          value={bulkCustomImageApiUrl}
+                          onChange={(e) => {
+                            setBulkCustomImageApiUrl(e.target.value);
+                            setBulkResult(null);
+                          }}
+                          placeholder="https://your-server.com/api/quiz-image?q={query}"
+                          className="mt-1 h-9 border-border bg-quizup-dark font-mono text-[11px] text-foreground"
+                          autoComplete="off"
+                        />
+                      </div>
+                    )}
+                  </fieldset>
                   <textarea
                     value={bulkJson}
                     onChange={(e) => { setBulkJson(e.target.value); setBulkResult(null); }}

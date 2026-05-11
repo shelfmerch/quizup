@@ -43,10 +43,10 @@ const LEAGUES: Array<{ key: LeagueKey; name: string; minLevel: number; minXpIncl
   { key: "unranked", name: "Unranked", minLevel: 0, minXpInclusive: 0,     badgeUrl: "/leagues/unranked.png" },
 ];
 
-function getLeagueFromLevel(levelRaw: unknown) {
-  const level = typeof levelRaw === "number" && Number.isFinite(levelRaw) ? Math.floor(levelRaw) : 0;
+function getLeagueFromXp(xpRaw: unknown) {
+  const xp = typeof xpRaw === "number" && Number.isFinite(xpRaw) ? Math.max(0, Math.floor(xpRaw)) : 0;
   for (const league of LEAGUES) {
-    if (level >= league.minLevel) return league;
+    if (xp >= league.minXpInclusive) return league;
   }
   return LEAGUES[LEAGUES.length - 1];
 }
@@ -246,7 +246,7 @@ const HomeLobby: React.FC = () => {
   const tournaments = useMemo(() => allTopics.slice(0, 5), [allTopics]);
   const dailyChallenges = useMemo(() => allTopics.slice(5, 9), [allTopics]);
   const followed = followedTopics.length ? followedTopics.slice(0, 5) : allTopics.slice(9, 14);
-  const league = getLeagueFromLevel(user?.level);
+  const league = getLeagueFromXp(user?.xp);
   const avatarSrc = resolveMediaUrl(
     user?.avatarUrl,
     `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(user?.username || "player")}`

@@ -51,10 +51,10 @@ const LEAGUES: Array<{ key: LeagueKey; name: string; minLevel: number; minXpIncl
 
 const TILE_COLORS = ["#f65357", "#1fb7c9", "#ffca32", "#f65357", "#8d65e7", "#15b78f"];
 
-function getLeagueFromLevel(levelRaw: unknown) {
-  const level = typeof levelRaw === "number" && Number.isFinite(levelRaw) ? Math.floor(levelRaw) : 0;
+function getLeagueFromXp(xpRaw: unknown) {
+  const xp = typeof xpRaw === "number" && Number.isFinite(xpRaw) ? Math.max(0, Math.floor(xpRaw)) : 0;
   for (const league of LEAGUES) {
-    if (level >= league.minLevel) return league;
+    if (xp >= league.minXpInclusive) return league;
   }
   return LEAGUES[LEAGUES.length - 1];
 }
@@ -412,7 +412,7 @@ const ProfilePage: React.FC = () => {
     );
   }
 
-  const league = getLeagueFromLevel(p.level);
+  const league = getLeagueFromXp(p.xp);
   const avatarSrc = resolveMediaUrl(
     p.avatarUrl,
     `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(p.username)}`

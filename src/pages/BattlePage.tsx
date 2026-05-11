@@ -10,6 +10,7 @@ import { getSocket } from "@/services/socketService";
 import { MOCK_ACHIEVEMENTS } from "@/data/mock-data";
 import Icons8Icon from "@/components/Icons8Icon";
 import { useAuth } from "@/hooks/useAuth";
+import { authService } from "@/services/authService";
 
 function parseBattleNav(state: unknown): { online: OnlineBattleInit | null; localMatch: Match | null } {
   if (
@@ -159,10 +160,10 @@ const LEAGUES: Array<{ key: LeagueKey; name: string; minLevel: number; minXpIncl
   { key: "unranked", name: "Unranked", minLevel: 0, minXpInclusive: 0,     badgeUrl: "/leagues/unranked.png" },
 ];
 
-function getLeagueFromLevel(levelRaw: unknown) {
-  const level = typeof levelRaw === "number" && Number.isFinite(levelRaw) ? Math.floor(levelRaw) : 0;
+function getLeagueFromXp(xpRaw: unknown) {
+  const xp = typeof xpRaw === "number" && Number.isFinite(xpRaw) ? Math.max(0, Math.floor(xpRaw)) : 0;
   for (const league of LEAGUES) {
-    if (level >= league.minLevel) return league;
+    if (xp >= league.minXpInclusive) return league;
   }
   return LEAGUES[LEAGUES.length - 1];
 }
@@ -249,33 +250,35 @@ const BattlePage: React.FC = () => {
   const [showDedicatedAchievements, setShowDedicatedAchievements] = useState(false);
   const achievementsScreenShownRef = useRef(false);
 
-  const levelBeforeMatchRef = useRef<number | null>(null);
+  const xpBeforeMatchRef = useRef<number | null>(null);
   const [leaguePromotion, setLeaguePromotion] = useState<{
-    from: ReturnType<typeof getLeagueFromLevel>;
-    to: ReturnType<typeof getLeagueFromLevel>;
+    from: ReturnType<typeof getLeagueFromXp>;
+    to: ReturnType<typeof getLeagueFromXp>;
   } | null>(null);
 
   useEffect(() => {
-    if (levelBeforeMatchRef.current !== null) return;
-    const level = typeof user?.level === "number" && Number.isFinite(user.level) ? user.level : null;
-    levelBeforeMatchRef.current = level;
-  }, [user?.level]);
+    if (xpBeforeMatchRef.current !== null) return;
+    const xp = typeof user?.xp === "number" && Number.isFinite(user.xp) ? user.xp : null;
+    xpBeforeMatchRef.current = xp;
+  }, [user?.xp]);
 
   useEffect(() => {
     if (state?.phase !== "match_end") return;
     if (!user?.id) return;
-    if (levelBeforeMatchRef.current === null) return;
+    if (xpBeforeMatchRef.current === null) return;
 
     let cancelled = false;
     (async () => {
       try {
         await refreshUser();
         if (cancelled) return;
-        const afterLevel = typeof user?.level === "number" && Number.isFinite(user.level) ? user.level : null;
-        if (afterLevel === null) return;
+        const fresh = authService.getCurrentUser();
+        const afterXp =
+          typeof fresh?.xp === "number" && Number.isFinite(fresh.xp) ? fresh.xp : null;
+        if (afterXp === null) return;
 
-        const from = getLeagueFromLevel(levelBeforeMatchRef.current ?? 0);
-        const to = getLeagueFromLevel(afterLevel);
+        const from = getLeagueFromXp(xpBeforeMatchRef.current ?? 0);
+        const to = getLeagueFromXp(afterXp);
         if (from.key !== to.key) {
           setLeaguePromotion({ from, to });
         }
@@ -287,7 +290,7 @@ const BattlePage: React.FC = () => {
     return () => {
       cancelled = true;
     };
-  }, [refreshUser, state?.phase, user?.id, user?.level]);
+  }, [refreshUser, state?.phase, user?.id, user?.xp]);
 
   useEffect(() => {
     if (state?.phase === "match_end" && unlockedAchievements.length > 0 && !achievementsScreenShownRef.current) {

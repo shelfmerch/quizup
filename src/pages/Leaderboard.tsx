@@ -28,10 +28,11 @@ const LEAGUES: Array<{ key: LeagueKey; name: string; minLevel: number; minXpIncl
   { key: "unranked", name: "Unranked", minLevel: 0, minXpInclusive: 0,     badgeUrl: "/leagues/unranked.png" },
 ];
 
-function getLeagueFromLevel(levelRaw: unknown) {
-  const level = typeof levelRaw === "number" && Number.isFinite(levelRaw) ? Math.floor(levelRaw) : 0;
+/** Global leaderboard `score` is total XP (see backend getGlobalLeaderboard). */
+function getLeagueFromXp(xpRaw: unknown) {
+  const xp = typeof xpRaw === "number" && Number.isFinite(xpRaw) ? Math.max(0, Math.floor(xpRaw)) : 0;
   for (const league of LEAGUES) {
-    if (level >= league.minLevel) return league;
+    if (xp >= league.minXpInclusive) return league;
   }
   return LEAGUES[LEAGUES.length - 1];
 }
@@ -177,7 +178,7 @@ const Leaderboard: React.FC = () => {
               </div>
             <div className="flex items-center gap-4 pl-2">
               {/* <span className="font-display font-extrabold text-slate-700 text-md w-7 text-right">{entry.rank}</span> */}
-              <img src={getLeagueFromLevel(entry.level).badgeUrl} alt={getLeagueFromLevel(entry.level).name} className="w-5 h-5 object-cover" />
+              <img src={getLeagueFromXp(entry.score).badgeUrl} alt={getLeagueFromXp(entry.score).name} className="w-5 h-5 object-cover" />
             </div>
           </button>
         ))}

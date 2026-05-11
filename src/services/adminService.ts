@@ -128,6 +128,10 @@ export const adminService = {
 
   async createBulkQuestions(body: {
     categoryId: string;
+    /** When `imageUrl` is omitted on a row: use SerpAPI (server `SERP_API_KEY`) or your HTTPS template. */
+    autoImageProvider?: "serpapi" | "custom";
+    /** Required if `autoImageProvider` is `custom`. Must be `https://...` and include `{query}` (URL-encoded search text). */
+    customImageApiUrl?: string;
     questions: {
       text: string;
       options: string[];
