@@ -91,6 +91,7 @@ const EXACT_MAP: Record<string, { slug: string; fallback: string }> = {
   "logos":           { slug: "brand",                fallback: "🏷️" },
   // ── Common variants ───────────────────────────────────────────────────────
   "biology":         { slug: "dna",                  fallback: "🧬" },
+  "cartoons":        { slug: "cartoon",              fallback: "👻" },
   "chemistry":       { slug: "flask",                fallback: "⚗️" },
   "physics":         { slug: "physics",              fallback: "⚛️" },
   "astronomy":       { slug: "telescope",            fallback: "🔭" },
