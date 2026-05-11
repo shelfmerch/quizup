@@ -25,14 +25,17 @@ const fetchJson = (url, headers = {}) =>
  * @param {string} apiKey
  * @returns {Promise<string|null>}
  */
-const fetchPexelsImageUrl = async (query, apiKey) => {
+const fetchSerpImageUrl = async (query, apiKey) => {
   if (!apiKey || !query) return null;
-  const q = encodeURIComponent(query);
-  const json = await fetchJson(`https://api.pexels.com/v1/search?query=${q}&per_page=1&size=medium`, {
-    Authorization: apiKey,
-  });
-  const p = json?.photos?.[0];
-  return p?.src?.large || p?.src?.medium || null;
+  const url = new URL("https://serpapi.com/search.json");
+  url.searchParams.set("engine", "google_images");
+  url.searchParams.set("q", String(query).slice(0, 80));
+  url.searchParams.set("api_key", apiKey);
+  url.searchParams.set("ijn", "0");
+
+  const json = await fetchJson(url.toString());
+  const img = json?.images_results?.[0];
+  return img?.original || img?.link || img?.thumbnail || null;
 };
 
 /**
@@ -76,7 +79,7 @@ const resolveImageUrl = async (args) => {
   const { imageQuery = "", tags = [], questionType } = args;
   if (questionType !== "IMAGE") return null;
 
-  const pexelsKey = process.env.PEXELS_API_KEY || "";
+  const serpKey = process.env.SERP_API_KEY || "";
   const unsplashKey = process.env.UNSPLASH_ACCESS_KEY || "";
 
   const tagStr = tags.map((t) => String(t).toLowerCase()).join(" ");
@@ -103,9 +106,9 @@ const resolveImageUrl = async (args) => {
     if (u) return u;
   }
 
-  if (pexelsKey) {
-    const p = await fetchPexelsImageUrl(q || tags.join(" ") || "quiz", pexelsKey).catch(() => null);
-    if (p) return p;
+  if (serpKey) {
+    const s = await fetchSerpImageUrl(q || tags.join(" ") || "quiz", serpKey).catch(() => null);
+    if (s) return s;
   }
 
   if (unsplashKey) {
@@ -117,7 +120,7 @@ const resolveImageUrl = async (args) => {
 };
 
 module.exports = {
-  fetchPexelsImageUrl,
+  fetchSerpImageUrl,
   fetchUnsplashImageUrl,
   clearbitLogoUrl,
   resolveImageUrl,

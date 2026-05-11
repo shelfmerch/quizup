@@ -1,7 +1,7 @@
 const Category = require("../models/Category");
 const Question = require("../models/Question");
 const { syncQuestionCount } = require("../services/categoryQuestionCount");
-const { resolveEmptyImageFromPexels } = require("../services/pexelsSearch");
+const { resolveEmptyImageFromSerp } = require("../services/serpImageSearch");
 
 const normalizeImageUrl = (raw) => {
   if (raw == null) return null;
@@ -212,7 +212,7 @@ const createQuestion = async (req, res) => {
     const rawImageTrimmed = imageUrlRaw == null ? "" : String(imageUrlRaw).trim();
     let imageUrl = normalizeImageUrl(imageUrlRaw);
     if (!imageUrl && rawImageTrimmed === "") {
-      imageUrl = await resolveEmptyImageFromPexels(text.trim(), opts[ci]);
+      imageUrl = await resolveEmptyImageFromSerp(text.trim(), opts[ci]);
     }
     if (rawImageTrimmed && !imageUrl) {
       return res.status(422).json({
@@ -349,10 +349,10 @@ const createBulkQuestions = async (req, res) => {
         const ci = resolveCorrectIndex(raw.correctIndex, raw.answer, opts);
         // TimeLimit
         const tl = Math.min(120, Math.max(5, Number(raw.timeLimit) || 10));
-        // ImageUrl — empty/missing uses Pexels when PEXELS_API_KEY (or PEXELS_API) is set
+        // ImageUrl — empty/missing uses SerpAPI when SERP_API_KEY is set
         let imageUrl = normalizeImageUrl(raw.imageUrl);
         if (!imageUrl) {
-          imageUrl = await resolveEmptyImageFromPexels(raw.text.trim(), opts[ci]);
+          imageUrl = await resolveEmptyImageFromSerp(raw.text.trim(), opts[ci]);
         }
 
         const q = await Question.create({

@@ -105,7 +105,7 @@ const processQuestionPipelineJob = async (data) => {
 
     if (questionType === "IMAGE" && !imageUrl) {
       console.warn(
-        `[QuestionPipeline] no imageUrl (check PEXELS_API_KEY / UNSPLASH_ACCESS_KEY) — saving as TEXT: "${String(text).slice(0, 60)}..."`
+        `[QuestionPipeline] no imageUrl (check SERP_API_KEY / UNSPLASH_ACCESS_KEY) — saving as TEXT: "${String(text).slice(0, 60)}..."`
       );
       persistType = "TEXT";
       persistImageQuery = "";
