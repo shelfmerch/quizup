@@ -13,6 +13,50 @@ const normalizeImageUrl = (raw) => {
   return null;
 };
 
+/**
+ * Supports JSON shapes that use either `correctIndex` or `answer`.
+ * - If `correctIndex` is present, it is validated and used.
+ * - Else if `answer` is a number 0-3, it's used as correctIndex.
+ * - Else if `answer` is a string, it must match one of the 4 options.
+ * @param {unknown} correctIndexRaw
+ * @param {unknown} answerRaw
+ * @param {string[]} opts
+ * @returns {number}
+ */
+const resolveCorrectIndex = (correctIndexRaw, answerRaw, opts) => {
+  const hasCorrectIndex = correctIndexRaw !== undefined && correctIndexRaw !== null && String(correctIndexRaw).trim() !== "";
+  if (hasCorrectIndex) {
+    const ci = Number(correctIndexRaw);
+    if (!Number.isInteger(ci) || ci < 0 || ci > 3) {
+      throw new Error("correctIndex must be 0, 1, 2, or 3");
+    }
+    return ci;
+  }
+
+  if (answerRaw === undefined || answerRaw === null) {
+    throw new Error("Either correctIndex or answer is required");
+  }
+
+  if (typeof answerRaw === "number") {
+    const ai = Number(answerRaw);
+    if (!Number.isInteger(ai) || ai < 0 || ai > 3) {
+      throw new Error("answer as a number must be 0, 1, 2, or 3");
+    }
+    return ai;
+  }
+
+  const answer = String(answerRaw).trim();
+  if (!answer) {
+    throw new Error("answer must be a non-empty string (or a number 0-3)");
+  }
+
+  const idx = opts.findIndex((o) => o.trim().toLowerCase() === answer.toLowerCase());
+  if (idx === -1) {
+    throw new Error("answer must match one of the provided options");
+  }
+  return idx;
+};
+
 const slugify = (name) => {
   const s = name
     .toLowerCase()
@@ -126,7 +170,7 @@ const listQuestions = async (req, res) => {
 };
 
 // POST /api/admin/questions
-// { categoryId, text, options: string[4], correctIndex, timeLimit? }
+// { categoryId, text, options: string[4], correctIndex? | answer?, timeLimit?, imageUrl? }
 const createQuestion = async (req, res) => {
   try {
     const {
@@ -134,6 +178,7 @@ const createQuestion = async (req, res) => {
       text,
       options,
       correctIndex,
+      answer,
       timeLimit = 10,
       imageUrl: imageUrlRaw,
     } = req.body;
@@ -151,9 +196,11 @@ const createQuestion = async (req, res) => {
     if (opts.some((o) => !o)) {
       return res.status(422).json({ error: "Each option must be non-empty" });
     }
-    const ci = Number(correctIndex);
-    if (!Number.isInteger(ci) || ci < 0 || ci > 3) {
-      return res.status(422).json({ error: "correctIndex must be 0, 1, 2, or 3" });
+    let ci;
+    try {
+      ci = resolveCorrectIndex(correctIndex, answer, opts);
+    } catch (e) {
+      return res.status(422).json({ error: e instanceof Error ? e.message : "Invalid correct answer" });
     }
     const tl = Math.min(120, Math.max(5, Number(timeLimit) || 10));
 
@@ -258,7 +305,7 @@ const generateQuestionsQueued = async (req, res) => {
 };
 
 // POST /api/admin/questions/bulk
-// { categoryId, questions: [{ text, options, correctIndex, timeLimit?, imageUrl? }, ...] }
+// { categoryId, questions: [{ text, options, correctIndex? | answer?, timeLimit?, imageUrl? }, ...] }
 const createBulkQuestions = async (req, res) => {
   try {
     const { categoryId, questions } = req.body;
@@ -298,11 +345,8 @@ const createBulkQuestions = async (req, res) => {
         if (opts.some((o) => !o)) {
           throw new Error("Each option must be non-empty");
         }
-        // Validate correctIndex
-        const ci = Number(raw.correctIndex);
-        if (!Number.isInteger(ci) || ci < 0 || ci > 3) {
-          throw new Error("correctIndex must be 0, 1, 2, or 3");
-        }
+        // Resolve correctIndex (supports `answer` field)
+        const ci = resolveCorrectIndex(raw.correctIndex, raw.answer, opts);
         // TimeLimit
         const tl = Math.min(120, Math.max(5, Number(raw.timeLimit) || 10));
         // ImageUrl — empty/missing uses Pexels when PEXELS_API_KEY (or PEXELS_API) is set
