@@ -31,7 +31,7 @@ const Landing: React.FC = () => {
         <div className="flex flex-1 flex-col items-center justify-center px-2 text-center">
           <motion.div
             initial={{ opacity: 0, scale: 0.96 }}
-            animate={{ opacity: 1, scale: 1 }}
+            animate={{ opacity: 1, scale: 2 }}
             transition={{ type: "spring", stiffness: 260, damping: 24 }}
             className="w-full max-w-[min(22rem,88vw)]"
           >
