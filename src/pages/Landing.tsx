@@ -1,9 +1,10 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { ChevronRight, Play, User, Zap } from "lucide-react";
+import { ChevronRight, Play, User } from "lucide-react";
 
 const BANNER_SRC = "/images/default_banner.png";
+const BRAND_SRC = "/images/quizup.png";
 
 const Landing: React.FC = () => {
   const navigate = useNavigate();
@@ -27,57 +28,20 @@ const Landing: React.FC = () => {
       />
 
       <div className="relative z-10 mx-auto flex min-h-[100dvh] w-full max-w-md flex-col px-7 pb-[max(1.5rem,env(safe-area-inset-bottom))] pt-[max(1.25rem,env(safe-area-inset-top))]">
-        <div className="flex flex-1 flex-col items-center justify-center text-center">
+        <div className="flex flex-1 flex-col items-center justify-center px-2 text-center">
           <motion.div
-            initial={{ opacity: 0, scale: 0.92 }}
+            initial={{ opacity: 0, scale: 0.96 }}
             animate={{ opacity: 1, scale: 1 }}
-            transition={{ type: "spring", stiffness: 260, damping: 22 }}
-            className="relative mb-7"
+            transition={{ type: "spring", stiffness: 260, damping: 24 }}
+            className="w-full max-w-[min(22rem,88vw)]"
           >
-            <span
-              className="absolute -left-1 -top-2 text-lg text-sky-300 drop-shadow-md"
-              aria-hidden
-            >
-              ✦
-            </span>
-            <span
-              className="absolute -right-2 top-3 text-sm text-amber-300 drop-shadow-md"
-              aria-hidden
-            >
-              ✧
-            </span>
-            <span
-              className="absolute -bottom-1 left-1/2 text-xs text-pink-300 drop-shadow-md"
-              aria-hidden
-            >
-              ·✦·
-            </span>
-            <div className="flex h-[7.25rem] w-[7.25rem] items-center justify-center rounded-full border-[5px] border-white bg-gradient-to-b from-[#ff4d4d] to-[#d91a1a] shadow-[0_12px_40px_rgba(0,0,0,0.45),0_0_0_1px_rgba(255,255,255,0.15)_inset]">
-              <Zap
-                className="h-[3.35rem] w-[3.35rem] fill-white text-white"
-                strokeWidth={1.75}
-                aria-hidden
-              />
-            </div>
-          </motion.div>
-
-          <motion.h1
-            initial={{ opacity: 0, y: 12 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.08 }}
-            className="text-[2.65rem] font-black tracking-tight text-white drop-shadow-[0_4px_14px_rgba(0,0,0,0.55)]"
-          >
-            QuizUp
-          </motion.h1>
-
-          <motion.div
-            initial={{ opacity: 0, y: 12 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.14 }}
-            className="mt-4 max-w-[17.5rem] space-y-1 text-[0.95rem] font-semibold leading-snug text-white/95 drop-shadow-[0_2px_10px_rgba(0,0,0,0.45)]"
-          >
-            <p>The biggest trivia community.</p>
-            <p>Millions of topics. Endless fun.</p>
+            <img
+              src={BRAND_SRC}
+              alt="QuizUp — The biggest trivia community. Millions of topics. Endless fun."
+              className="mx-auto h-auto w-full select-none drop-shadow-[0_8px_32px_rgba(0,0,0,0.45)]"
+              draggable={false}
+              decoding="async"
+            />
           </motion.div>
         </div>
 
