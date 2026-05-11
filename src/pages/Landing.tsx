@@ -1,105 +1,26 @@
-import React, { useMemo } from "react";
+import React from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { ChevronRight, Play, User, Zap } from "lucide-react";
 
-const TILE_BACKGROUNDS = [
-  "#14b8a6",
-  "#14532d",
-  "#fbcfe8",
-  "#ea580c",
-  "#27272a",
-  "#7c3aed",
-  "#dc2626",
-  "#eab308",
-  "#0d9488",
-  "#166534",
-  "#f9a8d4",
-  "#c2410c",
-  "#18181b",
-  "#9333ea",
-  "#b91c1c",
-  "#ca8a04",
-  "#2dd4bf",
-  "#15803d",
-  "#fda4af",
-  "#f97316",
-  "#3f3f46",
-  "#a855f7",
-  "#ef4444",
-  "#fde047",
-];
-
-const TILE_ICONS = [
-  "🎬",
-  "⌨️",
-  "🌍",
-  "🐞",
-  "🚌",
-  "🎠",
-  "⚡",
-  "⚛️",
-  "🧭",
-  "🎵",
-  "🎮",
-  "🎥",
-  "🧭",
-  "👤",
-  "🐻",
-  "👑",
-  "💀",
-  "🎯",
-  "📷",
-  "🎨",
-  "🔬",
-  "🎪",
-  "🌟",
-  "🎸",
-];
-
-const GRID_COLS = 14;
-const GRID_ROWS = 22;
-
-function LandingIconGrid() {
-  const tiles = useMemo(() => {
-    const total = GRID_COLS * GRID_ROWS;
-    return Array.from({ length: total }, (_, i) => {
-      const bg = TILE_BACKGROUNDS[(i * 7 + i % 3) % TILE_BACKGROUNDS.length];
-      const icon = TILE_ICONS[(i * 11) % TILE_ICONS.length];
-      return { bg, icon, key: i };
-    });
-  }, []);
-
-  return (
-    <div
-      className="absolute inset-0 min-h-[100dvh] grid gap-[2px] bg-neutral-950/80 p-[2px]"
-      style={{
-        gridTemplateColumns: `repeat(${GRID_COLS}, minmax(0, 1fr))`,
-        gridTemplateRows: `repeat(${GRID_ROWS}, minmax(0, 1fr))`,
-      }}
-      aria-hidden
-    >
-      {tiles.map(({ bg, icon, key }) => (
-        <div
-          key={key}
-          className="flex min-h-0 min-w-0 items-center justify-center text-[clamp(0.65rem,2.8vw,0.95rem)] leading-none shadow-[inset_0_0_0_1px_rgba(0,0,0,0.12)]"
-          style={{ backgroundColor: bg }}
-        >
-          <span className="select-none drop-shadow-[0_1px_1px_rgba(0,0,0,0.35)]">{icon}</span>
-        </div>
-      ))}
-    </div>
-  );
-}
+const BANNER_SRC = "/images/default_banner.png";
 
 const Landing: React.FC = () => {
   const navigate = useNavigate();
 
   return (
     <div className="relative min-h-[100dvh] w-full overflow-hidden font-display">
-      <LandingIconGrid />
+      <div className="pointer-events-none absolute inset-0 min-h-[100dvh]" aria-hidden>
+        <img
+          src={BANNER_SRC}
+          alt=""
+          className="h-full min-h-[100dvh] w-full object-cover object-center"
+          decoding="async"
+          fetchPriority="high"
+        />
+      </div>
 
-      {/* Dim overlay so foreground stays legible on busy grid */}
+      {/* Dim overlay so foreground stays legible on busy artwork */}
       <div
         className="pointer-events-none absolute inset-0 bg-gradient-to-b from-black/55 via-black/50 to-black/60"
         aria-hidden
