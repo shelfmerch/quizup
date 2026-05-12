@@ -11,7 +11,9 @@
     "seed": "node src/scripts/seed.js",
     "migrate:s3": "node src/scripts/migrateImagesToS3.js",
     "migrate:s3:upload-only": "node src/scripts/migrateImagesToS3.js --upload-only",
-    "migrate:s3:animal-celebrity": "node src/scripts/migrateImagesToS3.js --upload-only --folders=name-the-celebrity-seed,name-the-animal-seed"
+    "migrate:s3:animal-celebrity": "node src/scripts/migrateImagesToS3.js --upload-only --folders=name-the-celebrity-seed,name-the-animal-seed",
+    "migrate:images:s3": "node src/scripts/migrateAllImagesToS3.js",
+    "migrate:images:s3:dry-run": "node src/scripts/migrateAllImagesToS3.js --dry-run"
   },
   "dependencies": {
     "@google/generative-ai": "^0.21.0",
