@@ -241,7 +241,9 @@ const CategoryDetail: React.FC = () => {
               </button>
 
               <button
-                onClick={() => navigate(`/leaderboard`)}
+                onClick={() => navigate(`/leaderboard`, {
+                  state: { categoryId: category.id, categoryName: category.name },
+                })}
                 className="bg-white rounded-xl flex-1 flex items-center gap-3 px-4 shadow-md font-bold active:scale-[0.98] transition-transform"
                 style={{ color: '#9c27b0' }}
               >

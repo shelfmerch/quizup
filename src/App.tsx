@@ -24,6 +24,7 @@ import NotFound from "./pages/NotFound";
 import CategoryDetail from "./pages/CategoryDetail";
 import AdminRoute from "@/components/AdminRoute";
 import AdminPage from "./pages/AdminPage";
+import People from "./pages/People";
 
 const queryClient = new QueryClient();
 
@@ -50,6 +51,7 @@ const Shell: React.FC<{ children: React.ReactNode }> = ({ children }) => (
             <Route path="/settings" element={<SettingsPage />} />
             <Route path="/notifications" element={<Notifications />} />
             <Route path="/category/:categoryId" element={<CategoryDetail />} />
+            <Route path="/people" element={<People />} />
           </Route>
 
           {/* Full-screen routes (no bottom nav) */}
