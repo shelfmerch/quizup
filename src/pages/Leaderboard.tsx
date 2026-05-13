@@ -112,19 +112,19 @@ const Leaderboard: React.FC = () => {
             <h1 className="font-display font-bold text-3xl text-white tracking-tight">
               Leaderboard
             </h1>
-            {activeTab === "category" && state.categoryName && (
+            {/* {activeTab === "category" && state.categoryName && (
               <p className="text-xs text-purple-400 font-semibold mt-0.5 flex items-center gap-1">
                 <Tag className="w-3 h-3" />
                 {state.categoryName}
               </p>
-            )}
+            )} */}
           </div>
         </div>
 
         {/* Tab toggle — only show when we have a category context */}
         {hasCategoryCtx && (
           <div className="flex border-b border-white/10">
-            {(["global", "category"] as Tab[]).map((tab) => {
+            {(["category", "global"] as Tab[]).map((tab) => {
               const Icon = tab === "global" ? Globe : Tag;
               const label = tab === "global" ? "Global" : state.categoryName ?? "Category";
               return (
