@@ -5,6 +5,7 @@ import { profileService } from "@/services/profileService";
 import { Input } from "@/components/ui/input";
 import { ArrowLeft, Camera } from "lucide-react";
 import { GoogleLogin } from "@react-oauth/google";
+import { toast } from "sonner";
 
 const Signup: React.FC = () => {
   const navigate = useNavigate();
@@ -41,7 +42,9 @@ const Signup: React.FC = () => {
         }
       }
       navigate("/home");
-    } catch {
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : "Sign up failed. Please try again.";
+      toast.error(msg);
     } finally {
       setLoading(false);
     }
@@ -128,8 +131,12 @@ const Signup: React.FC = () => {
 
         {import.meta.env.VITE_GOOGLE_CLIENT_ID ? (
           <>
-            <p className="text-center text-xs text-muted-foreground mt-5 mb-2 uppercase tracking-wider">or</p>
-            <div className="mt-1 flex justify-center">
+            <div className="flex items-center gap-3 mt-5 mb-1">
+              <div className="flex-1 h-px bg-border" />
+              <span className="text-xs text-muted-foreground uppercase tracking-wider">or</span>
+              <div className="flex-1 h-px bg-border" />
+            </div>
+            <div className="mt-2 flex justify-center">
               <GoogleLogin
                 onSuccess={async (res) => {
                   if (!res.credential) return;
@@ -137,16 +144,19 @@ const Signup: React.FC = () => {
                   try {
                     const user = await googleLogin(res.credential);
                     navigate(user.role === "admin" ? "/admin" : "/home");
+                  } catch (err: unknown) {
+                    const msg = err instanceof Error ? err.message : "Google sign-up failed.";
+                    toast.error(msg);
                   } finally {
                     setLoading(false);
                   }
                 }}
-                onError={() => {}}
+                onError={() => toast.error("Google sign-up was cancelled or failed.")}
                 useOneTap={false}
                 text="signup_with"
                 theme="filled_black"
                 size="large"
-                width="100%"
+                width="320"
               />
             </div>
           </>

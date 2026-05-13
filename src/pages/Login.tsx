@@ -4,6 +4,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { Input } from "@/components/ui/input";
 import { ArrowLeft } from "lucide-react";
 import { GoogleLogin } from "@react-oauth/google";
+import { toast } from "sonner";
 
 const Login: React.FC = () => {
   const navigate = useNavigate();
@@ -18,7 +19,9 @@ const Login: React.FC = () => {
     try {
       const user = await login(email, password);
       navigate(user.role === "admin" ? "/admin" : "/home");
-    } catch {
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : "Login failed. Please try again.";
+      toast.error(msg);
     } finally {
       setLoading(false);
     }
@@ -71,24 +74,36 @@ const Login: React.FC = () => {
         </form>
 
         {import.meta.env.VITE_GOOGLE_CLIENT_ID ? (
-          <div className="mt-4 flex justify-center">
-            <GoogleLogin
-              onSuccess={async (res) => {
-                if (!res.credential) return;
-                setLoading(true);
-                try {
-                  const user = await googleLogin(res.credential);
-                  navigate(user.role === "admin" ? "/admin" : "/home");
-                } finally {
-                  setLoading(false);
-                }
-              }}
-              onError={() => {
-                // noop (UI already has minimal error handling elsewhere)
-              }}
-              useOneTap={false}
-            />
-          </div>
+          <>
+            <div className="flex items-center gap-3 mt-5 mb-1">
+              <div className="flex-1 h-px bg-border" />
+              <span className="text-xs text-muted-foreground uppercase tracking-wider">or</span>
+              <div className="flex-1 h-px bg-border" />
+            </div>
+            <div className="mt-2 flex justify-center">
+              <GoogleLogin
+                onSuccess={async (res) => {
+                  if (!res.credential) return;
+                  setLoading(true);
+                  try {
+                    const user = await googleLogin(res.credential);
+                    navigate(user.role === "admin" ? "/admin" : "/home");
+                  } catch (err: unknown) {
+                    const msg = err instanceof Error ? err.message : "Google sign-in failed.";
+                    toast.error(msg);
+                  } finally {
+                    setLoading(false);
+                  }
+                }}
+                onError={() => toast.error("Google sign-in was cancelled or failed.")}
+                useOneTap={false}
+                theme="filled_black"
+                size="large"
+                text="signin_with"
+                width="320"
+              />
+            </div>
+          </>
         ) : null}
 
         <p className="text-center text-sm text-muted-foreground mt-6">
