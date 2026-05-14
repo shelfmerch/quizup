@@ -135,7 +135,7 @@ const fetchJson = (urlStr, bearerToken) =>
 
 /**
  * Search for an image via local SearchStack backend and return the first image URL.
- * Endpoint: GET http://localhost:3001/api/v1/images?q=...
+ * Endpoint: GET http://localhost:3005/api/v1/images?q=...
  * @param {string} questionText
  * @param {string} correctOption
  * @returns {Promise<string|null>} image URL or null
@@ -157,7 +157,7 @@ async function resolveEmptyImageFromSerp(questionText, correctOption, directQuer
     // Note: User provided https://api.searchstack.dev/v1/search but it throws ENOTFOUND locally,
     // so we use the local URL. The endpoint for images is /api/v1/images.
     const { data } = await axios.get(
-      "http://localhost:3001/api/v1/images",
+      "http://localhost:3005/api/v1/images",
       {
         params: {
           q: query,
