@@ -1,7 +1,9 @@
 /**
- * SerpAPI Google Images search for auto-filling question imageUrl.
- * Set SERP_API_KEY on the server — see https://serpapi.com/
+ * SearchStack image search for auto-filling question imageUrl.
+ * Calls the local SearchStack backend running on http://localhost:3001
+ * Set SEARCHSTACK_KEY in backend/.env
  */
+const http = require("http");
 const https = require("https");
 
 const STOP = new Set([
@@ -67,8 +69,8 @@ const STOP = new Set([
   "as",
 ]);
 
-function getSerpKey() {
-  return (process.env.SERP_API_KEY || "").trim();
+function getSearchStackKey() {
+  return (process.env.SEARCHSTACK_KEY || "").trim();
 }
 
 function buildSearchQuery(questionText, correctOption) {
@@ -93,51 +95,109 @@ function buildSearchQuery(questionText, correctOption) {
 }
 
 /**
- * @param {string} url
+ * Fetch JSON from a URL with optional Bearer token.
+ * Automatically uses http for localhost, https for external.
+ * @param {string} urlStr
+ * @param {string} [bearerToken]
  * @returns {Promise<any>}
  */
-const fetchJson = (url) =>
+const fetchJson = (urlStr, bearerToken) =>
   new Promise((resolve, reject) => {
-    https
-      .get(url, (res) => {
-        let data = "";
-        res.on("data", (c) => (data += c));
-        res.on("end", () => {
-          if (res.statusCode && res.statusCode >= 400) {
-            return reject(new Error(`HTTP ${res.statusCode}`));
-          }
-          try {
-            resolve(JSON.parse(data));
-          } catch (e) {
-            reject(e);
-          }
-        });
-      })
-      .on("error", reject);
+    const parsedUrl = new URL(urlStr);
+    const transport = parsedUrl.protocol === "http:" ? http : https;
+    const options = {
+      hostname: parsedUrl.hostname,
+      port: parsedUrl.port || (parsedUrl.protocol === "http:" ? 80 : 443),
+      path: parsedUrl.pathname + parsedUrl.search,
+      method: "GET",
+      headers: {
+        "Accept": "application/json",
+        ...(bearerToken ? { Authorization: `Bearer ${bearerToken}` } : {}),
+      },
+    };
+    const req = transport.request(options, (res) => {
+      let data = "";
+      res.on("data", (c) => (data += c));
+      res.on("end", () => {
+        if (res.statusCode && res.statusCode >= 400) {
+          return reject(new Error(`HTTP ${res.statusCode}`));
+        }
+        try {
+          resolve(JSON.parse(data));
+        } catch (e) {
+          reject(e);
+        }
+      });
+    });
+    req.on("error", reject);
+    req.end();
   });
 
 /**
+ * Search for an image via local SearchStack backend and return the first image URL.
+ * Endpoint: GET http://localhost:3001/api/v1/images?q=...
  * @param {string} questionText
  * @param {string} correctOption
  * @returns {Promise<string|null>} image URL or null
  */
-async function resolveEmptyImageFromSerp(questionText, correctOption) {
-  const key = getSerpKey();
-  if (!key) return null;
+const axios = require("axios");
 
-  const query = buildSearchQuery(questionText, correctOption).slice(0, 80);
-  const url = new URL("https://serpapi.com/search.json");
-  url.searchParams.set("engine", "google_images");
-  url.searchParams.set("q", query);
-  url.searchParams.set("api_key", key);
-  url.searchParams.set("ijn", "0");
+async function resolveEmptyImageFromSerp(questionText, correctOption, directQuery = null) {
+  const key = getSearchStackKey();
+  if (!key) {
+    console.warn("[SearchStack] SEARCHSTACK_KEY not set — skipping image fetch");
+    return null;
+  }
+
+  const query = directQuery ? directQuery.trim().slice(0, 80) : buildSearchQuery(questionText, correctOption).slice(0, 80);
+
+  console.log(`[SearchStack] fetching image with axios for query: "${query}"`);
 
   try {
-    const data = await fetchJson(url.toString());
-    const img = data?.images_results?.[0];
-    return img?.original || img?.link || img?.thumbnail || null;
+    // Note: User provided https://api.searchstack.dev/v1/search but it throws ENOTFOUND locally,
+    // so we use the local URL. The endpoint for images is /api/v1/images.
+    const { data } = await axios.get(
+      "http://localhost:3001/api/v1/images",
+      {
+        params: {
+          q: query,
+          gl: "us",
+          hl: "en",
+        },
+        headers: {
+          Authorization: `Bearer ${key}`,
+        },
+      }
+    );
+
+    // Log full response for debugging
+    if (!data?.success) {
+      console.warn("[SearchStack] API error response:", JSON.stringify(data));
+      return null;
+    }
+
+    // SearchStack response shape (spread by sendSuccess):
+    // { success: true, engine: "google_images", results: { images: [{ imageUrl, thumbnailUrl, link }] } }
+    const img = data?.results?.images?.[0];
+    if (img && typeof img === "object") {
+      const u = img.imageUrl || img.thumbnailUrl || img.link;
+      if (u && typeof u === "string" && /^https?:\/\//i.test(u)) {
+        console.log(`[SearchStack] resolved image: ${u}`);
+        return u;
+      }
+    }
+
+    // Generic fallback picker
+    const fallback = pickImageUrlFromJson(data);
+    if (fallback) {
+      console.log(`[SearchStack] fallback image: ${fallback}`);
+      return fallback;
+    }
+
+    console.warn("[SearchStack] no image found in response:", JSON.stringify(data).slice(0, 300));
+    return null;
   } catch (e) {
-    console.warn("[SerpAPI] image search failed:", e?.message || e);
+    console.warn("[SearchStack] image search failed:", e?.response?.data || e?.message || e);
     return null;
   }
 }
@@ -175,6 +235,18 @@ function pickImageUrlFromJson(obj) {
     const img = o.images_results[0];
     if (img && typeof img === "object") {
       const u = tryStr(img.original) || tryStr(img.link) || tryStr(img.thumbnail);
+      if (u) return u;
+    }
+  }
+  if (Array.isArray(o.images) && o.images.length > 0) {
+    const img = o.images[0];
+    if (img && typeof img === "object") {
+      const u =
+        tryStr(img.original) ||
+        tryStr(img.originalUrl) ||
+        tryStr(img.url) ||
+        tryStr(img.link) ||
+        tryStr(img.thumbnail);
       if (u) return u;
     }
   }
@@ -242,4 +314,3 @@ module.exports = {
   resolveEmptyImageFromSerp,
   resolveEmptyImageFromCustom,
 };
-

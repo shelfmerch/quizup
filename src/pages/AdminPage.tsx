@@ -36,7 +36,7 @@ const AdminPage: React.FC = () => {
   const [bulkJson, setBulkJson] = useState("");
   const [bulkSubmitting, setBulkSubmitting] = useState(false);
   const [bulkResult, setBulkResult] = useState<BulkCreateResponse | null>(null);
-  const [bulkAutoImageProvider, setBulkAutoImageProvider] = useState<"serpapi" | "custom">("serpapi");
+  const [bulkAutoImageProvider, setBulkAutoImageProvider] = useState<"searchstack" | "custom">("searchstack");
   const [bulkCustomImageApiUrl, setBulkCustomImageApiUrl] = useState("");
 
   const refreshCategories = async () => {
@@ -412,7 +412,7 @@ const AdminPage: React.FC = () => {
                     Optional: <code className="text-foreground/80">timeLimit</code> (default 10s),{" "}
                     <code className="text-foreground/80">imageUrl</code>. If{" "}
                     <code className="text-foreground/80">imageUrl</code> is empty or omitted, the server fills it using
-                    the source below: <strong>SerpAPI</strong> (needs <code className="text-foreground/80">SERP_API_KEY</code> on the
+                    the source below: <strong>SearchStack</strong> (needs <code className="text-foreground/80">SEARCHSTACK_KEY</code> on the
                     server) or your <strong>custom HTTPS</strong> URL that includes the placeholder{" "}
                     <code className="text-foreground/80">{"{query}"}</code> (URL-encoded search text from the question + correct
                     option). Custom APIs should return JSON with <code className="text-foreground/80">url</code>,{" "}
@@ -428,15 +428,15 @@ const AdminPage: React.FC = () => {
                         type="radio"
                         name="bulk-auto-image"
                         className="mt-0.5 accent-purple-500"
-                        checked={bulkAutoImageProvider === "serpapi"}
+                        checked={bulkAutoImageProvider === "searchstack"}
                         onChange={() => {
-                          setBulkAutoImageProvider("serpapi");
+                          setBulkAutoImageProvider("searchstack");
                           setBulkResult(null);
                         }}
                       />
                       <span>
-                        <span className="font-semibold text-foreground">SerpAPI</span>{" "}
-                        <span className="text-muted-foreground">(default — Google Images via serpapi.com)</span>
+                        <span className="font-semibold text-foreground">SearchStack</span>{" "}
+                        <span className="text-muted-foreground">(default — Google Images via searchstack.dev)</span>
                       </span>
                     </label>
                     <label className="flex cursor-pointer items-start gap-2 text-xs">

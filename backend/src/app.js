@@ -33,7 +33,7 @@ app.use(
       "http://www.quizup.site",
       "https://www.quizup.site",
       "http://82.29.160.45:8080",
-      "http://82.29.160.45:3001",
+      "http://82.29.160.45:3003",
       "http://localhost:5173",
       "http://localhost:8080",
       "http://localhost:8085",

@@ -305,10 +305,10 @@ const generateQuestionsQueued = async (req, res) => {
 };
 
 // POST /api/admin/questions/bulk
-// { categoryId, questions: [...], autoImageProvider?: "serpapi"|"custom", customImageApiUrl?: string }
+// { categoryId, questions: [...], autoImageProvider?: "searchstack"|"custom", customImageApiUrl?: string }
 const createBulkQuestions = async (req, res) => {
   try {
-    const { categoryId, questions, autoImageProvider = "serpapi", customImageApiUrl = "" } = req.body;
+    const { categoryId, questions, autoImageProvider = "searchstack", customImageApiUrl = "" } = req.body;
 
     if (!categoryId || typeof categoryId !== "string") {
       return res.status(422).json({ error: "categoryId is required" });
@@ -320,7 +320,7 @@ const createBulkQuestions = async (req, res) => {
       return res.status(422).json({ error: "Maximum 200 questions per bulk request" });
     }
 
-    const provider = String(autoImageProvider || "serpapi").toLowerCase();
+    const provider = String(autoImageProvider || "searchstack").toLowerCase();
     const customTemplate = String(customImageApiUrl || "").trim();
     if (provider === "custom") {
       if (!customTemplate) {
@@ -334,8 +334,8 @@ const createBulkQuestions = async (req, res) => {
       if (!/^https:\/\//i.test(customTemplate) || customTemplate.length > 2048) {
         return res.status(422).json({ error: "customImageApiUrl must be an https URL (max 2048 chars)" });
       }
-    } else if (provider !== "serpapi") {
-      return res.status(422).json({ error: "autoImageProvider must be serpapi or custom" });
+    } else if (provider !== "searchstack") {
+      return res.status(422).json({ error: "autoImageProvider must be searchstack or custom" });
     }
 
     const slug = categoryId.trim().toLowerCase();
@@ -367,13 +367,17 @@ const createBulkQuestions = async (req, res) => {
         const ci = resolveCorrectIndex(raw.correctIndex, raw.answer, opts);
         // TimeLimit
         const tl = Math.min(120, Math.max(5, Number(raw.timeLimit) || 10));
-        // ImageUrl — empty/missing: SerpAPI (SERP_API_KEY) or admin-provided custom HTTPS template
+        // ImageUrl — empty/missing: SearchStack (SEARCHSTACK_KEY) or admin-provided custom HTTPS template
         let imageUrl = normalizeImageUrl(raw.imageUrl);
         if (!imageUrl) {
           if (provider === "custom") {
             imageUrl = await resolveEmptyImageFromCustom(customTemplate, raw.text.trim(), opts[ci]);
           } else {
-            imageUrl = await resolveEmptyImageFromSerp(raw.text.trim(), opts[ci]);
+            let directQ = raw.answer ? raw.answer.trim() : null;
+            if (directQ && slug === "logos" && !directQ.toLowerCase().includes("logo")) {
+              directQ += " logo";
+            }
+            imageUrl = await resolveEmptyImageFromSerp(raw.text.trim(), opts[ci], directQ);
           }
         }
 

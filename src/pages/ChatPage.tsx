@@ -162,7 +162,7 @@ const ChatPage: React.FC = () => {
       {/* ── WhatsApp-style header ────────────────────────────────────────── */}
       <div
         className="shrink-0 flex items-center gap-3 px-2 py-2 shadow-md z-20"
-        style={{ background: "#075e54" }}
+        style={{ background: "#c53320ff" }}
       >
         <button
           type="button"
@@ -196,12 +196,12 @@ const ChatPage: React.FC = () => {
 
         {/* Action icons */}
         <div className="flex items-center gap-1 text-white">
-          <button className="p-2 rounded-full active:bg-white/10">
+          {/* <button className="p-2 rounded-full active:bg-white/10">
             <Video className="w-5 h-5" />
           </button>
           <button className="p-2 rounded-full active:bg-white/10">
             <Phone className="w-5 h-5" />
-          </button>
+          </button> */}
           <button className="p-2 rounded-full active:bg-white/10">
             <MoreVertical className="w-5 h-5" />
           </button>

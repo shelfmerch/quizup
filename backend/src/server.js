@@ -4,7 +4,7 @@ const connectDB = require("./config/db");
 const app = require("./app");
 const initSockets = require("./sockets");
 
-const PORT = process.env.PORT || 3001;
+const PORT = process.env.PORT || 3003;
 
 const start = async () => {
   // 1. Create HTTP server from Express app
