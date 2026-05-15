@@ -1,6 +1,10 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { ArrowLeft, Sparkles, FileText } from "lucide-react";
+import { 
+  ArrowLeft, Sparkles, FileText, PlusCircle, 
+  Database, Layers, UploadCloud, Clock, 
+  Image as ImageIcon, CheckCircle2, ChevronDown, ListPlus
+} from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { adminService, AdminCategory, AdminQuestion, GenerateQuestionsQueuedResponse, BulkCreateResponse } from "@/services/adminService";
@@ -13,6 +17,8 @@ const AdminPage: React.FC = () => {
   const [selectedSlug, setSelectedSlug] = useState<string>("");
   const [questions, setQuestions] = useState<AdminQuestion[]>([]);
   const [loading, setLoading] = useState(true);
+
+  const [activeTab, setActiveTab] = useState<"manual" | "bulk" | "ai">("manual");
 
   const [topicName, setTopicName] = useState("");
   const [topicSlug, setTopicSlug] = useState("");
@@ -64,7 +70,7 @@ const AdminPage: React.FC = () => {
     return () => {
       cancelled = true;
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- initial load only
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
@@ -95,7 +101,7 @@ const AdminPage: React.FC = () => {
         icon: topicIcon,
         description: topicDescription,
       });
-      toast.success("Topic created");
+      toast.success("Topic created successfully!");
       setTopicName("");
       setTopicSlug("");
       setTopicIcon("🎯");
@@ -124,7 +130,7 @@ const AdminPage: React.FC = () => {
         count,
       });
       toast.success(
-        `Queued ${res.batches} background job(s) for ${count} question(s). They appear here after the worker finishes (usually under a minute).`,
+        `Queued ${res.batches} background job(s) for ${count} question(s). They appear here after the worker finishes.`,
         { duration: 8000 }
       );
     } catch (err) {
@@ -216,7 +222,7 @@ const AdminPage: React.FC = () => {
         timeLimit,
         imageUrl: qImageUrl.trim() || null,
       });
-      toast.success("Question added");
+      toast.success("Question added successfully!");
       setQText("");
       setOpt0("");
       setOpt1("");
@@ -232,427 +238,527 @@ const AdminPage: React.FC = () => {
     }
   };
 
-  return (
-    <div className="min-h-screen bg-quizup-dark max-w-md mx-auto pb-10">
-      <div className="quizup-header-teal px-4 py-3 flex items-center gap-3 sticky top-0 z-10">
-        <button type="button" onClick={() => navigate("/home")} className="text-foreground">
-          <ArrowLeft className="w-5 h-5" />
-        </button>
-        <h1 className="font-display font-bold text-foreground text-base">Quiz admin</h1>
+  const renderManualTab = () => (
+    <form onSubmit={handleCreateQuestion} className="space-y-5 animate-in fade-in zoom-in-95 duration-300">
+      <div className="space-y-2">
+        <Label className="text-xs font-bold text-slate-700 uppercase tracking-wider">Question Text</Label>
+        <Input
+          value={qText}
+          onChange={(e) => setQText(e.target.value)}
+          className="bg-white border-slate-300 text-slate-900 text-base py-6 focus-visible:ring-quizup-green shadow-sm"
+          placeholder="What is the capital of France?"
+          required
+        />
       </div>
 
-      <div className="p-4 space-y-8">
-        {loading ? (
-          <p className="text-muted-foreground text-sm">Loading…</p>
-        ) : (
-          <>
-            <section className="space-y-3">
-              <h2 className="font-display font-bold text-foreground text-lg">Create topic</h2>
-              <p className="text-xs text-muted-foreground">
-                Topics use a URL slug for matchmaking (e.g. <span className="text-foreground/80">science</span>). Leave slug
-                blank to auto-generate from the name.
-              </p>
-              <form onSubmit={handleCreateTopic} className="space-y-3 bg-quizup-card p-4 rounded-lg">
-                <div>
-                  <Label className="text-xs text-muted-foreground">Name</Label>
-                  <Input
-                    value={topicName}
-                    onChange={(e) => setTopicName(e.target.value)}
-                    className="mt-1 bg-quizup-dark border-border text-foreground"
-                    placeholder="e.g. Space & Astronomy"
-                    required
-                  />
-                </div>
-                <div>
-                  <Label className="text-xs text-muted-foreground">Slug (optional)</Label>
-                  <Input
-                    value={topicSlug}
-                    onChange={(e) => setTopicSlug(e.target.value)}
-                    className="mt-1 bg-quizup-dark border-border text-foreground"
-                    placeholder="space-astronomy"
-                  />
-                </div>
-                <div className="grid grid-cols-2 gap-2">
-                  <div>
-                    <Label className="text-xs text-muted-foreground">Icon</Label>
-                    <Input
-                      value={topicIcon}
-                      onChange={(e) => setTopicIcon(e.target.value)}
-                      className="mt-1 bg-quizup-dark border-border text-foreground"
-                      placeholder="Emoji, URL, or upload"
-                    />
-                    <div className="mt-2 flex flex-wrap items-center gap-2">
-                      <label className="text-xs text-quizup-green font-semibold cursor-pointer">
-                        <input
-                          type="file"
-                          accept="image/jpeg,image/png,image/gif,image/webp,image/svg+xml"
-                          className="hidden"
-                          disabled={topicIconUploading}
-                          onChange={async (e) => {
-                            const file = e.target.files?.[0];
-                            e.target.value = "";
-                            if (!file) return;
-                            setTopicIconUploading(true);
-                            try {
-                              const url = await adminService.uploadQuestionImage(file);
-                              setTopicIcon(url);
-                              toast.success("Icon uploaded");
-                            } catch (err) {
-                              toast.error(err instanceof Error ? err.message : "Upload failed");
-                            } finally {
-                              setTopicIconUploading(false);
-                            }
-                          }}
-                        />
-                        {topicIconUploading ? "Uploading…" : "Upload icon"}
-                      </label>
-                      {topicIcon && topicIcon !== "🎯" ? (
-                        <button
-                          type="button"
-                          onClick={() => setTopicIcon("🎯")}
-                          className="text-xs text-muted-foreground underline"
-                        >
-                          Reset icon
-                        </button>
-                      ) : null}
-                    </div>
-                    {topicIcon && (topicIcon.startsWith("http") || topicIcon.startsWith("/") || topicIcon.startsWith("data:")) && resolveQuestionImageUrl(topicIcon) ? (
-                      <img
-                        src={resolveQuestionImageUrl(topicIcon)}
-                        alt=""
-                        className="mt-2 w-12 h-12 object-contain rounded-md border border-border bg-quizup-dark"
-                      />
-                    ) : null}
-                  </div>
-                  <div>
-                    <Label className="text-xs text-muted-foreground">Description</Label>
-                    <Input
-                      value={topicDescription}
-                      onChange={(e) => setTopicDescription(e.target.value)}
-                      className="mt-1 bg-quizup-dark border-border text-foreground"
-                      placeholder="Short blurb"
-                    />
-                  </div>
-                </div>
-                <button
-                  type="submit"
-                  className="w-full h-11 rounded-lg quizup-header-green text-foreground font-display font-bold text-sm"
-                >
-                  CREATE TOPIC
-                </button>
-              </form>
-            </section>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="space-y-2">
+          <Label className="text-xs font-bold text-slate-700 uppercase tracking-wider flex items-center justify-between">
+            <span>Image <span className="text-slate-500 font-normal">(Optional)</span></span>
+            {qImageUploading && <span className="text-quizup-green animate-pulse text-[10px]">Uploading...</span>}
+          </Label>
+          <div className="flex items-center gap-2">
+            <Input
+              value={qImageUrl}
+              onChange={(e) => setQImageUrl(e.target.value)}
+              className="bg-white border-slate-300 text-slate-900 flex-1 shadow-sm"
+              placeholder="Image URL or Upload"
+            />
+            <label className="flex items-center justify-center w-10 h-10 rounded-md bg-white border border-slate-300 hover:bg-slate-50 cursor-pointer transition-colors shrink-0 shadow-sm">
+              <UploadCloud className="w-4 h-4 text-quizup-green" />
+              <input
+                type="file"
+                accept="image/jpeg,image/png,image/gif,image/webp"
+                className="hidden"
+                disabled={qImageUploading}
+                onChange={async (e) => {
+                  const file = e.target.files?.[0];
+                  e.target.value = "";
+                  if (!file) return;
+                  setQImageUploading(true);
+                  try {
+                    const url = await adminService.uploadQuestionImage(file);
+                    setQImageUrl(url);
+                    toast.success("Image uploaded");
+                  } catch (err) {
+                    toast.error(err instanceof Error ? err.message : "Upload failed");
+                  } finally {
+                    setQImageUploading(false);
+                  }
+                }}
+              />
+            </label>
+          </div>
+          {resolveQuestionImageUrl(qImageUrl) && (
+            <div className="mt-3 relative rounded-lg overflow-hidden border border-slate-200 bg-slate-100 w-full h-32 flex items-center justify-center group shadow-sm">
+              <img src={resolveQuestionImageUrl(qImageUrl)!} alt="Preview" className="max-w-full max-h-full object-contain" />
+              <button
+                type="button"
+                onClick={() => setQImageUrl("")}
+                className="absolute inset-0 bg-white/80 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-red-600 font-semibold text-sm backdrop-blur-sm"
+              >
+                Remove Image
+              </button>
+            </div>
+          )}
+        </div>
 
-            <section className="space-y-3">
-              <h2 className="font-display font-bold text-foreground text-lg">Add questions</h2>
-              <p className="text-xs text-muted-foreground leading-relaxed">
-                You can add any number of questions per topic. Each live match randomly picks{" "}
-                <span className="text-foreground font-semibold">7</span> different questions from that
-                pool (or all of them if fewer than 7 exist).
-              </p>
-              <div>
-                <Label className="text-xs text-muted-foreground">Topic</Label>
-                <select
-                  value={selectedSlug}
-                  onChange={(e) => setSelectedSlug(e.target.value)}
-                  className="mt-1 w-full h-11 rounded-md bg-quizup-card border border-border text-foreground px-3 text-sm"
+        <div className="space-y-2">
+          <Label className="text-xs font-bold text-slate-700 uppercase tracking-wider">Time Limit (sec)</Label>
+          <div className="flex items-center gap-3">
+             <div className="w-10 h-10 rounded-md bg-white border border-slate-300 flex items-center justify-center shadow-sm">
+               <Clock className="w-4 h-4 text-amber-500" />
+             </div>
+             <Input
+                type="number"
+                min={5}
+                max={120}
+                value={timeLimit}
+                onChange={(e) => setTimeLimit(Number(e.target.value) || 10)}
+                className="bg-white border-slate-300 text-slate-900 font-mono text-lg flex-1 h-10 shadow-sm"
+             />
+          </div>
+        </div>
+      </div>
+
+      <div className="space-y-3 pt-2">
+        <Label className="text-xs font-bold text-slate-700 uppercase tracking-wider">Options & Correct Answer</Label>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {(["A", "B", "C", "D"] as const).map((label, i) => {
+            const isCorrect = correctIndex === i;
+            return (
+              <div 
+                key={label} 
+                className={`relative flex items-center border rounded-lg overflow-hidden transition-all duration-300 shadow-sm ${isCorrect ? 'border-quizup-green bg-green-50 shadow-[0_0_15px_rgba(46,204,113,0.15)]' : 'border-slate-300 bg-white hover:border-slate-400'}`}
+              >
+                <button
+                  type="button"
+                  onClick={() => setCorrectIndex(i)}
+                  className={`w-12 h-full absolute left-0 top-0 bottom-0 flex items-center justify-center font-display font-bold text-lg transition-colors border-r ${isCorrect ? 'bg-quizup-green text-white border-quizup-green' : 'bg-slate-100 text-slate-500 border-slate-300 hover:bg-slate-200 hover:text-slate-900'}`}
+                  title={`Set option ${label} as correct`}
                 >
-                  <option value="">Select a topic…</option>
-                  {categories.map((c) => (
-                    <option key={c.slug} value={c.slug}>
-                      {c.icon} {c.name} ({c.questionCount} Q)
-                    </option>
+                  {label}
+                </button>
+                <Input
+                  value={[opt0, opt1, opt2, opt3][i]}
+                  onChange={(e) => [setOpt0, setOpt1, setOpt2, setOpt3][i](e.target.value)}
+                  className="pl-16 bg-transparent border-0 h-12 focus-visible:ring-0 focus-visible:ring-offset-0 text-slate-900"
+                  placeholder={`Option ${label}`}
+                  required
+                />
+                {isCorrect && (
+                  <CheckCircle2 className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-quizup-green pointer-events-none" />
+                )}
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
+      <button
+        type="submit"
+        className="w-full h-12 mt-4 rounded-xl bg-red-400 hover:from-red-500 hover:to-quizup-green text-white font-display font-bold text-base shadow-lg shadow-quizup-green/20 transition-all hover:scale-[1.02] active:scale-[0.98]"
+      >
+        ADD QUESTION
+      </button>
+    </form>
+  );
+
+  const renderBulkTab = () => (
+    <form onSubmit={handleBulkImport} className="space-y-5 animate-in fade-in zoom-in-95 duration-300">
+       <div className="bg-purple-50 border border-purple-200 rounded-xl p-4 shadow-sm">
+          <div className="flex items-start gap-3 text-purple-700 text-sm">
+             <FileText className="w-5 h-5 shrink-0 mt-0.5 text-purple-500" />
+             <div>
+                <strong className="block text-purple-900 mb-1">Bulk Import Guide</strong>
+                Paste a JSON array of questions. Required: <code className="bg-purple-100 px-1 py-0.5 rounded text-purple-800">text</code>, <code className="bg-purple-100 px-1 py-0.5 rounded text-purple-800">options</code> (4 strings), <code className="bg-purple-100 px-1 py-0.5 rounded text-purple-800">correctIndex</code> (0–3). Optional: <code className="bg-purple-100 px-1 py-0.5 rounded text-purple-800">timeLimit</code>, <code className="bg-purple-100 px-1 py-0.5 rounded text-purple-800">imageUrl</code>.
+             </div>
+          </div>
+       </div>
+
+       <div className="space-y-3 p-4 rounded-xl border border-slate-200 bg-slate-50 shadow-sm">
+          <Label className="text-xs font-bold text-slate-700 uppercase tracking-wider flex items-center gap-2">
+            <ImageIcon className="w-4 h-4 text-purple-500" /> Auto-fill Missing Images
+          </Label>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+             <label className={`cursor-pointer flex items-center p-3 rounded-lg border transition-colors shadow-sm ${bulkAutoImageProvider === 'searchstack' ? 'bg-purple-50 border-purple-300' : 'bg-white border-slate-200 hover:bg-slate-50'}`}>
+                <input type="radio" name="autoImg" checked={bulkAutoImageProvider === 'searchstack'} onChange={() => setBulkAutoImageProvider('searchstack')} className="sr-only" />
+                <div className={`w-4 h-4 rounded-full border mr-3 flex items-center justify-center ${bulkAutoImageProvider === 'searchstack' ? 'border-purple-500 bg-purple-500' : 'border-slate-400 bg-white'}`}>
+                   {bulkAutoImageProvider === 'searchstack' && <div className="w-1.5 h-1.5 bg-white rounded-full" />}
+                </div>
+                <div className="text-sm">
+                   <p className="font-semibold text-slate-900">SearchStack</p>
+                   <p className="text-xs text-slate-500">Google Images API</p>
+                </div>
+             </label>
+             <label className={`cursor-pointer flex items-center p-3 rounded-lg border transition-colors shadow-sm ${bulkAutoImageProvider === 'custom' ? 'bg-purple-50 border-purple-300' : 'bg-white border-slate-200 hover:bg-slate-50'}`}>
+                <input type="radio" name="autoImg" checked={bulkAutoImageProvider === 'custom'} onChange={() => setBulkAutoImageProvider('custom')} className="sr-only" />
+                <div className={`w-4 h-4 rounded-full border mr-3 flex items-center justify-center ${bulkAutoImageProvider === 'custom' ? 'border-purple-500 bg-purple-500' : 'border-slate-400 bg-white'}`}>
+                   {bulkAutoImageProvider === 'custom' && <div className="w-1.5 h-1.5 bg-white rounded-full" />}
+                </div>
+                <div className="text-sm">
+                   <p className="font-semibold text-slate-900">Custom API</p>
+                   <p className="text-xs text-slate-500">HTTPS GET request</p>
+                </div>
+             </label>
+          </div>
+          
+          {bulkAutoImageProvider === "custom" && (
+            <div className="pt-2 animate-in slide-in-from-top-2 duration-300">
+              <Input
+                type="url"
+                value={bulkCustomImageApiUrl}
+                onChange={(e) => setBulkCustomImageApiUrl(e.target.value)}
+                placeholder="https://your-server.com/api/image?q={query}"
+                className="bg-white border-purple-200 text-slate-900 font-mono focus-visible:ring-purple-500 shadow-sm"
+              />
+            </div>
+          )}
+       </div>
+
+       <div className="space-y-2">
+         <div className="flex items-center justify-between">
+           <Label className="text-xs font-bold text-slate-700 uppercase tracking-wider">JSON Payload</Label>
+           {bulkJson.trim() && (
+             <span className={`text-xs font-semibold px-2 py-0.5 rounded ${parseBulkJson(bulkJson) ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
+               {parseBulkJson(bulkJson) ? `✓ ${parseBulkJson(bulkJson)?.length} valid items` : '⚠ Invalid JSON'}
+             </span>
+           )}
+         </div>
+         <textarea
+            value={bulkJson}
+            onChange={(e) => { setBulkJson(e.target.value); setBulkResult(null); }}
+            rows={8}
+            className="w-full rounded-xl bg-slate-50 border border-slate-300 text-slate-800 px-4 py-3 text-sm font-mono placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-purple-500/50 focus:border-purple-500 shadow-inner custom-scrollbar"
+            placeholder={'[\n  {\n    "text": "What is the capital of France?",\n    "options": ["Berlin", "Madrid", "Paris", "Rome"],\n    "correctIndex": 2,\n    "timeLimit": 10\n  }\n]'}
+          />
+       </div>
+
+       {bulkResult && (
+         <div className={`text-sm p-4 rounded-xl border shadow-sm ${bulkResult.errors.length > 0 ? 'bg-red-50 border-red-200' : 'bg-green-50 border-green-200'}`}>
+            <p className="font-semibold text-slate-900 mb-2 flex items-center gap-2">
+               {bulkResult.errors.length === 0 ? <CheckCircle2 className="w-4 h-4 text-green-600" /> : null}
+               Result: <span className="text-green-700">{bulkResult.created} created</span>
+               {bulkResult.failed > 0 && <span className="text-red-600 mx-1">| {bulkResult.failed} failed</span>}
+            </p>
+            {bulkResult.errors.length > 0 && (
+              <div className="mt-2 bg-white rounded-lg p-2 max-h-32 overflow-y-auto custom-scrollbar border border-red-100 shadow-inner">
+                <ul className="space-y-1">
+                  {bulkResult.errors.map((err) => (
+                    <li key={err.index} className="text-red-700 text-xs font-mono">
+                      <span className="text-red-600 font-bold">#{err.index + 1}</span> "{err.text.substring(0, 30)}...": {err.error}
+                    </li>
                   ))}
-                </select>
+                </ul>
+              </div>
+            )}
+         </div>
+       )}
+
+       <button
+        type="submit"
+        disabled={bulkSubmitting || !bulkJson.trim() || !parseBulkJson(bulkJson)}
+        className="w-full h-12 rounded-xl bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-indigo-600 hover:to-purple-600 text-white font-display font-bold text-base shadow-lg shadow-purple-500/20 transition-all disabled:opacity-50 disabled:pointer-events-none hover:scale-[1.02] active:scale-[0.98]"
+      >
+        {bulkSubmitting ? "IMPORTING BATCH..." : "IMPORT JSON"}
+      </button>
+    </form>
+  );
+
+  const renderAiTab = () => (
+    <form onSubmit={handleGenerateAiQuestions} className="space-y-6 animate-in fade-in zoom-in-95 duration-300 text-center py-6">
+       <div className="w-20 h-20 mx-auto rounded-2xl bg-gradient-to-br from-emerald-400 to-teal-500 p-[2px] shadow-lg shadow-emerald-500/20">
+         <div className="w-full h-full bg-white rounded-[14px] flex items-center justify-center">
+            <Sparkles className="w-10 h-10 text-emerald-500 animate-pulse" />
+         </div>
+       </div>
+       
+       <div>
+         <h3 className="font-display font-bold text-2xl mb-2 text-transparent bg-clip-text bg-gradient-to-r from-emerald-600 to-teal-600">AI Generator</h3>
+         <p className="text-sm text-slate-500 max-w-sm mx-auto">
+            Harness the power of Gemini to automatically generate rich, context-aware questions with images for this topic.
+         </p>
+       </div>
+
+       <div className="max-w-xs mx-auto space-y-2">
+         <Label className="text-xs font-bold text-slate-700 uppercase tracking-wider">Number of Questions</Label>
+         <div className="relative">
+            <Input
+              type="number"
+              min={1}
+              max={500}
+              value={aiCount}
+              onChange={(e) => setAiCount(Number(e.target.value) || 0)}
+              className="bg-white border-slate-300 text-slate-900 text-center text-2xl font-bold h-16 focus-visible:ring-emerald-500 shadow-sm"
+            />
+         </div>
+       </div>
+
+       <button
+        type="submit"
+        disabled={aiGenerating}
+        className="w-full max-w-xs mx-auto h-14 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-teal-500 hover:to-emerald-500 text-white font-display font-bold text-lg shadow-[0_0_20px_rgba(16,185,129,0.3)] transition-all disabled:opacity-50 disabled:pointer-events-none hover:scale-[1.05] active:scale-[0.95] flex items-center justify-center gap-2"
+      >
+        {aiGenerating ? (
+           <>
+            <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+            QUEUING...
+           </>
+        ) : (
+           <>
+            GENERATE NOW <Sparkles className="w-5 h-5" />
+           </>
+        )}
+      </button>
+    </form>
+  );
+
+  return (
+    <div className="min-h-screen bg-slate-50 text-slate-900 pb-20 font-sans">
+      {/* Header */}
+      <div className="sticky top-0 z-50 bg-white/80 backdrop-blur-md border-b border-slate-200 shadow-sm">
+        <div className="max-w-6xl mx-auto px-4 h-16 flex items-center gap-4">
+          <button 
+            type="button" 
+            onClick={() => navigate("/home")} 
+            className="p-2 rounded-full hover:bg-slate-100 transition-colors text-slate-600 hover:text-slate-900"
+          >
+            <ArrowLeft className="w-5 h-5" />
+          </button>
+          <div className="flex items-center gap-3">
+            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-quizup-green to-teal-500 flex items-center justify-center shadow-md shadow-teal-500/20">
+              <Database className="w-4 h-4 text-white" />
+            </div>
+            <h1 className="font-display font-bold text-lg tracking-wide text-slate-900">Quiz Admin Console</h1>
+          </div>
+        </div>
+      </div>
+
+      <div className="max-w-6xl mx-auto p-4 md:p-6 space-y-8 mt-4">
+        {loading ? (
+          <div className="flex flex-col items-center justify-center h-64 space-y-4">
+             <div className="w-10 h-10 border-4 border-quizup-green border-t-transparent rounded-full animate-spin"></div>
+             <p className="text-slate-500 font-medium text-sm animate-pulse">Loading Admin Workspace...</p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+            
+            {/* Left Column: Topics Sidebar */}
+            <div className="lg:col-span-4 space-y-6 lg:sticky lg:top-24">
+              
+              {/* Select Topic */}
+              <div className="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm relative overflow-hidden group">
+                <div className="absolute top-0 right-0 w-32 h-32 bg-slate-50 rounded-full blur-[50px] -mr-10 -mt-10 transition-all group-hover:bg-slate-100" />
+                <div className="flex items-center gap-2 mb-4 relative z-10">
+                  <Layers className="w-5 h-5 text-amber-500" />
+                  <h2 className="font-display font-bold text-lg text-slate-900">Active Topic</h2>
+                </div>
+                <div className="relative z-10">
+                  <select
+                    value={selectedSlug}
+                    onChange={(e) => setSelectedSlug(e.target.value)}
+                    className="w-full h-12 rounded-xl bg-slate-50 border border-slate-200 text-slate-900 px-4 text-sm font-medium appearance-none focus:outline-none focus:border-quizup-green focus:ring-2 focus:ring-quizup-green/20 transition-all cursor-pointer hover:bg-white shadow-sm"
+                  >
+                    <option value="" disabled className="text-slate-500">Choose a topic to manage...</option>
+                    {categories.map((c) => (
+                      <option key={c.slug} value={c.slug}>
+                        {c.icon} {c.name} ({c.questionCount} Qs)
+                      </option>
+                    ))}
+                  </select>
+                  <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-slate-500">
+                    <ChevronDown className="w-4 h-4" />
+                  </div>
+                </div>
               </div>
 
-              {selectedSlug && (
-                <form onSubmit={handleGenerateAiQuestions} className="space-y-3 bg-quizup-card p-4 rounded-lg border border-quizup-green/30">
-                  <div className="flex items-center gap-2 text-quizup-green">
-                    <Sparkles className="w-4 h-4 shrink-0" />
-                    <h3 className="font-display font-bold text-foreground text-sm">Generate with AI</h3>
-                  </div>
-                  <p className="text-xs text-muted-foreground leading-relaxed">
-                    Uses Gemini + image APIs on the server. Jobs run in the background (up to 5 questions per job). Requires{" "}
-                    <code className="text-foreground/80">REDIS_URL</code>, <code className="text-foreground/80">GEMINI_API_KEY</code>, and worker
-                    running.
-                  </p>
-                  <div>
-                    <Label className="text-xs text-muted-foreground">How many questions</Label>
+              {/* Create Topic Card */}
+              <div className="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm">
+                <h3 className="font-display font-bold text-xs text-slate-500 mb-4 uppercase tracking-wider flex items-center gap-2">
+                   <PlusCircle className="w-3 h-3" /> Create New Topic
+                </h3>
+                <form onSubmit={handleCreateTopic} className="space-y-4">
+                  <div className="space-y-1.5">
+                    <Label className="text-xs font-semibold text-slate-700">Name</Label>
                     <Input
-                      type="number"
-                      min={1}
-                      max={500}
-                      value={aiCount}
-                      onChange={(e) => setAiCount(Number(e.target.value) || 0)}
-                      className="mt-1 bg-quizup-dark border-border text-foreground"
-                    />
-                  </div>
-                  <button
-                    type="submit"
-                    disabled={aiGenerating}
-                    className="w-full h-11 rounded-lg bg-quizup-green/90 hover:bg-quizup-green text-quizup-dark font-display font-bold text-sm disabled:opacity-50 disabled:pointer-events-none"
-                  >
-                    {aiGenerating ? "QUEUING…" : "QUEUE AI GENERATION"}
-                  </button>
-                </form>
-              )}
-
-              {selectedSlug && (
-                <form onSubmit={handleBulkImport} className="space-y-3 bg-quizup-card p-4 rounded-lg border border-purple-500/30">
-                  <div className="flex items-center gap-2 text-purple-400">
-                    <FileText className="w-4 h-4 shrink-0" />
-                    <h3 className="font-display font-bold text-foreground text-sm">Bulk Import (JSON)</h3>
-                  </div>
-                  <p className="text-xs text-muted-foreground leading-relaxed">
-                    Paste a JSON array of questions. Each object needs:{" "}
-                    <code className="text-foreground/80">text</code>,{" "}
-                    <code className="text-foreground/80">options</code> (4 strings),{" "}
-                    <code className="text-foreground/80">correctIndex</code> (0–3).{" "}
-                    Optional: <code className="text-foreground/80">timeLimit</code> (default 10s),{" "}
-                    <code className="text-foreground/80">imageUrl</code>. If{" "}
-                    <code className="text-foreground/80">imageUrl</code> is empty or omitted, the server fills it using
-                    the source below: <strong>SearchStack</strong> (needs <code className="text-foreground/80">SEARCHSTACK_KEY</code> on the
-                    server) or your <strong>custom HTTPS</strong> URL that includes the placeholder{" "}
-                    <code className="text-foreground/80">{"{query}"}</code> (URL-encoded search text from the question + correct
-                    option). Custom APIs should return JSON with <code className="text-foreground/80">url</code>,{" "}
-                    <code className="text-foreground/80">imageUrl</code>, or <code className="text-foreground/80">link</code>, or a
-                    plain <code className="text-foreground/80">https://…</code> image URL as the body. Max 200 per batch.
-                  </p>
-                  <fieldset className="space-y-2 rounded-md border border-border/80 bg-quizup-dark/40 p-3">
-                    <legend className="px-1 text-[11px] font-bold uppercase tracking-wide text-foreground/80">
-                      Auto image when <code className="text-foreground/70">imageUrl</code> omitted
-                    </legend>
-                    <label className="flex cursor-pointer items-start gap-2 text-xs">
-                      <input
-                        type="radio"
-                        name="bulk-auto-image"
-                        className="mt-0.5 accent-purple-500"
-                        checked={bulkAutoImageProvider === "searchstack"}
-                        onChange={() => {
-                          setBulkAutoImageProvider("searchstack");
-                          setBulkResult(null);
-                        }}
-                      />
-                      <span>
-                        <span className="font-semibold text-foreground">SearchStack</span>{" "}
-                        <span className="text-muted-foreground">(default — Google Images via searchstack.dev)</span>
-                      </span>
-                    </label>
-                    <label className="flex cursor-pointer items-start gap-2 text-xs">
-                      <input
-                        type="radio"
-                        name="bulk-auto-image"
-                        className="mt-0.5 accent-purple-500"
-                        checked={bulkAutoImageProvider === "custom"}
-                        onChange={() => {
-                          setBulkAutoImageProvider("custom");
-                          setBulkResult(null);
-                        }}
-                      />
-                      <span>
-                        <span className="font-semibold text-foreground">Custom API</span>{" "}
-                        <span className="text-muted-foreground">(HTTPS GET; your server returns an image URL)</span>
-                      </span>
-                    </label>
-                    {bulkAutoImageProvider === "custom" && (
-                      <div className="pt-1">
-                        <Label htmlFor="bulk-custom-image-api" className="text-[11px] text-muted-foreground">
-                          URL template — must include <code className="text-foreground/80">{"{query}"}</code>
-                        </Label>
-                        <Input
-                          id="bulk-custom-image-api"
-                          type="url"
-                          value={bulkCustomImageApiUrl}
-                          onChange={(e) => {
-                            setBulkCustomImageApiUrl(e.target.value);
-                            setBulkResult(null);
-                          }}
-                          placeholder="https://your-server.com/api/quiz-image?q={query}"
-                          className="mt-1 h-9 border-border bg-quizup-dark font-mono text-[11px] text-foreground"
-                          autoComplete="off"
-                        />
-                      </div>
-                    )}
-                  </fieldset>
-                  <textarea
-                    value={bulkJson}
-                    onChange={(e) => { setBulkJson(e.target.value); setBulkResult(null); }}
-                    rows={8}
-                    className="w-full rounded-md bg-quizup-dark border border-border text-foreground px-3 py-2 text-xs font-mono placeholder:text-muted-foreground/50 focus:outline-none focus:ring-1 focus:ring-purple-500/50"
-                    placeholder={'[\n  {\n    "text": "What is the capital of France?",\n    "options": ["Berlin", "Madrid", "Paris", "Rome"],\n    "correctIndex": 2,\n    "timeLimit": 10\n  },\n  {\n    "text": "Which planet is closest to the Sun?",\n    "options": ["Venus", "Mercury", "Earth", "Mars"],\n    "correctIndex": 1\n  }\n]'}
-                  />
-                  {bulkJson.trim() && (
-                    <p className="text-xs text-muted-foreground">
-                      {(() => {
-                        const parsed = parseBulkJson(bulkJson);
-                        if (!parsed) return <span className="text-red-400">⚠ Invalid JSON</span>;
-                        return <span className="text-purple-400">✓ {parsed.length} question(s) parsed</span>;
-                      })()}
-                    </p>
-                  )}
-                  {bulkResult && (
-                    <div className="text-xs space-y-1 p-3 rounded-md bg-quizup-dark border border-border">
-                      <p className="text-foreground font-semibold">
-                        Result: <span className="text-green-400">{bulkResult.created} created</span>
-                        {bulkResult.failed > 0 && <>, <span className="text-red-400">{bulkResult.failed} failed</span></>}
-                      </p>
-                      {bulkResult.errors.length > 0 && (
-                        <ul className="mt-1 space-y-0.5 max-h-32 overflow-y-auto">
-                          {bulkResult.errors.map((err) => (
-                            <li key={err.index} className="text-red-400">
-                              #{err.index + 1} &ldquo;{err.text}&rdquo;: {err.error}
-                            </li>
-                          ))}
-                        </ul>
-                      )}
-                    </div>
-                  )}
-                  <button
-                    type="submit"
-                    disabled={bulkSubmitting || !bulkJson.trim()}
-                    className="w-full h-11 rounded-lg bg-purple-600/90 hover:bg-purple-600 text-foreground font-display font-bold text-sm disabled:opacity-50 disabled:pointer-events-none"
-                  >
-                    {bulkSubmitting ? "IMPORTING…" : "IMPORT BULK QUESTIONS"}
-                  </button>
-                </form>
-              )}
-
-              {selectedSlug && (
-                <form onSubmit={handleCreateQuestion} className="space-y-3 bg-quizup-card p-4 rounded-lg">
-                  <div>
-                    <Label className="text-xs text-muted-foreground">Question</Label>
-                    <Input
-                      value={qText}
-                      onChange={(e) => setQText(e.target.value)}
-                      className="mt-1 bg-quizup-dark border-border text-foreground"
+                      value={topicName}
+                      onChange={(e) => setTopicName(e.target.value)}
+                      className="bg-slate-50 border-slate-200 text-slate-900 focus-visible:ring-quizup-green h-11 rounded-lg hover:bg-white shadow-sm"
+                      placeholder="e.g. Space & Astronomy"
                       required
                     />
                   </div>
-                  <div>
-                    <Label className="text-xs text-muted-foreground">Image (optional)</Label>
+                  <div className="space-y-1.5">
+                    <Label className="text-xs font-semibold text-slate-700">Slug <span className="text-slate-400 font-normal">(optional)</span></Label>
                     <Input
-                      value={qImageUrl}
-                      onChange={(e) => setQImageUrl(e.target.value)}
-                      className="mt-1 bg-quizup-dark border-border text-foreground"
-                      placeholder="https://… or leave empty after upload"
+                      value={topicSlug}
+                      onChange={(e) => setTopicSlug(e.target.value)}
+                      className="bg-slate-50 border-slate-200 text-slate-900 focus-visible:ring-quizup-green h-11 rounded-lg hover:bg-white font-mono text-xs shadow-sm"
+                      placeholder="space-astronomy"
                     />
-                    <div className="mt-2 flex flex-wrap items-center gap-2">
-                      <label className="text-xs text-quizup-green font-semibold cursor-pointer">
-                        <input
-                          type="file"
-                          accept="image/jpeg,image/png,image/gif,image/webp"
-                          className="hidden"
-                          disabled={qImageUploading}
-                          onChange={async (e) => {
-                            const file = e.target.files?.[0];
-                            e.target.value = "";
-                            if (!file) return;
-                            setQImageUploading(true);
-                            try {
-                              const url = await adminService.uploadQuestionImage(file);
-                              setQImageUrl(url);
-                              toast.success("Image uploaded");
-                            } catch (err) {
-                              toast.error(err instanceof Error ? err.message : "Upload failed");
-                            } finally {
-                              setQImageUploading(false);
-                            }
-                          }}
-                        />
-                        {qImageUploading ? "Uploading…" : "Upload image file"}
-                      </label>
-                      {qImageUrl ? (
-                        <button
-                          type="button"
-                          onClick={() => setQImageUrl("")}
-                          className="text-xs text-muted-foreground underline"
-                        >
-                          Remove image
-                        </button>
-                      ) : null}
-                    </div>
-                    {resolveQuestionImageUrl(qImageUrl) ? (
-                      <img
-                        src={resolveQuestionImageUrl(qImageUrl)}
-                        alt=""
-                        className="mt-2 w-full max-h-40 object-contain rounded-md border border-border bg-quizup-dark"
-                      />
-                    ) : null}
                   </div>
-                  {(["A", "B", "C", "D"] as const).map((label, i) => (
-                    <div key={label}>
-                      <Label className="text-xs text-muted-foreground">Option {label}</Label>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="space-y-1.5">
+                      <Label className="text-xs font-semibold text-slate-700">Icon</Label>
                       <Input
-                        value={[opt0, opt1, opt2, opt3][i]}
-                        onChange={(e) => [setOpt0, setOpt1, setOpt2, setOpt3][i](e.target.value)}
-                        className="mt-1 bg-quizup-dark border-border text-foreground"
-                        required
+                        value={topicIcon}
+                        onChange={(e) => setTopicIcon(e.target.value)}
+                        className="bg-slate-50 border-slate-200 text-slate-900 focus-visible:ring-quizup-green h-11 rounded-lg hover:bg-white shadow-sm"
+                        placeholder="Emoji/URL"
                       />
                     </div>
-                  ))}
-                  <div>
-                    <Label className="text-xs text-muted-foreground">Correct answer</Label>
-                    <select
-                      value={correctIndex}
-                      onChange={(e) => setCorrectIndex(Number(e.target.value))}
-                      className="mt-1 w-full h-11 rounded-md bg-quizup-dark border border-border text-foreground px-3 text-sm"
-                    >
-                      <option value={0}>A</option>
-                      <option value={1}>B</option>
-                      <option value={2}>C</option>
-                      <option value={3}>D</option>
-                    </select>
-                  </div>
-                  <div className="grid grid-cols-1 gap-2">
-                    <div>
-                      <Label className="text-xs text-muted-foreground">Time (sec)</Label>
+                    <div className="space-y-1.5">
+                      <Label className="text-xs font-semibold text-slate-700">Desc.</Label>
                       <Input
-                        type="number"
-                        min={5}
-                        max={120}
-                        value={timeLimit}
-                        onChange={(e) => setTimeLimit(Number(e.target.value) || 10)}
-                        className="mt-1 bg-quizup-dark border-border text-foreground"
+                        value={topicDescription}
+                        onChange={(e) => setTopicDescription(e.target.value)}
+                        className="bg-slate-50 border-slate-200 text-slate-900 focus-visible:ring-quizup-green h-11 rounded-lg hover:bg-white shadow-sm"
+                        placeholder="Short blurb"
                       />
                     </div>
                   </div>
+                  
+                  <div className="flex items-center justify-between pt-1">
+                    <label className="flex items-center gap-2 px-3 py-2 rounded-lg bg-slate-50 hover:bg-slate-100 text-xs font-medium cursor-pointer transition-colors border border-slate-300 border-dashed hover:border-slate-400 text-slate-700">
+                      <UploadCloud className="w-4 h-4 text-quizup-green" />
+                      <span>{topicIconUploading ? "Uploading…" : "Upload Icon"}</span>
+                      <input
+                        type="file"
+                        accept="image/jpeg,image/png,image/gif,image/webp,image/svg+xml"
+                        className="hidden"
+                        disabled={topicIconUploading}
+                        onChange={async (e) => {
+                          const file = e.target.files?.[0];
+                          e.target.value = "";
+                          if (!file) return;
+                          setTopicIconUploading(true);
+                          try {
+                            const url = await adminService.uploadQuestionImage(file);
+                            setTopicIcon(url);
+                            toast.success("Icon uploaded");
+                          } catch (err) {
+                            toast.error(err instanceof Error ? err.message : "Upload failed");
+                          } finally {
+                            setTopicIconUploading(false);
+                          }
+                        }}
+                      />
+                    </label>
+                    {topicIcon && topicIcon !== "🎯" && (
+                       <button type="button" onClick={() => setTopicIcon("🎯")} className="text-xs text-red-500 hover:text-red-600 underline underline-offset-2">Reset</button>
+                    )}
+                  </div>
+
                   <button
                     type="submit"
-                    className="w-full h-11 rounded-lg quizup-header-teal text-foreground font-display font-bold text-sm"
+                    className="w-full h-11 mt-2 rounded-xl bg-slate-100 hover:bg-slate-200 border border-slate-200 text-slate-900 font-display font-bold text-sm transition-all hover:border-quizup-green/50 hover:text-quizup-green shadow-sm active:scale-[0.98]"
                   >
-                    ADD QUESTION
+                    CREATE TOPIC
                   </button>
                 </form>
-              )}
+              </div>
 
-              {selectedSlug && questions.length > 0 && (
-                <div className="mt-4 space-y-2">
-                  <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-                    In this topic ({questions.length})
-                  </p>
-                  <ul className="space-y-2 max-h-64 overflow-y-auto">
-                    {questions.map((q, qi) => {
-                      const thumb = resolveQuestionImageUrl(q.imageUrl ?? undefined);
-                      return (
-                        <li key={q.id} className="text-xs bg-quizup-card p-3 rounded-md text-foreground/90 border border-border flex gap-2">
-                          {thumb ? (
-                            <img src={thumb} alt="" className="w-14 h-14 object-cover rounded shrink-0 border border-border" />
-                          ) : null}
-                          <div className="min-w-0 flex-1">
-                            <span className="text-quizup-gold font-semibold">#{qi + 1}</span> {q.text}
-                            <p className="text-muted-foreground mt-1 truncate">
-                              ✓ {q.options[q.correctIndex]} · {q.timeLimit}s
-                            </p>
-                          </div>
-                        </li>
-                      );
-                    })}
-                  </ul>
-                </div>
+            </div>
+
+            {/* Right Column: Question Workspace */}
+            <div className="lg:col-span-8 flex flex-col gap-6">
+              {!selectedSlug ? (
+                 <div className="flex-1 flex flex-col items-center justify-center text-center p-16 bg-white rounded-3xl border border-slate-200 border-dashed min-h-[400px] shadow-sm">
+                    <div className="w-20 h-20 rounded-full bg-slate-50 flex items-center justify-center mb-6 shadow-inner border border-slate-100">
+                       <ListPlus className="w-10 h-10 text-slate-400" />
+                    </div>
+                    <h3 className="font-display font-bold text-2xl text-slate-800 mb-3">No Topic Selected</h3>
+                    <p className="text-slate-500 text-sm max-w-sm leading-relaxed">
+                       Choose a topic from the sidebar to manage its questions, or create a new topic to get started.
+                    </p>
+                 </div>
+              ) : (
+                <>
+                  {/* Action Tabs & Form Area */}
+                  <div className="bg-white rounded-2xl border border-slate-200 shadow-md overflow-hidden flex flex-col">
+                    
+                    {/* Tabs Header */}
+                    <div className="flex border-b border-slate-200 bg-slate-50 overflow-x-auto custom-scrollbar">
+                       <button 
+                         onClick={() => setActiveTab("manual")}
+                         className={`flex-1 flex items-center justify-center gap-2 py-4 px-4 font-display font-bold text-sm transition-all duration-300 whitespace-nowrap ${activeTab === "manual" ? "text-quizup-green bg-white shadow-[inset_0_-2px_0_rgba(46,204,113,1)]" : "text-slate-500 hover:text-slate-900 hover:bg-slate-100"}`}
+                       >
+                         <PlusCircle className="w-4 h-4" /> Add Manual
+                       </button>
+                       <button 
+                         onClick={() => setActiveTab("bulk")}
+                         className={`flex-1 flex items-center justify-center gap-2 py-4 px-4 font-display font-bold text-sm transition-all duration-300 whitespace-nowrap ${activeTab === "bulk" ? "text-purple-600 bg-white shadow-[inset_0_-2px_0_rgba(147,51,234,1)]" : "text-slate-500 hover:text-slate-900 hover:bg-slate-100"}`}
+                       >
+                         <FileText className="w-4 h-4 text" /> Bulk Import
+                       </button>
+                       <button 
+                         onClick={() => setActiveTab("ai")}
+                         className={`flex-1 flex items-center justify-center gap-2 py-4 px-4 font-display font-bold text-sm transition-all duration-300 whitespace-nowrap ${activeTab === "ai" ? "text-emerald-600 bg-white shadow-[inset_0_-2px_0_rgba(5,150,105,1)]" : "text-slate-500 hover:text-slate-900 hover:bg-slate-100"}`}
+                       >
+                         <Sparkles className="w-4 h-4" /> AI Generate
+                       </button>
+                    </div>
+
+                    {/* Form Container */}
+                    <div className="p-5 md:p-8 relative">
+                      <div className={`absolute top-0 right-0 w-64 h-64 bg-gradient-to-br rounded-full blur-[100px] opacity-[0.2] pointer-events-none transition-colors duration-700 ${activeTab === 'manual' ? 'from-teal-200 to-blue-200' : activeTab === 'bulk' ? 'from-purple-200 to-pink-200' : 'from-emerald-200 to-teal-200'}`} />
+                      
+                      <div className="relative z-10">
+                        {activeTab === "manual" && renderManualTab()}
+                        {activeTab === "bulk" && renderBulkTab()}
+                        {activeTab === "ai" && renderAiTab()}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Questions List */}
+                  {questions.length > 0 && (
+                    <div className="space-y-4">
+                      <div className="flex items-center justify-between px-2">
+                        <h3 className="font-display font-bold text-lg text-slate-800 flex items-center gap-2">
+                           <Database className="w-5 h-5 text-amber-500" />
+                           Topic Questions <span className="text-slate-500 font-normal text-sm">({questions.length})</span>
+                        </h3>
+                      </div>
+                      
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3 max-h-[600px] overflow-y-auto custom-scrollbar pr-2 pb-4">
+                        {questions.map((q, qi) => {
+                          const thumb = resolveQuestionImageUrl(q.imageUrl ?? undefined);
+                          return (
+                            <div key={q.id} className="group bg-white border border-slate-200 hover:border-slate-300 hover:shadow-md p-3 rounded-xl flex gap-3 transition-all hover:-translate-y-0.5">
+                              {thumb ? (
+                                <div className="w-16 h-16 rounded-lg bg-slate-100 border border-slate-200 overflow-hidden shrink-0">
+                                  <img src={thumb} alt="" className="w-full h-full object-cover transition-transform group-hover:scale-110" loading="lazy" />
+                                </div>
+                              ) : (
+                                <div className="w-16 h-16 rounded-lg bg-slate-50 border border-slate-100 flex items-center justify-center shrink-0 text-slate-300">
+                                  <ImageIcon className="w-6 h-6" />
+                                </div>
+                              )}
+                              <div className="min-w-0 flex-1 flex flex-col justify-center">
+                                <p className="text-sm text-slate-900 font-medium line-clamp-2 leading-tight mb-1">
+                                  <span className="text-amber-500 font-bold mr-1">#{qi + 1}</span> {q.text}
+                                </p>
+                                <div className="flex items-center gap-2 text-xs text-slate-500 mt-auto">
+                                  <span className="bg-green-100 text-green-700 px-1.5 py-0.5 rounded font-medium flex items-center gap-1 truncate max-w-[120px]">
+                                     <CheckCircle2 className="w-3 h-3 shrink-0" /> <span className="truncate">{q.options[q.correctIndex]}</span>
+                                  </span>
+                                  <span className="flex items-center gap-1 bg-slate-100 px-1.5 py-0.5 rounded shrink-0">
+                                     <Clock className="w-3 h-3" /> {q.timeLimit}s
+                                  </span>
+                                </div>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
+                </>
               )}
-            </section>
-          </>
+            </div>
+
+          </div>
         )}
       </div>
     </div>

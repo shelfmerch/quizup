@@ -42,4 +42,39 @@ questionSchema.pre("save", function (next) {
   next();
 });
 
+// Automatically update the Category questionCount when a Question is saved or removed
+async function updateCategoryCount(categoryId, model) {
+  if (!categoryId) return;
+  const count = await model.countDocuments({ categoryId, isActive: true });
+  const Category = mongoose.model("Category");
+  if (Category) {
+    await Category.findOneAndUpdate({ slug: categoryId }, { questionCount: count });
+  }
+}
+
+questionSchema.post("save", async function (doc) {
+  await updateCategoryCount(doc.categoryId, this.constructor);
+});
+
+questionSchema.post("findOneAndDelete", async function (doc) {
+  if (doc) {
+    await updateCategoryCount(doc.categoryId, doc.constructor);
+  }
+});
+
+questionSchema.post("deleteOne", { document: true, query: false }, async function (doc) {
+  if (doc) {
+    await updateCategoryCount(doc.categoryId, doc.constructor);
+  }
+});
+
+questionSchema.post("insertMany", async function (docs) {
+  if (Array.isArray(docs) && docs.length > 0) {
+    const categories = [...new Set(docs.map((d) => d.categoryId))];
+    for (const cat of categories) {
+      await updateCategoryCount(cat, this);
+    }
+  }
+});
+
 module.exports = mongoose.model("Question", questionSchema);
