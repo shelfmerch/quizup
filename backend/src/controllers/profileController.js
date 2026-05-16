@@ -51,6 +51,7 @@ const updateProfile = [
   body("displayName").optional().trim().isLength({ max: 50 }),
   body("bio").optional().trim().isLength({ max: 200 }),
   body("country").optional().trim().isLength({ max: 60 }),
+  body("avatarPrivacy").optional().isIn(["public", "followers_only"]),
 
   async (req, res) => {
     const errors = validationResult(req);
@@ -59,7 +60,7 @@ const updateProfile = [
     }
 
     try {
-      const allowed = ["displayName", "bio", "country", "favoriteCategory"];
+      const allowed = ["displayName", "bio", "country", "favoriteCategory", "avatarPrivacy"];
       const updates = {};
       for (const key of allowed) {
         if (req.body[key] !== undefined) updates[key] = req.body[key];

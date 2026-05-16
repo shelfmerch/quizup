@@ -1,5 +1,6 @@
 import { getSocket } from "./socketService";
 import { ChatMessage } from "@/types";
+import { API_URL } from "@/config/env";
 
 /** Notify when someone messages you (for inbox badge). */
 export function subscribeChatInbox(onInbox: () => void): () => void {
@@ -36,10 +37,33 @@ export const chatService = {
     }
   },
 
-  /** Send a message to a room. */
-  sendMessage(roomId: string, text: string) {
+  /** Send a text message (optionally with a media attachment already uploaded to S3). */
+  sendMessage(
+    roomId: string,
+    text: string,
+    mediaUrl?: string,
+    mediaType?: string,
+    localId?: string
+  ) {
     const socket = getSocket();
-    socket.emit("chat:send", { roomId, text });
+    socket.emit("chat:send", { roomId, text, mediaUrl: mediaUrl || "", mediaType: mediaType || "", localId });
+  },
+
+  /** Upload a media file (image/video) to S3 and return the permanent URL + MIME type. */
+  async uploadMedia(file: File): Promise<{ mediaUrl: string; mediaType: string }> {
+    const token = localStorage.getItem("quizup_token");
+    const form = new FormData();
+    form.append("media", file);
+    const res = await fetch(`${API_URL}/chat/upload-media`, {
+      method: "POST",
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
+      body: form,
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err?.error || "Upload failed");
+    }
+    return res.json();
   },
 
   /** Clean up listeners when the drawer closes. */

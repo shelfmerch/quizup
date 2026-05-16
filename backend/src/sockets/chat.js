@@ -15,7 +15,9 @@ module.exports = function registerChat(socket, io) {
           senderId: m.senderId,
           senderName: m.senderName,
           senderAvatar: m.senderAvatar,
-          text: m.text,
+          text: m.text || "",
+          mediaUrl: m.mediaUrl || "",
+          mediaType: m.mediaType || "",
           createdAt: m.createdAt,
         }));
       socket.emit("chat:history", { roomId, messages: history });
@@ -29,10 +31,14 @@ module.exports = function registerChat(socket, io) {
     socket.leave(roomId);
   });
 
-  socket.on("chat:send", async ({ roomId, text }) => {
+  socket.on("chat:send", async ({ roomId, text, mediaUrl, mediaType, localId }) => {
     const t = String(text || "").trim();
+    const mUrl = String(mediaUrl || "").trim();
+    const mType = String(mediaType || "").trim();
+
     if (!roomId || typeof roomId !== "string") return;
-    if (!t) return;
+    // Must have at least text or media
+    if (!t && !mUrl) return;
 
     try {
       const doc = await ChatMessage.create({
@@ -41,6 +47,8 @@ module.exports = function registerChat(socket, io) {
         senderName: socket.username,
         senderAvatar: socket.avatarUrl || "",
         text: t,
+        mediaUrl: mUrl,
+        mediaType: mType,
       });
 
       const msg = {
@@ -50,7 +58,10 @@ module.exports = function registerChat(socket, io) {
         senderName: socket.username,
         senderAvatar: socket.avatarUrl || "",
         text: t,
+        mediaUrl: mUrl,
+        mediaType: mType,
         createdAt: doc.createdAt,
+        localId, // return the optimistic local id if provided
       };
 
       io.to(roomId).emit("chat:message", msg);

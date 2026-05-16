@@ -36,6 +36,7 @@ const userSchema = new mongoose.Schema(
     bio: { type: String, default: "", maxlength: 200 },
     country: { type: String, default: "" },
     avatarUrl: { type: String, default: "" },
+    avatarPrivacy: { type: String, enum: ["public", "followers_only"], default: "public" },
     favoriteCategory: { type: String, default: "" },
     lastActive: { type: Date, default: Date.now },
 
@@ -140,6 +141,7 @@ userSchema.methods.toProfile = function () {
     bestWinStreak: this.bestWinStreak,
     followers: this.followers.length,
     following: this.following.length,
+    avatarPrivacy: this.avatarPrivacy || "public",
     favoriteCategory: this.favoriteCategory,
     lastActive: this.lastActive,
     createdAt: this.createdAt,

@@ -36,6 +36,7 @@ export interface Profile extends User {
   achievements: Achievement[];
   favoriteCategory: string;
   lastActive: string;
+  avatarPrivacy?: "public" | "followers_only";
 }
 
 export interface ChatMessage {
@@ -46,6 +47,9 @@ export interface ChatMessage {
   senderAvatar: string;
   text: string;
   createdAt: string; // ISO
+  mediaUrl?: string;
+  mediaType?: string;
+  read?: boolean;
 }
 
 export interface Category {
