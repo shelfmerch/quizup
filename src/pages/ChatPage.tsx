@@ -223,7 +223,7 @@ const ChatPage: React.FC = () => {
             <div className="bg-white/80 backdrop-blur-sm rounded-2xl px-5 py-4 shadow-sm flex flex-col items-center gap-2 max-w-[220px]">
               <img src={peerAvatar} alt="" className="w-14 h-14 rounded-full border-2 border-white shadow" />
               <p className="text-[13px] text-[#111]/70 font-medium leading-snug">
-                Say hi to <span className="text-[#075e54] font-bold">{peerName}</span>!<br />
+                Say hi to <span className="text-[#c53320ff] font-bold">{peerName}</span>!<br />
                 <span className="text-[11px] font-normal text-[#111]/50">Messages are end-to-end encrypted.</span>
               </p>
             </div>
@@ -250,7 +250,7 @@ const ChatPage: React.FC = () => {
       >
         {/* Text field */}
         <div className="flex-1 flex items-center bg-white rounded-full px-4 gap-2 shadow-sm min-h-[44px]">
-          <button className="text-[#075e54] opacity-60 hover:opacity-100 shrink-0">
+          <button className="text-[#c53320ff] opacity-60 hover:opacity-100 shrink-0">
             <Smile className="w-5 h-5" />
           </button>
           <input
@@ -270,7 +270,7 @@ const ChatPage: React.FC = () => {
             type="button"
             onClick={handleSend}
             className="w-11 h-11 rounded-full flex items-center justify-center shadow-md active:scale-95 transition-transform shrink-0"
-            style={{ background: "#075e54" }}
+            style={{ background: "#c53320ff" }}
           >
             <Send className="w-5 h-5 text-white" />
           </button>
@@ -278,7 +278,7 @@ const ChatPage: React.FC = () => {
           <button
             type="button"
             className="w-11 h-11 rounded-full flex items-center justify-center shadow-md shrink-0"
-            style={{ background: "#075e54" }}
+            style={{ background: "#c53320ff" }}
           >
             <Mic className="w-5 h-5 text-white" />
           </button>

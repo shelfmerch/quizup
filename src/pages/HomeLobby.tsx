@@ -8,7 +8,7 @@ import { Category, LeaderboardEntry, MatchFoundPayload } from "@/types";
 import { fetchFollowedCategories, fetchPublicCategories } from "@/services/categoryService";
 import { leaderboardService } from "@/services/leaderboardService";
 import { resolveMediaUrl } from "@/config/env";
-import Icons8Icon, { getCategoryIconSlug } from "@/components/Icons8Icon";
+import { CategoryIcon } from "@/components/CategoryIcon";
 import { getSocket } from "@/services/socketService";
 import { LeagueModal } from "@/components/LeagueModal";
 
@@ -67,21 +67,17 @@ function mergeTopics(apiList: Category[]): Category[] {
 }
 
 const TopicTile: React.FC<{ category: Category; index: number; onClick: () => void }> = ({ category, index, onClick }) => {
-  const { slug, fallback } = getCategoryIconSlug(category.name);
-
   return (
     <button type="button" onClick={onClick} className="w-[66px] shrink-0 text-center">
       <span
         className="quizup-topic-tile mx-auto h-[54px] w-[54px]"
         style={{ backgroundColor: TILE_COLORS[index % TILE_COLORS.length] }}
       >
-        <Icons8Icon
-          name={slug}
-          fallback={fallback}
+        <CategoryIcon
+          category={category}
           size={64}
           style="fluency"
           className="h-11 w-11 object-contain"
-          alt=""
         />
       </span>
       <span className="mt-1 block min-h-[24px] text-[10px] font-bold leading-[11px] text-[#454545] line-clamp-2">
@@ -330,13 +326,11 @@ const HomeLobby: React.FC = () => {
                     className="quizup-topic-tile mx-auto flex h-12 w-12"
                     style={{ backgroundColor: TILE_COLORS[(index + 2) % TILE_COLORS.length] }}
                   >
-                    <Icons8Icon
-                      name={getCategoryIconSlug(cat.name).slug}
-                      fallback={getCategoryIconSlug(cat.name).fallback}
+                    <CategoryIcon
+                      category={cat}
                       size={64}
                       style="fluency"
                       className="h-10 w-10 object-contain"
-                      alt=""
                     />
                   </span>
                   <span className="mt-1 block min-h-[24px] text-[9px] font-bold leading-[10px] text-[#454545] line-clamp-2">
@@ -388,13 +382,11 @@ const HomeLobby: React.FC = () => {
                   {/* Category Icon */}
                   <div className="relative shrink-0 flex items-center justify-center h-16 w-16 rounded-xl bg-white/10 border border-white/20 shadow-[0_0_12px_rgba(255,255,255,0.1)]">
                     {incomingChallenge && (
-                      <Icons8Icon
-                        name={getCategoryIconSlug(incomingChallenge.categoryName).slug}
-                        fallback={getCategoryIconSlug(incomingChallenge.categoryName).fallback}
+                      <CategoryIcon
+                        category={allTopics.find(t => t.id === incomingChallenge.categoryId) || { name: incomingChallenge.categoryName }}
                         size={74}
                         style="fluency"
                         className="h-16 w-16 object-contain"
-                        alt=""
                       />
                     )}
                     {/* <span

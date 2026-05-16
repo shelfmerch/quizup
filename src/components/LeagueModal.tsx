@@ -83,7 +83,7 @@ export const LeagueModal: React.FC<LeagueModalProps> = ({ isOpen, onClose, curre
 
         <div 
           ref={scrollRef}
-          className="flex overflow-x-auto snap-x snap-mandatory px-10 gap-6 pb-8 pt-4 custom-scrollbar"
+          className="flex overflow-x-auto snap-x snap-mandatory px-10 gap-6 pb-8 pt-9 custom-scrollbar"
           style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
         >
           {LEAGUES.map((league) => {

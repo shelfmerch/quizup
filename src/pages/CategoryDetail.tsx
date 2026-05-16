@@ -9,7 +9,7 @@ import { EXTRA_HOME_TOPICS } from "@/data/extraTopics";
 import { Category, LeaderboardEntry } from "@/types";
 import { useAuth } from "@/hooks/useAuth";
 import { fetchFollowedCategories, followCategory, unfollowCategory } from "@/services/categoryService";
-import Icons8Icon, { getCategoryIconSlug } from "@/components/Icons8Icon";
+import { CategoryIcon } from "@/components/CategoryIcon";
 import { communityService, CommunityPost, CategoryStatus } from "@/services/communityService";
 import { resolveQuestionImageUrl } from "@/lib/mediaUrl";
 import { Heart, MessageSquare, Send, Image as ImageIcon, X } from "lucide-react";
@@ -217,8 +217,6 @@ const CategoryDetail: React.FC = () => {
     );
   }
 
-  const { slug, fallback } = getCategoryIconSlug(category.name);
-
   return (
     <div className="min-h-[100dvh] flex flex-col max-w-md mx-auto bg-[#242424] text-white">
       {/* ── Header Bar ───────────────────────────────────────────────────────── */}
@@ -264,13 +262,11 @@ const CategoryDetail: React.FC = () => {
               className="quizup-topic-tile w-36 h-36 sm:w-[160px] sm:h-[160px] shrink-0"
               style={{ backgroundColor: theme.accent }}
             >
-              <Icons8Icon
-                name={slug}
-                fallback={fallback}
+              <CategoryIcon
+                category={category}
                 size={96}
                 style="fluency"
                 className="h-24 w-24 sm:h-32 sm:w-32 object-contain"
-                alt=""
               />
             </div>
 

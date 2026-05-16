@@ -4,7 +4,7 @@ import { MOCK_CATEGORIES } from "@/data/mock-data";
 import { fetchPublicCategories } from "@/services/categoryService";
 import { Category } from "@/types";
 import { Search, MessageCircle } from "lucide-react";
-import Icons8Icon, { getCategoryIconSlug } from "@/components/Icons8Icon";
+import { CategoryIcon } from "@/components/CategoryIcon";
 
 const GROUPS = ["General", "Education", "TV", "Movies", "Sports", "Music"];
 const TILE_COLORS = ["#ff6b4a", "#ffd24f", "#18b9cf", "#895de8", "#f65357", "#20c997"];
@@ -17,21 +17,17 @@ function groupCategories(categories: Category[]) {
 }
 
 const TopicTile: React.FC<{ category: Category; index: number; onClick: () => void }> = ({ category, index, onClick }) => {
-  const { slug, fallback } = getCategoryIconSlug(category.name);
-
   return (
     <button type="button" onClick={onClick} className="w-[62px] shrink-0 text-center">
       <span
         className="quizup-topic-tile mx-auto h-[50px] w-[50px]"
         style={{ backgroundColor: TILE_COLORS[index % TILE_COLORS.length] }}
       >
-        <Icons8Icon
-          name={slug}
-          fallback={fallback}
+        <CategoryIcon
+          category={category}
           size={64}
           style="fluency"
           className="h-10 w-10 object-contain"
-          alt=""
         />
       </span>
       <span className="mt-1 block min-h-[24px] text-[10px] font-bold leading-[11px] text-[#444] line-clamp-2">

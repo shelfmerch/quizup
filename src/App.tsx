@@ -47,7 +47,6 @@ const Shell: React.FC<{ children: React.ReactNode }> = ({ children }) => (
             <Route path="/history" element={<MatchHistory />} />
             <Route path="/profile" element={<ProfilePage />} />
             <Route path="/profile/:userId" element={<ProfilePage />} />
-            <Route path="/chat/:peerId" element={<ChatPage />} />
             <Route path="/settings" element={<SettingsPage />} />
             <Route path="/notifications" element={<Notifications />} />
             <Route path="/category/:categoryId" element={<CategoryDetail />} />
@@ -57,6 +56,7 @@ const Shell: React.FC<{ children: React.ReactNode }> = ({ children }) => (
           {/* Full-screen routes (no bottom nav) */}
           <Route path="/find-match/:categoryId" element={<ProtectedRoute><FindMatch /></ProtectedRoute>} />
           <Route path="/battle" element={<ProtectedRoute><BattlePage /></ProtectedRoute>} />
+          <Route path="/chat/:peerId" element={<ProtectedRoute><ChatPage /></ProtectedRoute>} />
           <Route path="/admin" element={<AdminRoute><AdminPage /></AdminRoute>} />
 
           <Route path="*" element={<NotFound />} />

@@ -16,7 +16,7 @@ import {
   UserPlus,
 } from "lucide-react";
 import { toast } from "@/components/ui/sonner";
-import Icons8Icon, { getCategoryIconSlug } from "@/components/Icons8Icon";
+import { CategoryIcon } from "@/components/CategoryIcon";
 import BottomNav from "@/components/BottomNav";
 import { useAuth } from "@/hooks/useAuth";
 import { MOCK_ACHIEVEMENTS, MOCK_CATEGORIES, MOCK_MATCH_HISTORY } from "@/data/mock-data";
@@ -68,15 +68,13 @@ function playerRankLabel(level: number) {
 }
 
 const TopicTile: React.FC<{ category: Category; index: number; onClick: () => void }> = ({ category, index, onClick }) => {
-  const { slug, fallback } = getCategoryIconSlug(category.name);
-
   return (
     <button type="button" onClick={onClick} className="w-[74px] shrink-0 text-center">
       <span
         className="quizup-topic-tile mx-auto flex h-14 w-14 rounded-lg"
         style={{ backgroundColor: TILE_COLORS[index % TILE_COLORS.length] }}
       >
-        <Icons8Icon name={slug} fallback={fallback} size={64} style="fluency" className="h-11 w-11 object-contain" alt="" />
+        <CategoryIcon category={category} size={64} style="fluency" className="h-11 w-11 object-contain" />
       </span>
       <span className="mt-1 block min-h-[24px] text-[10px] font-black leading-[11px] text-[#343434] line-clamp-2">
         {category.name}
