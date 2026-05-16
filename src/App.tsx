@@ -25,6 +25,7 @@ import CategoryDetail from "./pages/CategoryDetail";
 import AdminRoute from "@/components/AdminRoute";
 import AdminPage from "./pages/AdminPage";
 import People from "./pages/People";
+import AllCategories from "./pages/AllCategories";
 
 const queryClient = new QueryClient();
 
@@ -54,6 +55,7 @@ const Shell: React.FC<{ children: React.ReactNode }> = ({ children }) => (
           </Route>
 
           {/* Full-screen routes (no bottom nav) */}
+          <Route path="/all-categories" element={<ProtectedRoute><AllCategories /></ProtectedRoute>} />
           <Route path="/find-match/:categoryId" element={<ProtectedRoute><FindMatch /></ProtectedRoute>} />
           <Route path="/battle" element={<ProtectedRoute><BattlePage /></ProtectedRoute>} />
           <Route path="/chat/:peerId" element={<ProtectedRoute><ChatPage /></ProtectedRoute>} />

@@ -17,20 +17,19 @@ export const CategoryIcon: React.FC<CategoryIconProps> = ({
   const [errored, setErrored] = useState(false);
   const iconRaw = category.icon;
 
-  // Icons8 graphics natively have a lot of transparent padding built into their canvas.
-  // We use scale-[0.8] and p-1.5 to visually simulate that exact spacing without breaking layout.
-  const paddedClass = `${className} p-1.5 scale-[0.8]`;
-
   if (iconRaw && !errored) {
     // Basic check to see if it's likely a URL
     if (iconRaw.startsWith("http") || iconRaw.startsWith("/") || iconRaw.startsWith("data:image")) {
+      // For actual image uploads/links, we want them larger and with less padding
+      // to fill the category tile better.
+      const imgUrlClass = `${className} p-0.5 scale-95`;
       return (
         <img
           src={iconRaw}
           alt={category.name}
           width={size}
           height={size}
-          className={paddedClass}
+          className={imgUrlClass}
           onError={() => setErrored(true)}
           draggable={false}
           style={{ objectFit: "contain" }}
@@ -38,9 +37,10 @@ export const CategoryIcon: React.FC<CategoryIconProps> = ({
       );
     }
     // Else treat as emoji
+    const emojiClass = `${className} p-1.5 scale-[0.8]`;
     return (
       <span
-        className={paddedClass}
+        className={emojiClass}
         role="img"
         aria-label={category.name}
         style={{ fontSize: size * 0.7, lineHeight: 1, display: "inline-flex", alignItems: "center", justifyContent: "center" }}

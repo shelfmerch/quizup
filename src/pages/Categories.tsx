@@ -87,7 +87,7 @@ const Categories: React.FC = () => {
             <section key={group.name} className="quizup-section border-t-0">
               <div className="flex items-center justify-between px-3 py-3">
                 <h2 className="quizup-section-title">{group.name}</h2>
-                <button className="quizup-see-all" onClick={() => navigate("/categories")}>See all</button>
+                <button className="quizup-see-all" onClick={() => navigate("/all-categories")}>See all</button>
               </div>
               <div className="flex gap-2 overflow-x-auto px-3 pb-4">
                 {group.items.map((cat, index) => (
