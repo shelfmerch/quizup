@@ -10,6 +10,7 @@ import { leaderboardService } from "@/services/leaderboardService";
 import { resolveMediaUrl } from "@/config/env";
 import Icons8Icon, { getCategoryIconSlug } from "@/components/Icons8Icon";
 import { getSocket } from "@/services/socketService";
+import { LeagueModal } from "@/components/LeagueModal";
 
 interface IncomingChallenge {
   id: string;
@@ -117,6 +118,7 @@ const HomeLobby: React.FC = () => {
   const [loadingTopics, setLoadingTopics] = useState(true);
   const [incomingChallenge, setIncomingChallenge] = useState<IncomingChallenge | null>(null);
   const [challengeResponding, setChallengeResponding] = useState(false);
+  const [leagueModalOpen, setLeagueModalOpen] = useState(false);
   // keep latest phase ref so cleanup effect can read it
   const challengeRef = useRef(incomingChallenge);
   challengeRef.current = incomingChallenge;
@@ -273,7 +275,12 @@ const HomeLobby: React.FC = () => {
             <img src={avatarSrc} alt="" className="h-11 w-11 rounded-full border-2 border-white object-cover" />
             <div>
               <p className="font-display text-sm font-extrabold">{user?.username || "Player"}</p>
-              <img src={leagueBadgeSrc(league.badgeUrl)} alt="" className="h-6 w-6 object-contain drop-shadow" />
+              <button 
+                onClick={() => setLeagueModalOpen(true)} 
+                className="hover:scale-110 transition-transform active:scale-95 cursor-pointer outline-none block mt-1"
+              >
+                <img src={leagueBadgeSrc(league.badgeUrl)} alt="" className="h-6 w-6 object-contain drop-shadow" />
+              </button>
             </div>
           </div>
           <div className="grid grid-cols-3 gap-4 text-center text-[11px] font-bold">
@@ -508,6 +515,8 @@ const HomeLobby: React.FC = () => {
       >
         <Bell className="h-5 w-5" />
       </button> */}
+
+      <LeagueModal isOpen={leagueModalOpen} onClose={() => setLeagueModalOpen(false)} currentXp={user?.xp || 0} />
     </div>
   );
 };

@@ -26,7 +26,7 @@ const path = require("path");
 const mime = require("mime-types");
 
 const { PutObjectCommand } = require("@aws-sdk/client-s3");
-const { s3, BUCKET } = require("../config/s3");
+const { s3, BUCKET, getPublicUrl } = require("../config/s3");
 
 const mongoose = require("mongoose");
 const Question = require("../models/Question");
@@ -118,7 +118,7 @@ async function uploadFile(localPath, s3Key) {
             ContentType: contentType,
         })
     );
-    return `https://${BUCKET}.s3.${process.env.AWS_REGION || "ap-south-1"}.amazonaws.com/${s3Key}`;
+    return getPublicUrl(s3Key);
 }
 
 async function connectForMigrate() {

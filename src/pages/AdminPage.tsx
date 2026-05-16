@@ -3,7 +3,8 @@ import { useNavigate } from "react-router-dom";
 import { 
   ArrowLeft, Sparkles, FileText, PlusCircle, 
   Database, Layers, UploadCloud, Clock, 
-  Image as ImageIcon, CheckCircle2, ChevronDown, ListPlus
+  Image as ImageIcon, CheckCircle2, ChevronDown, ListPlus,
+  Trash2, ImageOff, Link2, Upload
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -237,6 +238,58 @@ const AdminPage: React.FC = () => {
       toast.error(err instanceof Error ? err.message : "Create failed");
     }
   };
+
+  const handleDeleteQuestion = async (id: string) => {
+    if (!window.confirm("Are you sure you want to delete this question?")) return;
+    try {
+      await adminService.deleteQuestion(id);
+      toast.success("Question deleted");
+      const qs = await adminService.listQuestions(selectedSlug);
+      setQuestions(qs);
+      await refreshCategories();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Failed to delete");
+    }
+  };
+
+  const handleRemoveImage = async (id: string) => {
+    if (!window.confirm("Are you sure you want to remove the image from this question?")) return;
+    try {
+      await adminService.removeQuestionImage(id);
+      toast.success("Image removed");
+      const qs = await adminService.listQuestions(selectedSlug);
+      setQuestions(qs);
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Failed to remove image");
+    }
+  };
+
+  const handleUpdateImageUrl = async (id: string) => {
+    const url = window.prompt("Enter the new image URL:");
+    if (url === null) return;
+    if (!url.trim()) return;
+    try {
+      await adminService.updateQuestionImage(id, url.trim());
+      toast.success("Image updated");
+      const qs = await adminService.listQuestions(selectedSlug);
+      setQuestions(qs);
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Failed to update image");
+    }
+  };
+
+  const handleUpdateImageFile = async (id: string, file: File) => {
+    try {
+      const url = await adminService.uploadQuestionImage(file);
+      await adminService.updateQuestionImage(id, url);
+      toast.success("Image updated");
+      const qs = await adminService.listQuestions(selectedSlug);
+      setQuestions(qs);
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Upload failed");
+    }
+  };
+
 
   const renderManualTab = () => (
     <form onSubmit={handleCreateQuestion} className="space-y-5 animate-in fade-in zoom-in-95 duration-300">
@@ -727,7 +780,11 @@ const AdminPage: React.FC = () => {
                           return (
                             <div key={q.id} className="group bg-white border border-slate-200 hover:border-slate-300 hover:shadow-md p-3 rounded-xl flex gap-3 transition-all hover:-translate-y-0.5">
                               {thumb ? (
-                                <div className="w-16 h-16 rounded-lg bg-slate-100 border border-slate-200 overflow-hidden shrink-0">
+                                <div 
+                                  className="w-16 h-16 rounded-lg bg-slate-100 border border-slate-200 overflow-hidden shrink-0 cursor-pointer"
+                                  onClick={() => window.open(thumb, '_blank')}
+                                  title="View Full Image"
+                                >
                                   <img src={thumb} alt="" className="w-full h-full object-cover transition-transform group-hover:scale-110" loading="lazy" />
                                 </div>
                               ) : (
@@ -746,6 +803,47 @@ const AdminPage: React.FC = () => {
                                   <span className="flex items-center gap-1 bg-slate-100 px-1.5 py-0.5 rounded shrink-0">
                                      <Clock className="w-3 h-3" /> {q.timeLimit}s
                                   </span>
+                                  <div className="flex items-center gap-1 ml-auto shrink-0">
+                                    <button
+                                      type="button"
+                                      onClick={() => handleUpdateImageUrl(q.id)}
+                                      className="p-1.5 text-slate-400 hover:text-blue-500 hover:bg-blue-50 rounded-md transition-colors"
+                                      title="Update Image URL"
+                                    >
+                                      <Link2 className="w-3.5 h-3.5" />
+                                    </button>
+                                    <label className="p-1.5 text-slate-400 hover:text-quizup-green hover:bg-green-50 rounded-md transition-colors cursor-pointer" title="Upload Image File">
+                                      <Upload className="w-3.5 h-3.5" />
+                                      <input
+                                        type="file"
+                                        accept="image/jpeg,image/png,image/gif,image/webp"
+                                        className="hidden"
+                                        onChange={(e) => {
+                                          const file = e.target.files?.[0];
+                                          e.target.value = "";
+                                          if (file) handleUpdateImageFile(q.id, file);
+                                        }}
+                                      />
+                                    </label>
+                                    {q.imageUrl && (
+                                      <button
+                                        type="button"
+                                        onClick={() => handleRemoveImage(q.id)}
+                                        className="p-1.5 text-slate-400 hover:text-amber-500 hover:bg-amber-50 rounded-md transition-colors"
+                                        title="Remove Image"
+                                      >
+                                        <ImageOff className="w-3.5 h-3.5" />
+                                      </button>
+                                    )}
+                                    <button
+                                      type="button"
+                                      onClick={() => handleDeleteQuestion(q.id)}
+                                      className="p-1.5 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-md transition-colors"
+                                      title="Delete Question"
+                                    >
+                                      <Trash2 className="w-3.5 h-3.5" />
+                                    </button>
+                                  </div>
                                 </div>
                               </div>
                             </div>

@@ -25,6 +25,7 @@ import { fetchFollowedCategories, fetchPublicCategories } from "@/services/categ
 import { getSocket } from "@/services/socketService";
 import { profileService } from "@/services/profileService";
 import { Category, MatchFoundPayload, MatchHistoryEntry, Profile, ProfileFollowUser } from "@/types";
+import { LeagueModal } from "@/components/LeagueModal";
 
 type LeagueKey =
   | "unranked"
@@ -177,6 +178,7 @@ const ProfilePage: React.FC = () => {
   const [followersError, setFollowersError] = useState<string | null>(null);
   const [categoriesLoading, setCategoriesLoading] = useState(false);
   const [categoriesError, setCategoriesError] = useState<string | null>(null);
+  const [leagueModalOpen, setLeagueModalOpen] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const loadProfile = useCallback(async () => {
@@ -480,7 +482,10 @@ const ProfilePage: React.FC = () => {
                 <Globe2 className="h-3.5 w-3.5" />
                 {p.country || "Country not set"}
               </p> */}
-              <div className="mt-3 flex items-center gap-2">
+              <div 
+                className="mt-3 flex items-center gap-2 cursor-pointer hover:opacity-80 transition-opacity"
+                onClick={() => setLeagueModalOpen(true)}
+              >
                 <img src={league.badgeUrl} alt="" className="h-8 w-8 object-contain drop-shadow" />
                 <span className="text-xs font-black uppercase tracking-wide text-white/85">{league.name}</span>
                 {/* <span className="ml-1 rounded-full bg-white/15 px-2.5 py-0.5 text-[10px] font-black tracking-wide text-white/90">{typeof p.xp === "number" ? p.xp.toLocaleString() : 0} XP</span> */}
@@ -678,6 +683,8 @@ const ProfilePage: React.FC = () => {
         </div>
       )}
       
+      <LeagueModal isOpen={leagueModalOpen} onClose={() => setLeagueModalOpen(false)} currentXp={p.xp || 0} />
+
       <BottomNav />
     </div>
   );

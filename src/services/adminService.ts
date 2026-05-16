@@ -176,4 +176,27 @@ export const adminService = {
     }
     return res.json();
   },
+
+  async deleteQuestion(id: string): Promise<void> {
+    const res = await fetch(`${API_URL}/admin/questions/${id}`, {
+      method: "DELETE",
+      headers: headers(),
+    });
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({}));
+      throw new Error(data.error || "Failed to delete question");
+    }
+  },
+
+  async updateQuestionImage(id: string, imageUrl: string | null): Promise<void> {
+    const res = await fetch(`${API_URL}/admin/questions/${id}/image`, {
+      method: "PATCH",
+      headers: headers(),
+      body: JSON.stringify({ imageUrl }),
+    });
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({}));
+      throw new Error(data.error || "Failed to update image");
+    }
+  },
 };

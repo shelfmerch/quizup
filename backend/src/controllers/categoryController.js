@@ -1,5 +1,6 @@
 const Category = require("../models/Category");
 const User = require("../models/User");
+const Question = require("../models/Question");
 
 // GET /api/categories
 const getCategories = async (req, res) => {
@@ -8,13 +9,20 @@ const getCategories = async (req, res) => {
       .sort({ name: 1 })
       .lean();
 
+    const counts = await Question.aggregate([
+      { $match: { isActive: true } },
+      { $group: { _id: "$categoryId", count: { $sum: 1 } } }
+    ]);
+    const countMap = new Map();
+    counts.forEach(c => countMap.set(c._id, c.count));
+
     // Shape to match frontend Category type
     const shaped = categories.map((c) => ({
       id: c.slug,
       name: c.name,
       icon: c.icon,
       color: c.color,
-      questionCount: c.questionCount,
+      questionCount: countMap.get(c.slug) || 0,
       description: c.description,
     }));
 
@@ -35,6 +43,13 @@ const getFollowedCategories = async (req, res) => {
     const categories = await Category.find({ isActive: true, slug: { $in: slugs } }).lean();
     const bySlug = new Map(categories.map((c) => [c.slug, c]));
 
+    const counts = await Question.aggregate([
+      { $match: { isActive: true, categoryId: { $in: slugs } } },
+      { $group: { _id: "$categoryId", count: { $sum: 1 } } }
+    ]);
+    const countMap = new Map();
+    counts.forEach(c => countMap.set(c._id, c.count));
+
     // preserve user order
     const shaped = slugs
       .map((slug) => bySlug.get(slug))
@@ -44,7 +59,7 @@ const getFollowedCategories = async (req, res) => {
         name: c.name,
         icon: c.icon,
         color: c.color,
-        questionCount: c.questionCount,
+        questionCount: countMap.get(c.slug) || 0,
         description: c.description,
       }));
 

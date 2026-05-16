@@ -38,15 +38,15 @@ const { URL } = require("url");
 const mime = require("mime-types");
 
 const { PutObjectCommand } = require("@aws-sdk/client-s3");
-const { s3, BUCKET } = require("../config/s3");
+const { s3, BUCKET, REGION, getPublicUrl, isOurS3Url } = require("../config/s3");
 
 const mongoose = require("mongoose");
 const Question = require("../models/Question");
 const Category = require("../models/Category");
+const User = require("../models/User");
+const CommunityPost = require("../models/CommunityPost");
 
 const UPLOADS_ROOT = path.resolve(__dirname, "..", "..", "uploads");
-const REGION = process.env.AWS_REGION || "ap-south-1";
-const PUBLIC_HOST = `${BUCKET}.s3.${REGION}.amazonaws.com`;
 
 const IMAGE_EXT = new Set([".jpg", ".jpeg", ".png", ".gif", ".webp", ".svg", ".bmp", ".tiff", ".avif"]);
 const DEFAULT_EXT = ".jpg";
@@ -70,19 +70,24 @@ function flagValue(name, defaultVal = null) {
 const DRY_RUN = flag("dry-run");
 const QUESTIONS_ONLY = flag("questions-only");
 const CATEGORIES_ONLY = flag("categories-only");
+const USERS_ONLY = flag("users-only");
+const COMMUNITY_ONLY = flag("community-only");
 const CATEGORY_FILTER = flagValue("category");
 const CONCURRENCY = Math.max(1, Math.min(16, Number(flagValue("concurrency", "4")) || 4));
+
+const runQuestions =
+  QUESTIONS_ONLY || (!CATEGORIES_ONLY && !USERS_ONLY && !COMMUNITY_ONLY);
+const runCategories =
+  CATEGORIES_ONLY || (!QUESTIONS_ONLY && !USERS_ONLY && !COMMUNITY_ONLY);
+const runUsers =
+  USERS_ONLY || (!QUESTIONS_ONLY && !CATEGORIES_ONLY && !COMMUNITY_ONLY);
+const runCommunity =
+  COMMUNITY_ONLY || (!QUESTIONS_ONLY && !CATEGORIES_ONLY && !USERS_ONLY);
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
 function isOnOurBucket(url) {
-  if (!url || typeof url !== "string") return false;
-  try {
-    const u = new URL(url);
-    return u.hostname === PUBLIC_HOST;
-  } catch {
-    return false;
-  }
+  return isOurS3Url(url);
 }
 
 function isHttpUrl(s) {
@@ -127,7 +132,7 @@ function hashKey(input) {
 }
 
 function s3PublicUrl(key) {
-  return `https://${PUBLIC_HOST}/${key}`;
+  return getPublicUrl(key);
 }
 
 /** Stream an http(s) URL into a Buffer (following up to 5 redirects). */
@@ -387,6 +392,76 @@ async function migrateCategories() {
   return counts;
 }
 
+async function migrateCollection({
+  model,
+  field,
+  filter,
+  labelFn,
+  sectionTitle,
+}) {
+  const total = await model.countDocuments(filter);
+  console.log(`\n📋  ${sectionTitle}: ${total}`);
+  if (total === 0) return { processed: 0, uploaded: 0, skipped: 0, errors: 0 };
+
+  const docs = await model.find(filter).select(`_id ${field}`).lean();
+  const counts = { processed: 0, uploaded: 0, skipped: 0, errors: 0 };
+
+  await runWithConcurrency(docs, CONCURRENCY, async (doc) => {
+    counts.processed++;
+    const label = labelFn(doc);
+    const current = doc[field];
+    try {
+      const result = await migrateOne(current, label);
+      if (result.status === "skip") {
+        counts.skipped++;
+        return result;
+      }
+      if (result.status === "error") {
+        counts.errors++;
+        console.warn(`  ⚠  ${label}: ${result.reason} (was ${current})`);
+        return result;
+      }
+      const isDry = result.status.startsWith("would-");
+      const newUrl = result.newUrl;
+      if (!isDry) {
+        await model.updateOne({ _id: doc._id }, { $set: { [field]: newUrl } });
+        counts.uploaded++;
+        console.log(`  ✔  ${label}: ${current} → ${newUrl}`);
+      } else {
+        counts.uploaded++;
+        console.log(`  ◌  ${label}: ${current} → ${newUrl}  (dry-run)`);
+      }
+      return result;
+    } catch (err) {
+      counts.errors++;
+      console.warn(`  ✗  ${label}: ${err?.message || err} (was ${current})`);
+      return { status: "error", reason: err?.message || String(err) };
+    }
+  });
+
+  return counts;
+}
+
+async function migrateUsers() {
+  return migrateCollection({
+    model: User,
+    field: "avatarUrl",
+    filter: { avatarUrl: { $nin: [null, ""] } },
+    labelFn: (u) => `User ${u._id}`,
+    sectionTitle: "Users with avatarUrl",
+  });
+}
+
+async function migrateCommunityPosts() {
+  return migrateCollection({
+    model: CommunityPost,
+    field: "imageUrl",
+    filter: { imageUrl: { $nin: [null, ""] } },
+    labelFn: (p) => `Post ${p._id}`,
+    sectionTitle: "Community posts with imageUrl",
+  });
+}
+
 // ─── Main ────────────────────────────────────────────────────────────────────
 
 async function main() {
@@ -403,15 +478,35 @@ async function main() {
   if (CATEGORY_FILTER) console.log(`     category:     ${CATEGORY_FILTER}`);
   if (QUESTIONS_ONLY) console.log("     scope:        questions only");
   if (CATEGORIES_ONLY) console.log("     scope:        categories only");
+  if (USERS_ONLY) console.log("     scope:        users only");
+  if (COMMUNITY_ONLY) console.log("     scope:        community posts only");
+
+  const { PutObjectCommand, DeleteObjectCommand } = require("@aws-sdk/client-s3");
+  const testKey = `_healthcheck/pre-migrate-${Date.now()}.txt`;
+  try {
+    await s3.send(
+      new PutObjectCommand({
+        Bucket: BUCKET,
+        Key: testKey,
+        Body: Buffer.from("ok"),
+        ContentType: "text/plain",
+      })
+    );
+    await s3.send(new DeleteObjectCommand({ Bucket: BUCKET, Key: testKey }));
+    console.log("     s3 write:     OK");
+  } catch (e) {
+    throw new Error(
+      `S3 PutObject denied — attach s3:PutObject on arn:aws:s3:::${BUCKET}/* to your IAM user. ${e.message}`
+    );
+  }
 
   await mongoose.connect(process.env.MONGODB_URI, { serverSelectionTimeoutMS: 20000 });
   console.log(`     mongo:        connected to ${mongoose.connection.host}`);
 
-  const runQuestions = !CATEGORIES_ONLY;
-  const runCategories = !QUESTIONS_ONLY;
-
   const qCounts = runQuestions ? await migrateQuestions() : null;
   const cCounts = runCategories ? await migrateCategories() : null;
+  const uCounts = runUsers ? await migrateUsers() : null;
+  const pCounts = runCommunity ? await migrateCommunityPosts() : null;
 
   await mongoose.disconnect();
 
@@ -424,6 +519,16 @@ async function main() {
   if (cCounts) {
     console.log(
       `Categories  processed=${cCounts.processed}  migrated=${cCounts.uploaded}  skipped=${cCounts.skipped}  errors=${cCounts.errors}`
+    );
+  }
+  if (uCounts) {
+    console.log(
+      `Users       processed=${uCounts.processed}  migrated=${uCounts.uploaded}  skipped=${uCounts.skipped}  errors=${uCounts.errors}`
+    );
+  }
+  if (pCounts) {
+    console.log(
+      `Community   processed=${pCounts.processed}  migrated=${pCounts.uploaded}  skipped=${pCounts.skipped}  errors=${pCounts.errors}`
     );
   }
   console.log(`Mode        ${DRY_RUN ? "DRY RUN — nothing changed" : "WROTE to S3 and MongoDB"}`);

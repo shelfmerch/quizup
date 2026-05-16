@@ -9,6 +9,8 @@ const {
   createQuestion,
   createBulkQuestions,
   generateQuestionsQueued,
+  deleteQuestion,
+  updateQuestionImage,
 } = require("../controllers/adminController");
 const uploadQuestionImage = require("../middleware/uploadQuestionImage");
 
@@ -31,6 +33,8 @@ router.post("/categories", createCategory);
 router.get("/questions", listQuestions);
 router.post("/questions/bulk", createBulkQuestions);
 router.post("/questions", createQuestion);
+router.delete("/questions/:id", deleteQuestion);
+router.patch("/questions/:id/image", updateQuestionImage);
 router.post("/generate-questions", generateQuestionsQueued);
 // Alias: some clients / proxies use snake_case
 router.post("/generate_questions", generateQuestionsQueued);

@@ -13,8 +13,11 @@ const matchRoutes = require("./routes/matches");
 const adminRoutes = require("./routes/admin");
 const followRoutes = require("./routes/follow");
 const chatRoutes = require("./routes/chat");
+const communityRoutes = require("./routes/communityRoutes");
+const { BUCKET, getPublicUrl, localPathToS3Key } = require("./config/s3");
 
 const app = express();
+const uploadsDir = path.join(__dirname, "..", "uploads");
 
 const extraOrigins = (process.env.ALLOWED_ORIGINS || "")
   .split(",")
@@ -45,8 +48,23 @@ app.use(
 // ─── Body parsing ─────────────────────────────────────────────────────────────
 app.use(express.json({ limit: "1mb" }));
 
-// ─── Public files (admin-uploaded question images) ─────────────────────────────
-app.use("/uploads", express.static(path.join(__dirname, "..", "uploads")));
+// ─── Legacy /uploads: local disk if present, else redirect to S3 ─────────────
+app.use("/uploads", (req, res, next) => {
+  const rel = req.path.replace(/^\//, "").replace(/^uploads\//, "");
+  if (rel && !rel.includes("..")) {
+    const localFile = path.join(uploadsDir, rel);
+    if (fs.existsSync(localFile)) {
+      return express.static(uploadsDir)(req, res, next);
+    }
+  }
+  if (BUCKET) {
+    const key = localPathToS3Key(req.path);
+    if (key) {
+      return res.redirect(302, getPublicUrl(key));
+    }
+  }
+  return express.static(uploadsDir)(req, res, next);
+});
 
 // ─── Health check ─────────────────────────────────────────────────────────────
 app.get("/health", (_req, res) => {
@@ -65,6 +83,7 @@ app.use("/api/matches", matchRoutes);
 app.use("/api/admin", adminRoutes);
 app.use("/api/follow", followRoutes);
 app.use("/api/chat", chatRoutes);
+app.use("/api/community", communityRoutes);
 
 // ─── Production: serve Vite build (same port as API + Socket.io) ────────────
 // Repo structure: /root/quizup/backend/src/app.js → frontend build lives at /root/quizup/dist

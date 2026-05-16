@@ -141,6 +141,7 @@ const fetchJson = (urlStr, bearerToken) =>
  * @returns {Promise<string|null>} image URL or null
  */
 const axios = require("axios");
+const { mirrorRemoteImageToS3 } = require("./mirrorImageToS3");
 
 async function resolveEmptyImageFromSerp(questionText, correctOption, directQuery = null) {
   const key = getSearchStackKey();
@@ -183,7 +184,7 @@ async function resolveEmptyImageFromSerp(questionText, correctOption, directQuer
       const u = img.imageUrl || img.thumbnailUrl || img.link;
       if (u && typeof u === "string" && /^https?:\/\//i.test(u)) {
         console.log(`[SearchStack] resolved image: ${u}`);
-        return u;
+        return mirrorRemoteImageToS3(u);
       }
     }
 
@@ -191,7 +192,7 @@ async function resolveEmptyImageFromSerp(questionText, correctOption, directQuer
     const fallback = pickImageUrlFromJson(data);
     if (fallback) {
       console.log(`[SearchStack] fallback image: ${fallback}`);
-      return fallback;
+      return mirrorRemoteImageToS3(fallback);
     }
 
     console.warn("[SearchStack] no image found in response:", JSON.stringify(data).slice(0, 300));
@@ -296,13 +297,13 @@ async function resolveEmptyImageFromCustom(apiTemplate, questionText, correctOpt
       try {
         const json = JSON.parse(trimmed);
         const fromJson = pickImageUrlFromJson(json);
-        if (fromJson) return fromJson;
+        if (fromJson) return mirrorRemoteImageToS3(fromJson);
       } catch {
         // fall through
       }
     }
     const plain = pickImageUrlFromJson(trimmed);
-    return plain;
+    return plain ? mirrorRemoteImageToS3(plain) : null;
   } catch (e) {
     console.warn("[CustomImageAPI] request failed:", e?.message || e);
     return null;

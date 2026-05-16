@@ -2,6 +2,14 @@ const Category = require("../models/Category");
 const Question = require("../models/Question");
 const { syncQuestionCount } = require("../services/categoryQuestionCount");
 const { resolveEmptyImageFromSerp, resolveEmptyImageFromCustom } = require("../services/serpImageSearch");
+const { resolveStoredMediaUrl } = require("../config/s3");
+const { mirrorRemoteImageToS3 } = require("../services/mirrorImageToS3");
+
+/** Store image on S3 when possible (SearchStack/Serp URLs, pasted https links, etc.). */
+const ensureImageOnS3 = async (imageUrl) => {
+  if (!imageUrl) return null;
+  return mirrorRemoteImageToS3(imageUrl);
+};
 
 const normalizeImageUrl = (raw) => {
   if (raw == null) return null;
@@ -9,7 +17,7 @@ const normalizeImageUrl = (raw) => {
   if (!s) return null;
   if (s.length > 2048) return null;
   if (/^https?:\/\//i.test(s)) return s;
-  if (s.startsWith("/uploads/")) return s;
+  if (s.startsWith("/uploads/")) return resolveStoredMediaUrl(s);
   return null;
 };
 
@@ -70,6 +78,16 @@ const slugify = (name) => {
 const listCategories = async (_req, res) => {
   try {
     const categories = await Category.find().sort({ name: 1 }).lean();
+    
+    // Fetch actual real counts from the questions collection
+    const counts = await Question.aggregate([
+      { $match: { isActive: true } },
+      { $group: { _id: "$categoryId", count: { $sum: 1 } } }
+    ]);
+    
+    const countMap = new Map();
+    counts.forEach(c => countMap.set(c._id, c.count));
+
     const shaped = categories.map((c) => ({
       id: c.slug,
       slug: c.slug,
@@ -77,7 +95,7 @@ const listCategories = async (_req, res) => {
       icon: c.icon,
       color: c.color,
       description: c.description,
-      questionCount: c.questionCount,
+      questionCount: countMap.get(c.slug) || 0,
       isActive: c.isActive,
     }));
     return res.json({ categories: shaped });
@@ -216,9 +234,11 @@ const createQuestion = async (req, res) => {
     }
     if (rawImageTrimmed && !imageUrl) {
       return res.status(422).json({
-        error: "imageUrl must be a valid http(s) URL or /uploads/... path from upload",
+        error: "imageUrl must be a valid https URL (e.g. from admin image upload to S3)",
       });
     }
+
+    imageUrl = await ensureImageOnS3(imageUrl);
 
     const q = await Question.create({
       categoryId: cat.slug,
@@ -381,6 +401,8 @@ const createBulkQuestions = async (req, res) => {
           }
         }
 
+        imageUrl = await ensureImageOnS3(imageUrl);
+
         const q = await Question.create({
           categoryId: slug,
           text: raw.text.trim(),
@@ -426,6 +448,40 @@ const createBulkQuestions = async (req, res) => {
   }
 };
 
+const deleteQuestion = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const q = await Question.findById(id);
+    if (!q) {
+      return res.status(404).json({ error: "Question not found" });
+    }
+    await Question.findByIdAndDelete(id);
+    await syncQuestionCount(q.categoryId);
+    return res.json({ success: true });
+  } catch (err) {
+    console.error("[Admin] deleteQuestion error:", err);
+    return res.status(500).json({ error: "Server error" });
+  }
+};
+
+const updateQuestionImage = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { imageUrl } = req.body;
+    const q = await Question.findById(id);
+    if (!q) {
+      return res.status(404).json({ error: "Question not found" });
+    }
+    const normalized = normalizeImageUrl(imageUrl);
+    q.imageUrl = (await ensureImageOnS3(normalized)) || null;
+    await q.save();
+    return res.json({ success: true, imageUrl: q.imageUrl });
+  } catch (err) {
+    console.error("[Admin] updateQuestionImage error:", err);
+    return res.status(500).json({ error: "Server error" });
+  }
+};
+
 module.exports = {
   listCategories,
   createCategory,
@@ -433,4 +489,6 @@ module.exports = {
   createQuestion,
   createBulkQuestions,
   generateQuestionsQueued,
+  deleteQuestion,
+  updateQuestionImage,
 };

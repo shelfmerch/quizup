@@ -13,7 +13,9 @@
     "migrate:s3:upload-only": "node src/scripts/migrateImagesToS3.js --upload-only",
     "migrate:s3:animal-celebrity": "node src/scripts/migrateImagesToS3.js --upload-only --folders=name-the-celebrity-seed,name-the-animal-seed",
     "migrate:images:s3": "node src/scripts/migrateAllImagesToS3.js",
-    "migrate:images:s3:dry-run": "node src/scripts/migrateAllImagesToS3.js --dry-run"
+    "migrate:images:s3:dry-run": "node src/scripts/migrateAllImagesToS3.js --dry-run",
+    "migrate:all:s3": "node src/scripts/verifyS3Access.js && node src/scripts/migrateImagesToS3.js && node src/scripts/migrateAllImagesToS3.js",
+    "verify:s3": "node src/scripts/verifyS3Access.js"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1033.0",

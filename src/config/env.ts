@@ -2,7 +2,7 @@ const trimSlash = (u: string) => u.replace(/\/+$/, "");
 
 /**
  * Backend HTTP origin only — no path. Set in `.env` as `VITE_API_URL`.
- * REST calls use `${API_BASE}/api/...`; static uploads use `${API_BASE}/uploads/...`.
+ * REST calls use `${API_BASE}/api/...`. Media is stored on S3; legacy `/uploads/...` paths redirect to S3.
  * @example VITE_API_URL=http://localhost:3003
  * @example VITE_API_URL=https://api.yourdomain.com
  */
@@ -19,7 +19,7 @@ export const SOCKET_URL = trimSlash(import.meta.env.VITE_SOCKET_URL ?? API_BASE)
 
 /**
  * Turn stored avatar/media paths into a browser-loadable URL.
- * The API stores paths like `/uploads/avatars/...` on the user document; the browser must request them from `API_BASE`.
+ * New uploads return full S3 https URLs. Legacy `/uploads/...` paths are resolved via API_BASE (redirects to S3).
  */
 export function resolveMediaUrl(
   url: string | undefined | null,

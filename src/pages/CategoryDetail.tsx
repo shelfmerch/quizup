@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState, useRef } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { motion } from "framer-motion";
 import { ArrowLeft, Play, Trophy, Star, Users, BookOpen, Search, MessageCircle } from "lucide-react";
@@ -10,6 +10,8 @@ import { Category, LeaderboardEntry } from "@/types";
 import { useAuth } from "@/hooks/useAuth";
 import { fetchFollowedCategories, followCategory, unfollowCategory } from "@/services/categoryService";
 import Icons8Icon, { getCategoryIconSlug } from "@/components/Icons8Icon";
+import { communityService, CommunityPost, CategoryStatus } from "@/services/communityService";
+import { Heart, MessageSquare, Send, Image as ImageIcon, X } from "lucide-react";
 
 const CATEGORY_THEMES: Record<
   string,
@@ -54,6 +56,16 @@ const CategoryDetail: React.FC = () => {
   const [playersLoading, setPlayersLoading] = useState(true);
   const [isFollowed, setIsFollowed] = useState(false);
   const [followBusy, setFollowBusy] = useState(false);
+
+  // const [activeTab, setActiveTab] = useState<"rankings" | "community">("rankings");
+  const [communityStatus, setCommunityStatus] = useState<CategoryStatus | null>(null);
+  const [posts, setPosts] = useState<CommunityPost[]>([]);
+  const [newPostContent, setNewPostContent] = useState("");
+  const [isPosting, setIsPosting] = useState(false);
+  
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Fetch live categories from API
   useEffect(() => {
@@ -102,8 +114,68 @@ const CategoryDetail: React.FC = () => {
       .finally(() => {
         if (!cancelled) setPlayersLoading(false);
       });
+
+    // Also fetch community status in background
+    if (isAuthenticated) {
+      communityService.getStatus(categoryId).then(status => {
+        if (!cancelled) setCommunityStatus(status);
+      }).catch(() => {});
+    }
+
     return () => { cancelled = true; };
-  }, [categoryId]);
+  }, [categoryId, isAuthenticated]);
+
+  // useEffect(() => {
+  //   if (activeTab === "community" && categoryId && communityStatus?.communityUnlocked) {
+  //     communityService.getPosts(categoryId).then(setPosts).catch(() => {});
+  //   }
+  // }, [activeTab, categoryId, communityStatus?.communityUnlocked]);
+
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      setImageFile(e.target.files[0]);
+      setImagePreview(URL.createObjectURL(e.target.files[0]));
+    }
+  };
+
+  const removeImage = () => {
+    setImageFile(null);
+    setImagePreview(null);
+    if (fileInputRef.current) fileInputRef.current.value = "";
+  };
+
+  const handlePost = async () => {
+    if (!newPostContent.trim() && !imageFile) return;
+    setIsPosting(true);
+    try {
+      let uploadedUrl = null;
+      if (imageFile) {
+        uploadedUrl = await communityService.uploadImage(imageFile);
+      }
+      const post = await communityService.createPost(categoryId!, newPostContent, uploadedUrl || undefined);
+      setPosts([post, ...posts]);
+      setNewPostContent("");
+      removeImage();
+    } catch (err: any) {
+      alert(err?.response?.data?.error || "Failed to post");
+    } finally {
+      setIsPosting(false);
+    }
+  };
+
+  const handleLike = async (postId: string) => {
+    try {
+      const res = await communityService.likePost(postId);
+      setPosts(posts.map(p => {
+        if (p._id === postId) {
+          const likes = p.likes.filter(id => id !== user?.id);
+          if (res.liked && user?.id) likes.push(user.id);
+          return { ...p, likes };
+        }
+        return p;
+      }));
+    } catch (err) {}
+  };
 
   // Fetch follow state for this category (most recent follows persisted in backend)
   useEffect(() => {
@@ -282,100 +354,117 @@ const CategoryDetail: React.FC = () => {
           <p className="text-[2.5rem] font-display font-extrabold text-white leading-none tracking-tight">{category.questionCount}</p>
         </div>
       </div>
-      {/* </div> */}
-      {/* ── Top 5 Players ─────────────────────────────────────────────────────── */}
-      <div className="flex-1 px-4 pt-5 pb-28">
-        <div className="flex items-center gap-2 mb-3">
-          {/* <Trophy className="w-4 h-4 text-amber-500" /> */}
-          <h2 className="font-display font-bold text-slate-400 text-sm uppercase tracking-wider">
-            Top Players
-          </h2>
-        </div>
 
-        {playersLoading ? (
-          <div className="space-y-2">
-            {[0, 1, 2].map((i) => (
-              <div
-                key={i}
-                className="h-16 rounded-2xl bg-white border border-slate-100 animate-pulse"
-              />
-            ))}
-          </div>
-        ) : topPlayers.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-10 gap-2">
-            <Users className="w-10 h-10 text-zinc-700" />
-            <p className="text-zinc-500 text-sm">No rankings yet — be the first to play!</p>
-            <motion.button
-              type="button"
-              whileTap={{ scale: 0.96 }}
-              onClick={() => navigate(`/find-match/${category.id}`)}
-              className="mt-2 px-5 py-2.5 rounded-full text-sm font-semibold text-white"
-              style={{
-                background: `linear-gradient(135deg, ${theme.accent}, ${theme.accent}aa)`,
-                boxShadow: `0 4px 12px ${theme.glow}`,
-              }}
-            >
-              Play now
-            </motion.button>
-          </div>
-        ) : (
-          <div className="space-y-2">
-            {topPlayers.map((player, idx) => (
-              <motion.button
-                key={player.userId}
-                initial={{ opacity: 0, y: 12 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: idx * 0.07 }}
-                type="button"
-                onClick={() => navigate(`/profile/${player.userId}`)}
-                className="relative w-full text-left flex items-center gap-3 bg-white border border-slate-100 rounded-2xl px-4 py-3 overflow-hidden shadow-sm hover:border-slate-200 active:scale-[0.99] transition"
-              >
-                {/* subtle rank glow strip on left */}
-                <div
-                  className="absolute left-0 top-0 bottom-0 w-1 rounded-l-2xl"
-                  style={{
-                    background:
-                      idx === 0
-                        ? "linear-gradient(180deg,#FFD700,#FFA500)"
-                        : idx === 1
-                          ? "linear-gradient(180deg,#C0C0C0,#A0A0A0)"
-                          : "linear-gradient(180deg,#CD7F32,#A0522D)",
-                  }}
-                />
-                <span className="text-xl shrink-0 ml-1">{idx < 3 ? MEDAL[idx] : `#${idx + 1}`}</span>
-                <img
-                  src={
-                    player.avatarUrl ||
-                    `https://api.dicebear.com/7.x/avataaars/svg?seed=${player.username}`
-                  }
-                  alt=""
-                  className="w-10 h-10 rounded-full bg-slate-50 border border-slate-100 shrink-0"
-                />
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-semibold text-slate-900 truncate">
-                    {player.username}
-                  </p>
-                  <p className="text-[10px] text-slate-400">
-                    Level {player.level} · {player.wins} wins
-                  </p>
+      <div className="flex-1 px-4 pt-5 pb-28 overflow-y-auto">
+        <div className="space-y-4">
+            {!communityStatus?.communityUnlocked ? (
+              <div className="flex flex-col items-center justify-center py-12 text-center bg-[#1a1a1a] rounded-2xl border border-white/5 shadow-inner">
+                <div className="w-16 h-16 bg-white/5 rounded-full flex items-center justify-center mb-4">
+                  <span className="text-3xl">🔒</span>
                 </div>
-                <div className="text-right shrink-0">
-                  <p
-                    className="text-base font-display font-extrabold tabular-nums"
-                    style={{ color: theme.accent }}
-                  >
-                    {player.score.toLocaleString()}
-                  </p>
-                  <p className="text-[9px] text-slate-400 uppercase tracking-wide">pts</p>
+                <h3 className="font-display font-bold text-xl text-white mb-2">Community Locked</h3>
+                <p className="text-slate-400 text-sm max-w-[250px] mx-auto mb-4">
+                  Play {Math.max(0, 25 - (communityStatus?.playedMatches || 0))} more matches in {category.name} to unlock the community feed.
+                </p>
+                <div className="w-full max-w-[200px] bg-black/50 rounded-full h-3 mb-2 overflow-hidden border border-white/10">
+                  <div className="h-full bg-blue-500 rounded-full" style={{ width: `${Math.min(100, ((communityStatus?.playedMatches || 0) / 25) * 100)}%` }} />
                 </div>
-              </motion.button>
-            ))}
-          </div>
-        )
-        }
+                <p className="text-xs text-slate-500 font-bold uppercase tracking-wider">{communityStatus?.playedMatches || 0} / 25 Matches</p>
+              </div>
+            ) : (
+              <>
+                {/* Create Post */}
+                <div className="bg-[#1e1e1e] border border-white/10 rounded-2xl p-4 shadow-sm">
+                  <div className="flex gap-3">
+                    <img src={user?.avatarUrl || `https://api.dicebear.com/7.x/avataaars/svg?seed=${user?.username}`} alt="" className="w-10 h-10 rounded-full bg-slate-800 object-cover shrink-0" />
+                    <div className="flex-1">
+                      <textarea
+                        value={newPostContent}
+                        onChange={(e) => setNewPostContent(e.target.value)}
+                        placeholder="Share your thoughts or brag about your score..."
+                        className="w-full bg-transparent text-sm text-white resize-none outline-none min-h-[60px] placeholder:text-slate-500 custom-scrollbar"
+                      />
+                      
+                      {imagePreview && (
+                        <div className="relative mt-2 mb-2 inline-block">
+                          <img src={imagePreview} alt="Preview" className="h-24 w-auto rounded-lg object-cover border border-white/10" />
+                          <button 
+                            onClick={removeImage}
+                            className="absolute -top-2 -right-2 bg-slate-800 text-white rounded-full p-1 border border-white/20 hover:bg-slate-700 transition"
+                          >
+                            <X className="w-3 h-3" />
+                          </button>
+                        </div>
+                      )}
+                      
+                      <div className="flex justify-between items-center mt-2 border-t border-white/5 pt-2">
+                        <input 
+                          type="file" 
+                          ref={fileInputRef} 
+                          onChange={handleImageChange} 
+                          accept="image/*" 
+                          className="hidden" 
+                        />
+                        <button 
+                          onClick={() => fileInputRef.current?.click()}
+                          className="text-slate-400 hover:text-white p-1.5 rounded-full hover:bg-white/5 transition-colors"
+                          title="Attach an image"
+                        >
+                          <ImageIcon className="w-5 h-5" />
+                        </button>
+                        <button
+                          disabled={(!newPostContent.trim() && !imageFile) || isPosting}
+                          onClick={handlePost}
+                          className="bg-blue-500 text-white px-5 py-1.5 rounded-full text-xs font-bold uppercase tracking-wider shadow-md hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                        >
+                          {isPosting ? "Posting..." : "Post"}
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Posts Feed */}
+                <div className="space-y-4 pt-2">
+                  {posts.length === 0 ? (
+                    <p className="text-center text-slate-500 py-10 text-sm">No posts yet. Be the first to start the discussion!</p>
+                  ) : (
+                    posts.map(post => {
+                      const isLiked = post.likes.includes(user?.id || "");
+                      return (
+                        <div key={post._id} className="bg-[#1e1e1e] border border-white/10 rounded-2xl p-4 shadow-sm flex gap-3">
+                          <img src={post.authorId.avatarUrl} alt="" className="w-10 h-10 rounded-full bg-slate-800 object-cover shrink-0" />
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-baseline justify-between mb-1">
+                              <p className="font-bold text-sm text-white truncate pr-2">{post.authorId.displayName}</p>
+                              <p className="text-[10px] text-slate-500 shrink-0">{new Date(post.createdAt).toLocaleDateString()}</p>
+                            </div>
+                            <p className="text-sm text-slate-300 break-words leading-relaxed whitespace-pre-wrap">{post.content}</p>
+                            
+                            {post.imageUrl && (
+                              <div className="mt-3 rounded-xl overflow-hidden border border-white/10 bg-black/20">
+                                <img src={post.imageUrl} alt="Post attachment" className="w-full h-auto object-contain max-h-[300px]" loading="lazy" />
+                              </div>
+                            )}
+                            
+                            <div className="flex items-center gap-6 mt-4">
+                              <button onClick={() => handleLike(post._id)} className={`flex items-center gap-1.5 text-xs font-bold transition-colors ${isLiked ? 'text-red-500' : 'text-slate-500 hover:text-slate-300'}`}>
+                                <Heart className={`w-4 h-4 ${isLiked ? 'fill-current' : ''}`} /> {post.likes.length}
+                              </button>
+                              <button className="flex items-center gap-1.5 text-xs font-bold text-slate-500 hover:text-slate-300 transition-colors">
+                                <MessageSquare className="w-4 h-4" /> {post.comments.length}
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })
+                  )}
+                </div>
+              </>
+            )}
+        </div>
       </div>
-      {/* </div> */}
-      {/* </div> */}
     </div>
   );
 };

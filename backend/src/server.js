@@ -1,12 +1,15 @@
 require("dotenv").config();
 const http = require("http");
 const connectDB = require("./config/db");
+const { validateS3Config } = require("./config/s3");
 const app = require("./app");
 const initSockets = require("./sockets");
 
 const PORT = process.env.PORT || 3003;
 
 const start = async () => {
+  validateS3Config();
+
   // 1. Create HTTP server from Express app
   const server = http.createServer(app);
 

@@ -1,4 +1,5 @@
 const https = require("https");
+const { mirrorRemoteImageToS3 } = require("../services/mirrorImageToS3");
 
 const fetchJson = (url, headers = {}) =>
   new Promise((resolve, reject) => {
@@ -95,7 +96,7 @@ const resolveImageUrl = async (args) => {
     const domainGuess = q.includes(".") ? q.split(/\s+/).find((p) => p.includes(".")) : null;
     if (domainGuess) {
       const url = clearbitLogoUrl(domainGuess);
-      if (url) return url;
+      if (url) return mirrorRemoteImageToS3(url);
     }
   }
 
@@ -103,17 +104,17 @@ const resolveImageUrl = async (args) => {
 
   if (isAnimal && unsplashKey) {
     const u = await fetchUnsplashImageUrl(q || tags[0] || "animal", unsplashKey).catch(() => null);
-    if (u) return u;
+    if (u) return mirrorRemoteImageToS3(u);
   }
 
   if (serpKey) {
     const s = await fetchSerpImageUrl(q || tags.join(" ") || "quiz", serpKey).catch(() => null);
-    if (s) return s;
+    if (s) return mirrorRemoteImageToS3(s);
   }
 
   if (unsplashKey) {
     const u = await fetchUnsplashImageUrl(q || "abstract", unsplashKey).catch(() => null);
-    if (u) return u;
+    if (u) return mirrorRemoteImageToS3(u);
   }
 
   return null;
