@@ -17,17 +17,4 @@ export const API_URL = API_BASE ? `${API_BASE}/api` : "/api";
  */
 export const SOCKET_URL = trimSlash(import.meta.env.VITE_SOCKET_URL ?? API_BASE);
 
-/**
- * Turn stored avatar/media paths into a browser-loadable URL.
- * New uploads return full S3 https URLs. Legacy `/uploads/...` paths are resolved via API_BASE (redirects to S3).
- */
-export function resolveMediaUrl(
-  url: string | undefined | null,
-  fallback = ""
-): string {
-  if (url == null || String(url).trim() === "") return fallback;
-  const u = String(url).trim();
-  if (u.startsWith("http://") || u.startsWith("https://") || u.startsWith("data:")) return u;
-  if (u.startsWith("/")) return `${API_BASE}${u}`;
-  return u;
-}
+export { resolveMediaUrl } from "@/lib/mediaUrl";

@@ -11,6 +11,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { fetchFollowedCategories, followCategory, unfollowCategory } from "@/services/categoryService";
 import Icons8Icon, { getCategoryIconSlug } from "@/components/Icons8Icon";
 import { communityService, CommunityPost, CategoryStatus } from "@/services/communityService";
+import { resolveQuestionImageUrl } from "@/lib/mediaUrl";
 import { Heart, MessageSquare, Send, Image as ImageIcon, X } from "lucide-react";
 
 const CATEGORY_THEMES: Record<
@@ -443,7 +444,7 @@ const CategoryDetail: React.FC = () => {
                             
                             {post.imageUrl && (
                               <div className="mt-3 rounded-xl overflow-hidden border border-white/10 bg-black/20">
-                                <img src={post.imageUrl} alt="Post attachment" className="w-full h-auto object-contain max-h-[300px]" loading="lazy" />
+                                <img src={resolveQuestionImageUrl(post.imageUrl)!} alt="Post attachment" className="w-full h-auto object-contain max-h-[300px]" loading="lazy" />
                               </div>
                             )}
                             

@@ -52,6 +52,22 @@ function isOurS3Url(url) {
   }
 }
 
+/** Extract object key from a URL on our bucket (for proxy / GetObject). */
+function parseS3KeyFromUrl(url) {
+  if (!isOurS3Url(url)) return null;
+  try {
+    return decodeURIComponent(new URL(String(url).trim()).pathname.replace(/^\/+/, ""));
+  } catch {
+    return null;
+  }
+}
+
+/** Browser URL when the bucket is private (use API media proxy). */
+function getMediaProxyPath(key) {
+  const k = String(key).replace(/^\/+/, "");
+  return `/api/media/file/${k.split("/").map(encodeURIComponent).join("/")}`;
+}
+
 /**
  * Map API path `/uploads/food/x.png` → S3 key `uploads/food/x.png`
  * Map `/uploads/avatars/x.jpg` → `avatars/x.jpg`
@@ -99,6 +115,8 @@ module.exports = {
   getPublicUrl,
   getBucketHost,
   isOurS3Url,
+  parseS3KeyFromUrl,
+  getMediaProxyPath,
   localPathToS3Key,
   resolveStoredMediaUrl,
   validateS3Config,

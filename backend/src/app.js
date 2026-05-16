@@ -14,7 +14,8 @@ const adminRoutes = require("./routes/admin");
 const followRoutes = require("./routes/follow");
 const chatRoutes = require("./routes/chat");
 const communityRoutes = require("./routes/communityRoutes");
-const { BUCKET, getPublicUrl, localPathToS3Key } = require("./config/s3");
+const mediaRoutes = require("./routes/media");
+const { BUCKET, getMediaProxyPath, localPathToS3Key } = require("./config/s3");
 
 const app = express();
 const uploadsDir = path.join(__dirname, "..", "uploads");
@@ -60,7 +61,7 @@ app.use("/uploads", (req, res, next) => {
   if (BUCKET) {
     const key = localPathToS3Key(req.path);
     if (key) {
-      return res.redirect(302, getPublicUrl(key));
+      return res.redirect(302, getMediaProxyPath(key));
     }
   }
   return express.static(uploadsDir)(req, res, next);
@@ -75,6 +76,7 @@ app.get("/health", (_req, res) => {
 });
 
 // ─── API Routes ───────────────────────────────────────────────────────────────
+app.use("/api/media", mediaRoutes);
 app.use("/api/auth", authRoutes);
 app.use("/api/profile", profileRoutes);
 app.use("/api/categories", categoryRoutes);
