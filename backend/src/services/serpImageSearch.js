@@ -142,8 +142,13 @@ const fetchJson = (urlStr, bearerToken) =>
  */
 const axios = require("axios");
 const { mirrorRemoteImageToS3 } = require("./mirrorImageToS3");
+const { fetchSerpImageUrl } = require("../utils/imageResolver");
 
-async function resolveEmptyImageFromSerp(questionText, correctOption, directQuery = null) {
+function getSerpApiKey() {
+  return (process.env.SERP_API_KEY || "").trim();
+}
+
+async function resolveEmptyImageFromSearchStack(questionText, correctOption, directQuery = null) {
   const key = getSearchStackKey();
   if (!key) {
     console.warn("[SearchStack] SEARCHSTACK_KEY not set — skipping image fetch");
@@ -204,6 +209,43 @@ async function resolveEmptyImageFromSerp(questionText, correctOption, directQuer
 }
 
 /**
+ * Search for an image via SerpAPI (Google Images). Set SERP_API_KEY in backend/.env
+ * @param {string} questionText
+ * @param {string} correctOption
+ * @param {string|null} [directQuery]
+ * @returns {Promise<string|null>}
+ */
+async function resolveEmptyImageFromSerpApi(questionText, correctOption, directQuery = null) {
+  const key = getSerpApiKey();
+  if (!key) {
+    console.warn("[SerpAPI] SERP_API_KEY not set — skipping image fetch");
+    return null;
+  }
+
+  const query = directQuery
+    ? directQuery.trim().slice(0, 80)
+    : buildSearchQuery(questionText, correctOption).slice(0, 80);
+
+  console.log(`[SerpAPI] fetching image for query: "${query}"`);
+
+  try {
+    const url = await fetchSerpImageUrl(query, key);
+    if (url && /^https?:\/\//i.test(url)) {
+      console.log(`[SerpAPI] resolved image: ${url}`);
+      return mirrorRemoteImageToS3(url);
+    }
+    console.warn("[SerpAPI] no image found for query:", query);
+    return null;
+  } catch (e) {
+    console.warn("[SerpAPI] image search failed:", e?.message || e);
+    return null;
+  }
+}
+
+/** @deprecated Use resolveEmptyImageFromSearchStack — kept for existing call sites */
+const resolveEmptyImageFromSerp = resolveEmptyImageFromSearchStack;
+
+/**
  * Pick first HTTPS image URL from common JSON shapes returned by custom APIs.
  * @param {unknown} obj
  * @returns {string|null}
@@ -254,64 +296,9 @@ function pickImageUrlFromJson(obj) {
   return null;
 }
 
-/**
- * GET a custom HTTPS URL with `{query}` replaced by an encoded search string.
- * Response: JSON (see pickImageUrlFromJson) or a plain body that is a single image URL.
- * @param {string} apiTemplate e.g. https://your.api/image?q={query}
- * @param {string} questionText
- * @param {string} correctOption
- * @returns {Promise<string|null>}
- */
-async function resolveEmptyImageFromCustom(apiTemplate, questionText, correctOption) {
-  const template = String(apiTemplate || "").trim();
-  if (!template.includes("{query}") || template.length > 2048) return null;
-  if (!/^https:\/\//i.test(template)) return null;
-
-  const query = buildSearchQuery(questionText, correctOption).slice(0, 200);
-  const urlStr = template.split("{query}").join(encodeURIComponent(query));
-
-  try {
-    const data = await new Promise((resolve, reject) => {
-      https
-        .get(urlStr, (res) => {
-          let body = "";
-          res.on("data", (c) => {
-            body += c;
-            if (body.length > 2000000) {
-              res.destroy();
-              reject(new Error("response too large"));
-            }
-          });
-          res.on("end", () => {
-            if (res.statusCode && res.statusCode >= 400) {
-              return reject(new Error(`HTTP ${res.statusCode}`));
-            }
-            resolve(body);
-          });
-        })
-        .on("error", reject);
-    });
-
-    const trimmed = String(data).trim();
-    if (trimmed.startsWith("{") || trimmed.startsWith("[")) {
-      try {
-        const json = JSON.parse(trimmed);
-        const fromJson = pickImageUrlFromJson(json);
-        if (fromJson) return mirrorRemoteImageToS3(fromJson);
-      } catch {
-        // fall through
-      }
-    }
-    const plain = pickImageUrlFromJson(trimmed);
-    return plain ? mirrorRemoteImageToS3(plain) : null;
-  } catch (e) {
-    console.warn("[CustomImageAPI] request failed:", e?.message || e);
-    return null;
-  }
-}
-
 module.exports = {
   buildSearchQuery,
+  resolveEmptyImageFromSearchStack,
+  resolveEmptyImageFromSerpApi,
   resolveEmptyImageFromSerp,
-  resolveEmptyImageFromCustom,
 };

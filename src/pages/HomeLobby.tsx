@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { MessageCircle, Search, Settings, Swords, X } from "lucide-react";
+import { MessageCircle, Search, Settings, Swords } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { MOCK_CATEGORIES } from "@/data/mock-data";
 import { EXTRA_HOME_TOPICS } from "@/data/extraTopics";
@@ -265,7 +265,7 @@ const HomeLobby: React.FC = () => {
         </div>
       </div>
 
-      <div className="bg-[#101010] px-3 py-2 text-white">
+      <div className="bg-[#333333] px-3 py-2 text-white">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
             <img src={avatarSrc} alt="" className="h-11 w-11 rounded-full border-2 border-white object-cover" />
@@ -279,10 +279,10 @@ const HomeLobby: React.FC = () => {
               </button>
             </div>
           </div>
-          <div className="grid grid-cols-3 gap-4 text-center text-[11px] font-bold">
-            <div><span className="block text-[#00cc92]">{user?.wins || 0}</span>Wins</div>
-            <div><span className="block text-[#f6d22d]">{user?.winStreak || 0}</span>Streak</div>
-            <div><span className="block text-white">{user?.totalMatches || 0}</span>Games</div>
+          <div className="grid grid-cols-3 gap-4 text-center text-[9px] font-bold">
+            <div><img src="/images/win.png" alt="Win" className="h-7 w-7 object-contain" /> <span className="block text-white">{user?.wins || 0}</span></div>
+            <div><img src="/images/rank.png" alt="Rank" className="h-7 w-7 object-contain" /> <span className="block text-white">{user?.winStreak || 0}</span>Streak</div>
+            <div><img src="/images/gems.png" alt="Gems" className="h-7 w-7 object-contain" /> <span className="block text-white">{user?.totalMatches || 0}</span>Gems</div>
           </div>
         </div>
       </div>
@@ -290,13 +290,8 @@ const HomeLobby: React.FC = () => {
       <button
         type="button"
         onClick={() => navigate("/categories")}
-        className="bg-cover bg-no-repeat bg-center quizup-pattern relative flex h-36 w-full items-center justify-between overflow-hidden px-5 text-left text-white" style={{ backgroundImage: "url('/images/banner.jpg')" }}
+        className="bg-cover bg-no-repeat bg-center quizup-pattern relative flex h-44 w-full items-center justify-between overflow-hidden px-5 text-left text-white" style={{ backgroundImage: "url('/images/galorei.png')" }}
       >
-        <div>
-          <p className="font-display text-2xl font-black uppercase leading-6 drop-shadow">Challenges Galore!</p>
-          <p className="mt-1 text-xs font-bold text-white/85">Pick a topic and start a lightning round.</p>
-        </div>
-        <div className="flex h-16 w-16 items-center justify-center rounded-full bg-white/20 text-4xl font-black">!</div>
       </button>
 
 
@@ -346,100 +341,112 @@ const HomeLobby: React.FC = () => {
 
           <Section title="Challenges">
             <style>{`
+              @import url('https://fonts.googleapis.com/css2?family=Fredoka:wght@600;700&display=swap');
               @keyframes challengeSlideIn {
                 from { opacity: 0; transform: translateY(-12px) scale(0.97); }
                 to   { opacity: 1; transform: translateY(0) scale(1); }
               }
+              .coc-challenge-title {
+                font-family: 'Fredoka', 'Montserrat', sans-serif;
+                color: #fff;
+                -webkit-text-stroke: 2px #2a1608;
+                paint-order: stroke fill;
+                text-shadow:
+                  0 2px 0 #2a1608,
+                  0 3px 0 #1a0d04,
+                  0 4px 6px rgba(0,0,0,0.35);
+              }
+              .coc-challenge-btn-label {
+                color: #fff;
+                -webkit-text-stroke: 1.5px #2a1608;
+                paint-order: stroke fill;
+                text-shadow: 0 1px 0 #2a1608, 0 2px 3px rgba(0,0,0,0.25);
+              }
             `}</style>
             {incomingChallenge ? (
               <div
-                className="rounded-2xl overflow-hidden"
+                className="relative mx-auto max-w-sm pt-2"
                 style={{
-                  animation: "challengeSlideIn 0.3s cubic-bezier(0.34,1.56,0.64,1) both",
-                  background: "linear-gradient(135deg, #1a1a2e 0%, #0f3460 100%)",
-                  border: "1px solid rgba(246,83,87,0.35)",
-                  boxShadow: "0 4px 24px rgba(246,83,87,0.15), inset 0 1px 0 rgba(255,255,255,0.07)",
+                  animation: "challengeSlideIn 0.35s cubic-bezier(0.34,1.56,0.64,1) both",
                 }}
               >
-                {/* Header row */}
-                <div className="flex items-center justify-between px-4 pt-3 pb-1">
-                  <div className="flex items-center gap-1.5">
-                    <Swords className="h-3.5 w-3.5 text-[#f65357]" />
-                    <span className="text-[10px] font-black uppercase tracking-widest text-[#f65357]">Incoming Challenge</span>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => respondToChallenge("reject")}
-                    className="h-6 w-6 flex items-center justify-center rounded-full bg-white/10 text-white/40 hover:bg-white/20 transition-colors"
-                    aria-label="Dismiss"
-                  >
-                    <X className="h-3 w-3" />
-                  </button>
-                </div>
+                <div
+                  className="relative rounded-2xl px-3 pb-3 pt-8"
+                  style={{
+                    background: "linear-gradient(180deg, #faf6ee 0%, #f0e8d8 100%)",
+                    border: "4px solid #3d2914",
+                    boxShadow:
+                      "0 6px 0 #2a1a0c, 0 10px 24px rgba(0,0,0,0.28), inset 0 2px 0 rgba(255,255,255,0.85), inset 0 -3px 0 rgba(61,41,20,0.12)",
+                  }}
+                >
+                  <h3 className="coc-challenge-title absolute left-1/2 top-0 -translate-x-1/2 -translate-y-1/2 whitespace-nowrap text-xl font-bold tracking-wide">
+                    Incoming Challenge!
+                  </h3>
 
-                {/* Challenger info + buttons */}
-                <div className="flex items-center gap-3 px-4 pb-4 pt-2">
-                  {/* Category Icon */}
-                  <div className="relative shrink-0 flex items-center justify-center h-16 w-16 rounded-xl bg-white/10 border border-white/20 shadow-[0_0_12px_rgba(255,255,255,0.1)]">
-                    {incomingChallenge && (
-                      <CategoryIcon
-                        category={allTopics.find(t => t.id === incomingChallenge.categoryId) || { name: incomingChallenge.categoryName }}
-                        size={74}
-                        style="fluency"
-                        className="h-16 w-16 object-contain"
-                      />
-                    )}
-                    {/* <span
-                      className="absolute -bottom-1.5 -right-1.5 flex h-4 w-4 items-center justify-center rounded-full text-[9px] shadow-sm"
-                      style={{ background: "#f65357" }}
-                    >⚔️</span> */}
-                  </div>
-
-                  {/* Name + category */}
-                  <div className="min-w-0 flex-1">
-                    <div className="flex items-center gap-1.5 mb-0.5">
-                      <img
-                        src={resolveMediaUrl(
-                          incomingChallenge.from.avatarUrl,
-                          `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(incomingChallenge.from.username)}`
-                        )}
-                        alt=""
-                        className="h-4 w-4 rounded-full object-cover border border-white/20"
-                      />
-                      <p className="font-black text-sm text-white truncate">{incomingChallenge.from.username}</p>
+                  <div className="flex items-center gap-3">
+                    <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl border-[3px] border-[#c4a574] bg-white/60 shadow-[inset_0_2px_6px_rgba(61,41,20,0.08)]">
+                    <CategoryIcon
+                      category={
+                        allTopics.find((t) => t.id === incomingChallenge.categoryId) || {
+                          name: incomingChallenge.categoryName,
+                        }
+                      }
+                      size={74}
+                      style="fluency"
+                      className="h-12 w-12 object-contain"
+                    />
                     </div>
-                    <p className="text-[10px] text-white/50 font-semibold">challenges you in</p>
-                    <span className="mt-0.5 inline-block rounded-full bg-white/10 px-2 py-0.5 text-[9px] font-black uppercase tracking-wide text-white/70 border border-white/10">
-                      {incomingChallenge.categoryName}
-                    </span>
-                  </div>
 
-                  {/* 3D Buttons */}
-                  <div className="flex flex-col gap-2 shrink-0">
-                    <button
-                      type="button"
-                      disabled={challengeResponding}
-                      onClick={() => respondToChallenge("reject")}
-                      className="h-9 w-20 rounded-xl font-black text-xs text-white active:translate-y-[2px] transition-transform duration-75 disabled:opacity-50"
-                      style={{
-                        background: "linear-gradient(to bottom, #555, #333)",
-                        boxShadow: "0 4px 0 #111, 0 6px 12px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.12)",
-                      }}
-                    >
-                      Decline
-                    </button>
-                    <button
-                      type="button"
-                      disabled={challengeResponding}
-                      onClick={() => respondToChallenge("accept")}
-                      className="h-9 w-20 rounded-xl font-black text-xs text-white active:translate-y-[2px] transition-transform duration-75 disabled:opacity-50"
-                      style={{
-                        background: "linear-gradient(to bottom, #ff6b6b, #f65357, #c0392b)",
-                        boxShadow: "0 4px 0 #7b1a1a, 0 6px 14px rgba(246,83,87,0.4), inset 0 1px 0 rgba(255,255,255,0.2)",
-                      }}
-                    >
-                      {challengeResponding ? "…" : "Accept ⚔️"}
-                    </button>
+                    <div className="min-w-0 flex-1 text-left">
+                      <div className="mb-0.5 flex items-center gap-2">
+                        <img
+                          src={resolveMediaUrl(
+                            incomingChallenge.from.avatarUrl,
+                            `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(incomingChallenge.from.username)}`
+                          )}
+                          alt=""
+                          className="h-6 w-6 shrink-0 rounded-full border-2 border-[#c4a574] object-cover shadow-sm"
+                        />
+                        <p className="truncate font-display text-[14px] font-black text-[#3d2914]">
+                          {incomingChallenge.from.username}
+                        </p>
+                      </div>
+                      <p className="font-body text-[12px] font-semibold leading-snug text-[#5c4030]">
+                        challenges you in{" "}
+                        <span className="font-bold text-[#3d2914]">{incomingChallenge.categoryName}</span>
+                      </p>
+                    </div>
+
+                    <div className="flex shrink-0 flex-col gap-2">
+                      <button
+                        type="button"
+                        disabled={challengeResponding}
+                        onClick={() => respondToChallenge("reject")}
+                        className="coc-challenge-btn-label relative w-[76px] rounded-2xl py-2.5 text-xs font-bold active:translate-y-[3px] transition-transform duration-75 disabled:opacity-50"
+                        style={{
+                          background: "linear-gradient(180deg, #ffb347 0%, #ff7b2e 45%, #e84a1a 100%)",
+                          border: "3px solid #2a1608",
+                          boxShadow:
+                            "0 5px 0 #8b2e0a, 0 8px 14px rgba(0,0,0,0.22), inset 0 2px 0 rgba(255,255,255,0.45)",
+                        }}
+                      >
+                        Decline
+                      </button>
+                      <button
+                        type="button"
+                        disabled={challengeResponding}
+                        onClick={() => respondToChallenge("accept")}
+                        className="coc-challenge-btn-label relative w-[76px] rounded-2xl py-2.5 text-xs font-bold active:translate-y-[3px] transition-transform duration-75 disabled:opacity-50"
+                        style={{
+                          background: "linear-gradient(180deg, #b8f04a 0%, #7ed321 45%, #4a9e12 100%)",
+                          border: "3px solid #2a1608",
+                          boxShadow:
+                            "0 5px 0 #2d5a0a, 0 8px 14px rgba(0,0,0,0.22), inset 0 2px 0 rgba(255,255,255,0.45)",
+                        }}
+                      >
+                        {challengeResponding ? "…" : "Accept"}
+                      </button>
+                    </div>
                   </div>
                 </div>
               </div>

@@ -43,8 +43,7 @@ const AdminPage: React.FC = () => {
   const [bulkJson, setBulkJson] = useState("");
   const [bulkSubmitting, setBulkSubmitting] = useState(false);
   const [bulkResult, setBulkResult] = useState<BulkCreateResponse | null>(null);
-  const [bulkAutoImageProvider, setBulkAutoImageProvider] = useState<"searchstack" | "custom">("searchstack");
-  const [bulkCustomImageApiUrl, setBulkCustomImageApiUrl] = useState("");
+  const [bulkAutoImageProvider, setBulkAutoImageProvider] = useState<"searchstack" | "serp">("searchstack");
 
   const refreshCategories = async () => {
     const list = await adminService.listCategories();
@@ -166,30 +165,12 @@ const AdminPage: React.FC = () => {
       toast.error("Maximum 200 questions per bulk request");
       return;
     }
-    if (bulkAutoImageProvider === "custom") {
-      const t = bulkCustomImageApiUrl.trim();
-      if (!t) {
-        toast.error("Enter your custom image API URL (with {query})");
-        return;
-      }
-      if (!t.includes("{query}")) {
-        toast.error("Custom API URL must include the placeholder {query}");
-        return;
-      }
-      if (!/^https:\/\//i.test(t)) {
-        toast.error("Custom API URL must start with https://");
-        return;
-      }
-    }
     setBulkSubmitting(true);
     setBulkResult(null);
     try {
       const res = await adminService.createBulkQuestions({
         categoryId: selectedSlug,
         autoImageProvider: bulkAutoImageProvider,
-        ...(bulkAutoImageProvider === "custom"
-          ? { customImageApiUrl: bulkCustomImageApiUrl.trim() }
-          : {}),
         questions: parsed,
       });
       setBulkResult(res);
@@ -444,29 +425,18 @@ const AdminPage: React.FC = () => {
                    <p className="text-xs text-slate-500">Google Images API</p>
                 </div>
              </label>
-             <label className={`cursor-pointer flex items-center p-3 rounded-lg border transition-colors shadow-sm ${bulkAutoImageProvider === 'custom' ? 'bg-purple-50 border-purple-300' : 'bg-white border-slate-200 hover:bg-slate-50'}`}>
-                <input type="radio" name="autoImg" checked={bulkAutoImageProvider === 'custom'} onChange={() => setBulkAutoImageProvider('custom')} className="sr-only" />
-                <div className={`w-4 h-4 rounded-full border mr-3 flex items-center justify-center ${bulkAutoImageProvider === 'custom' ? 'border-purple-500 bg-purple-500' : 'border-slate-400 bg-white'}`}>
-                   {bulkAutoImageProvider === 'custom' && <div className="w-1.5 h-1.5 bg-white rounded-full" />}
+             <label className={`cursor-pointer flex items-center p-3 rounded-lg border transition-colors shadow-sm ${bulkAutoImageProvider === 'serp' ? 'bg-purple-50 border-purple-300' : 'bg-white border-slate-200 hover:bg-slate-50'}`}>
+                <input type="radio" name="autoImg" checked={bulkAutoImageProvider === 'serp'} onChange={() => setBulkAutoImageProvider('serp')} className="sr-only" />
+                <div className={`w-4 h-4 rounded-full border mr-3 flex items-center justify-center ${bulkAutoImageProvider === 'serp' ? 'border-purple-500 bg-purple-500' : 'border-slate-400 bg-white'}`}>
+                   {bulkAutoImageProvider === 'serp' && <div className="w-1.5 h-1.5 bg-white rounded-full" />}
                 </div>
                 <div className="text-sm">
-                   <p className="font-semibold text-slate-900">Custom API</p>
-                   <p className="text-xs text-slate-500">HTTPS GET request</p>
+                   <p className="font-semibold text-slate-900">Serp API</p>
+                   <p className="text-xs text-slate-500">Google Images via SerpAPI</p>
                 </div>
              </label>
           </div>
           
-          {bulkAutoImageProvider === "custom" && (
-            <div className="pt-2 animate-in slide-in-from-top-2 duration-300">
-              <Input
-                type="url"
-                value={bulkCustomImageApiUrl}
-                onChange={(e) => setBulkCustomImageApiUrl(e.target.value)}
-                placeholder="https://your-server.com/api/image?q={query}"
-                className="bg-white border-purple-200 text-slate-900 font-mono focus-visible:ring-purple-500 shadow-sm"
-              />
-            </div>
-          )}
        </div>
 
        <div className="space-y-2">

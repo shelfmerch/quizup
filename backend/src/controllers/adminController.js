@@ -1,7 +1,11 @@
 const Category = require("../models/Category");
 const Question = require("../models/Question");
 const { syncQuestionCount } = require("../services/categoryQuestionCount");
-const { resolveEmptyImageFromSerp, resolveEmptyImageFromCustom } = require("../services/serpImageSearch");
+const {
+  resolveEmptyImageFromSearchStack,
+  resolveEmptyImageFromSerpApi,
+  resolveEmptyImageFromSerp,
+} = require("../services/serpImageSearch");
 const { resolveStoredMediaUrl } = require("../config/s3");
 const { mirrorRemoteImageToS3 } = require("../services/mirrorImageToS3");
 
@@ -325,10 +329,10 @@ const generateQuestionsQueued = async (req, res) => {
 };
 
 // POST /api/admin/questions/bulk
-// { categoryId, questions: [...], autoImageProvider?: "searchstack"|"custom", customImageApiUrl?: string }
+// { categoryId, questions: [...], autoImageProvider?: "searchstack"|"serp" }
 const createBulkQuestions = async (req, res) => {
   try {
-    const { categoryId, questions, autoImageProvider = "searchstack", customImageApiUrl = "" } = req.body;
+    const { categoryId, questions, autoImageProvider = "searchstack" } = req.body;
 
     if (!categoryId || typeof categoryId !== "string") {
       return res.status(422).json({ error: "categoryId is required" });
@@ -340,22 +344,11 @@ const createBulkQuestions = async (req, res) => {
       return res.status(422).json({ error: "Maximum 200 questions per bulk request" });
     }
 
-    const provider = String(autoImageProvider || "searchstack").toLowerCase();
-    const customTemplate = String(customImageApiUrl || "").trim();
-    if (provider === "custom") {
-      if (!customTemplate) {
-        return res.status(422).json({ error: "customImageApiUrl is required when autoImageProvider is custom" });
-      }
-      if (!customTemplate.includes("{query}")) {
-        return res.status(422).json({
-          error: "customImageApiUrl must include the literal {query} placeholder (replaced with a search string)",
-        });
-      }
-      if (!/^https:\/\//i.test(customTemplate) || customTemplate.length > 2048) {
-        return res.status(422).json({ error: "customImageApiUrl must be an https URL (max 2048 chars)" });
-      }
-    } else if (provider !== "searchstack") {
-      return res.status(422).json({ error: "autoImageProvider must be searchstack or custom" });
+    const providerRaw = String(autoImageProvider || "searchstack").toLowerCase();
+    const provider =
+      providerRaw === "serp" || providerRaw === "serpapi" ? "serp" : providerRaw === "searchstack" ? "searchstack" : null;
+    if (!provider) {
+      return res.status(422).json({ error: "autoImageProvider must be searchstack or serp" });
     }
 
     const slug = categoryId.trim().toLowerCase();
@@ -387,18 +380,16 @@ const createBulkQuestions = async (req, res) => {
         const ci = resolveCorrectIndex(raw.correctIndex, raw.answer, opts);
         // TimeLimit
         const tl = Math.min(120, Math.max(5, Number(raw.timeLimit) || 10));
-        // ImageUrl — empty/missing: SearchStack (SEARCHSTACK_KEY) or admin-provided custom HTTPS template
+        // ImageUrl — empty/missing: SearchStack (SEARCHSTACK_KEY) or SerpAPI (SERP_API_KEY)
         let imageUrl = normalizeImageUrl(raw.imageUrl);
         if (!imageUrl) {
-          if (provider === "custom") {
-            imageUrl = await resolveEmptyImageFromCustom(customTemplate, raw.text.trim(), opts[ci]);
-          } else {
-            let directQ = raw.answer ? raw.answer.trim() : null;
-            if (directQ && slug === "logos" && !directQ.toLowerCase().includes("logo")) {
-              directQ += " logo";
-            }
-            imageUrl = await resolveEmptyImageFromSerp(raw.text.trim(), opts[ci], directQ);
+          let directQ = raw.answer ? raw.answer.trim() : null;
+          if (directQ && slug === "logos" && !directQ.toLowerCase().includes("logo")) {
+            directQ += " logo";
           }
+          const resolveImage =
+            provider === "serp" ? resolveEmptyImageFromSerpApi : resolveEmptyImageFromSearchStack;
+          imageUrl = await resolveImage(raw.text.trim(), opts[ci], directQ);
         }
 
         imageUrl = await ensureImageOnS3(imageUrl);
