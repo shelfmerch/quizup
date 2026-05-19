@@ -751,15 +751,15 @@ const AdminPage: React.FC = () => {
                             <div key={q.id} className="group bg-white border border-slate-200 hover:border-slate-300 hover:shadow-md p-3 rounded-xl flex gap-3 transition-all hover:-translate-y-0.5">
                               {thumb ? (
                                 <div 
-                                  className="w-16 h-16 rounded-lg bg-slate-100 border border-slate-200 overflow-hidden shrink-0 cursor-pointer"
+                                  className="w-32 h-32 rounded-lg bg-slate-100 border border-slate-200 overflow-hidden shrink-0 cursor-pointer"
                                   onClick={() => window.open(thumb, '_blank')}
                                   title="View Full Image"
                                 >
                                   <img src={thumb} alt="" className="w-full h-full object-cover transition-transform group-hover:scale-110" loading="lazy" />
                                 </div>
                               ) : (
-                                <div className="w-16 h-16 rounded-lg bg-slate-50 border border-slate-100 flex items-center justify-center shrink-0 text-slate-300">
-                                  <ImageIcon className="w-6 h-6" />
+                                <div className="w-32 h-32 rounded-lg bg-slate-50 border border-slate-100 flex items-center justify-center shrink-0 text-slate-300">
+                                  <ImageIcon className="w-8 h-8" />
                                 </div>
                               )}
                               <div className="min-w-0 flex-1 flex flex-col justify-center">

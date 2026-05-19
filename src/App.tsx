@@ -26,6 +26,8 @@ import AdminRoute from "@/components/AdminRoute";
 import AdminPage from "./pages/AdminPage";
 import People from "./pages/People";
 import AllCategories from "./pages/AllCategories";
+import OnboardingProfile from "./pages/OnboardingProfile";
+import OnboardingTopics from "./pages/OnboardingTopics";
 
 const queryClient = new QueryClient();
 
@@ -53,6 +55,10 @@ const Shell: React.FC<{ children: React.ReactNode }> = ({ children }) => (
             <Route path="/category/:categoryId" element={<CategoryDetail />} />
             <Route path="/people" element={<People />} />
           </Route>
+
+          {/* Onboarding routes (full-screen, no bottom nav) */}
+          <Route path="/onboarding/profile" element={<ProtectedRoute><OnboardingProfile /></ProtectedRoute>} />
+          <Route path="/onboarding/topics" element={<ProtectedRoute><OnboardingTopics /></ProtectedRoute>} />
 
           {/* Full-screen routes (no bottom nav) */}
           <Route path="/all-categories" element={<ProtectedRoute><AllCategories /></ProtectedRoute>} />

@@ -365,23 +365,23 @@ const HomeLobby: React.FC = () => {
             `}</style>
             {incomingChallenge ? (
               <div
-                className="relative mx-auto max-w-sm pt-2"
+                className="relative mx-auto max-w-lg"
                 style={{
                   animation: "challengeSlideIn 0.35s cubic-bezier(0.34,1.56,0.64,1) both",
                 }}
               >
                 <div
-                  className="relative rounded-2xl px-3 pb-3 pt-8"
+                  className="relative rounded-lg px-3 pb-3 pt-4"
                   style={{
-                    background: "linear-gradient(180deg, #faf6ee 0%, #f0e8d8 100%)",
-                    border: "4px solid #3d2914",
+                    background: "linear-gradient(180deg, #ffffffff 0%, #ffffffff 100%)",
+                    border: "2px solid #9c9184ff",
                     boxShadow:
-                      "0 6px 0 #2a1a0c, 0 10px 24px rgba(0,0,0,0.28), inset 0 2px 0 rgba(255,255,255,0.85), inset 0 -3px 0 rgba(61,41,20,0.12)",
+                      "0 0px 0 #2a1a0c, 0 8px 20px rgba(0,0,0,0.28), inset 0 2px 0 rgba(255,255,255,0.85), inset 0 -3px 0 rgba(61,41,20,0.12)",
                   }}
                 >
-                  <h3 className="coc-challenge-title absolute left-1/2 top-0 -translate-x-1/2 -translate-y-1/2 whitespace-nowrap text-xl font-bold tracking-wide">
+                  {/* <h3 className="coc-challenge-title absolute left-1/2 top-0 -translate-x-1/2 -translate-y-1/2 whitespace-nowrap text-xl font-bold tracking-wide">
                     Incoming Challenge!
-                  </h3>
+                  </h3> */}
 
                   <div className="flex items-center gap-3">
                     <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl border-[3px] border-[#c4a574] bg-white/60 shadow-[inset_0_2px_6px_rgba(61,41,20,0.08)]">
@@ -405,7 +405,7 @@ const HomeLobby: React.FC = () => {
                             `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(incomingChallenge.from.username)}`
                           )}
                           alt=""
-                          className="h-6 w-6 shrink-0 rounded-full border-2 border-[#c4a574] object-cover shadow-sm"
+                          className="h-6 w-6 shrink-0 rounded-full border-2 border-[#999999] object-cover shadow-sm"
                         />
                         <p className="truncate font-display text-[14px] font-black text-[#3d2914]">
                           {incomingChallenge.from.username}
@@ -422,12 +422,12 @@ const HomeLobby: React.FC = () => {
                         type="button"
                         disabled={challengeResponding}
                         onClick={() => respondToChallenge("reject")}
-                        className="coc-challenge-btn-label relative w-[76px] rounded-2xl py-2.5 text-xs font-bold active:translate-y-[3px] transition-transform duration-75 disabled:opacity-50"
+                        className="coc-challenge-btn-label relative w-[76px] rounded-md py-2.5 text-xs font-bold active:translate-y-[3px] transition-transform duration-75 disabled:opacity-50"
                         style={{
                           background: "linear-gradient(180deg, #ffb347 0%, #ff7b2e 45%, #e84a1a 100%)",
-                          border: "3px solid #2a1608",
+                          border: "px solid #2a1608",
                           boxShadow:
-                            "0 5px 0 #8b2e0a, 0 8px 14px rgba(0,0,0,0.22), inset 0 2px 0 rgba(255,255,255,0.45)",
+                            "0 2px 0 #8b2e0a, 0 8px 14px rgba(0,0,0,0.22), inset 0 2px 0 rgba(255,255,255,0.45)",
                         }}
                       >
                         Decline
@@ -436,12 +436,12 @@ const HomeLobby: React.FC = () => {
                         type="button"
                         disabled={challengeResponding}
                         onClick={() => respondToChallenge("accept")}
-                        className="coc-challenge-btn-label relative w-[76px] rounded-2xl py-2.5 text-xs font-bold active:translate-y-[3px] transition-transform duration-75 disabled:opacity-50"
+                        className="coc-challenge-btn-label relative w-[76px] rounded-md py-2.5 text-xs font-bold active:translate-y-[3px] transition-transform duration-75 disabled:opacity-50"
                         style={{
                           background: "linear-gradient(180deg, #b8f04a 0%, #7ed321 45%, #4a9e12 100%)",
-                          border: "3px solid #2a1608",
+                          border: "2px solid #2a1608",
                           boxShadow:
-                            "0 5px 0 #2d5a0a, 0 8px 14px rgba(0,0,0,0.22), inset 0 2px 0 rgba(255,255,255,0.45)",
+                            "0 2px 0 #2d5a0a, 0 8px 14px rgba(0,0,0,0.22), inset 0 2px 0 rgba(255,255,255,0.45)",
                         }}
                       >
                         {challengeResponding ? "…" : "Accept"}

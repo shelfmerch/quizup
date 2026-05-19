@@ -41,7 +41,7 @@ const Signup: React.FC = () => {
           console.error("Avatar upload failed during signup", err);
         }
       }
-      navigate("/home");
+      navigate("/onboarding/profile");
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "Sign up failed. Please try again.";
       toast.error(msg);
@@ -143,7 +143,7 @@ const Signup: React.FC = () => {
                   setLoading(true);
                   try {
                     const user = await googleLogin(res.credential);
-                    navigate(user.role === "admin" ? "/admin" : "/home");
+                    navigate(user.role === "admin" ? "/admin" : "/onboarding/profile");
                   } catch (err: unknown) {
                     const msg = err instanceof Error ? err.message : "Google sign-up failed.";
                     toast.error(msg);
