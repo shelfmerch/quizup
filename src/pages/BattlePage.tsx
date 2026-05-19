@@ -466,7 +466,20 @@ const BattlePage: React.FC = () => {
 
     return (
       <div className="h-[100dvh] overflow-y-auto bg-[#2a2a2a] flex flex-col max-w-md mx-auto relative z-20">
-        <div className="pt-6 pb-2 text-center shrink-0">
+        <div className="pt-6 pb-2 text-center shrink-0 relative">
+          <button
+            onClick={() => {
+              stopVictorySfx();
+              stopDefeatSfx();
+              navigate("/home");
+            }}
+            className="absolute left-4 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center transition-colors"
+            aria-label="Back to Home"
+          >
+            <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
+            </svg>
+          </button>
           <h1 className="text-5xl font-display font-black text-white tracking-widest uppercase drop-shadow-md">
             {winner === "player" ? "YOU WIN!" : winner === "opponent" ? "YOU LOSE!" : "DRAW!"}
           </h1>
