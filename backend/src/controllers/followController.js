@@ -20,8 +20,8 @@ const followUser = async (req, res) => {
     await User.findByIdAndUpdate(meId, { $addToSet: { following: targetId } });
     await User.findByIdAndUpdate(targetId, { $addToSet: { followers: meId } });
 
-    // Evaluate social achievements (no io passed here, which is fine)
-    await evaluateConnectionAchievements(meId, null);
+    const io = req.app.get("io");
+    await evaluateConnectionAchievements(targetId, io);
 
     const me = await User.findById(meId);
     return res.json({ ok: true, user: me.toProfile() });

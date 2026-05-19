@@ -41,6 +41,8 @@ const matchSchema = new mongoose.Schema(
     questions: { type: mongoose.Schema.Types.Mixed, default: [] }, 
     currentQuestionIndex: { type: Number, default: -1 },
     roundAnswers: { type: mongoose.Schema.Types.Mixed, default: {} },
+    /** Per-player answer log for the whole match (achievement: Perfect Round) */
+    playerMatchAnswers: { type: mongoose.Schema.Types.Mixed, default: {} },
     // End rapid-fire state
     currentRound: { type: Number, default: 0 },
     totalRounds: { type: Number, default: 7 },

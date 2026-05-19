@@ -80,6 +80,7 @@ const joinQueue = async (userId, categoryId, socketId) => {
     currentQuestionIndex: -1,
     connectedPlayers: [],
     roundAnswers: {},
+    playerMatchAnswers: {},
     timerEndsAt: null,
   });
 
@@ -153,6 +154,7 @@ const createDirectMatch = async (challengerId, opponentId, categoryId, challenge
     currentQuestionIndex: -1,
     connectedPlayers: [],
     roundAnswers: {},
+    playerMatchAnswers: {},
     timerEndsAt: null,
   });
 

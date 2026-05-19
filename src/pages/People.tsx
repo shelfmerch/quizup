@@ -39,6 +39,7 @@ const countryFlag = (code: string) => {
 // ─── User Card ─────────────────────────────────────────────────────────────────
 interface UserCardProps {
   user: ProfileFollowUser;
+  index: number;
   mode: "follower" | "following";
   onFollow: (id: string) => Promise<void>;
   onUnfollow: (id: string) => Promise<void>;
@@ -47,6 +48,7 @@ interface UserCardProps {
 
 const UserCard: React.FC<UserCardProps> = ({
   user,
+  index,
   mode,
   onFollow,
   onUnfollow,
@@ -142,13 +144,10 @@ const UserCard: React.FC<UserCardProps> = ({
           )}
         </button>
 
-        {/* Profile chevron */}
-        <button
-          onClick={() => navigate(`/profile/${user.id}`)}
-          className="p-2 rounded-lg text-muted-foreground hover:text-foreground hover:bg-white/8 transition-colors"
-        >
-          <ChevronRight className="w-4 h-4" />
-        </button>
+        {/* Number circle */}
+        <span className="ml-1 flex items-center justify-center w-6 h-6 rounded-full bg-white/8 border border-white/10 text-[10px] font-bold text-muted-foreground shrink-0">
+          {index + 1}
+        </span>
       </div>
     </div>
   );
@@ -249,7 +248,7 @@ const People: React.FC = () => {
     activeTab === "followers" ? loadingFollowers : loadingFollowing;
 
   return (
-    <div className="min-h-screen flex flex-col max-w-md mx-auto pb-24">
+    <div className="h-[100dvh] flex flex-col max-w-md mx-auto overflow-hidden">
       {/* Header */}
       <div className="quizup-header-teal px-4 py-3 shadow-sm">
         <h1 className="font-display font-bold text-white text-base">People</h1>
@@ -305,7 +304,7 @@ const People: React.FC = () => {
       </div>
 
       {/* List */}
-      <div className="flex-1 px-4 pt-3 space-y-2">
+      <div className="flex-1 overflow-y-auto px-4 pt-3 pb-24 space-y-2">
         {loading ? (
           Array.from({ length: 5 }).map((_, i) => <UserCardSkeleton key={i} />)
         ) : list.length === 0 ? (
@@ -331,10 +330,11 @@ const People: React.FC = () => {
             </p>
           </div>
         ) : (
-          list.map((u) => (
+          list.map((u, i) => (
             <UserCard
               key={u.id}
               user={u}
+              index={i}
               mode={activeTab === "followers" ? "follower" : "following"}
               onFollow={handleFollow}
               onUnfollow={handleUnfollow}

@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { MessageCircle, Search, Settings, Swords } from "lucide-react";
+import { Ellipsis, MessageCircle, Search, Settings, Swords } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { MOCK_CATEGORIES } from "@/data/mock-data";
 import { EXTRA_HOME_TOPICS } from "@/data/extraTopics";
@@ -261,7 +261,14 @@ const HomeLobby: React.FC = () => {
         </button>
         <div className="flex items-center gap-3">
           <Search className="h-5 w-5" />
-          <MessageCircle className="h-5 w-5" />
+          <button
+            onClick={() => navigate("/people")}
+            className="relative"
+            aria-label="Messages & People"
+          >
+            <MessageCircle className="h-5 w-5" />
+            <span className="absolute -top-1 -right-1 h-2.5 w-2.5 rounded-full bg-[#f65357] border-2 border-[#111] animate-pulse" />
+          </button>
         </div>
       </div>
 
@@ -280,9 +287,10 @@ const HomeLobby: React.FC = () => {
             </div>
           </div>
           <div className="grid grid-cols-3 gap-4 text-center text-[9px] font-bold">
-            <div><img src="/images/win.png" alt="Win" className="h-7 w-7 object-contain" /> <span className="block text-white">{user?.wins || 0}</span></div>
+            {/* <div><img src="/images/win.png" alt="Win" className="h-7 w-7 object-contain" /> <span className="block text-white">{user?.wins || 0}</span></div>
             <div><img src="/images/rank.png" alt="Rank" className="h-7 w-7 object-contain" /> <span className="block text-white">{user?.winStreak || 0}</span></div>
-            <div><img src="/images/gems.png" alt="Gems" className="h-7 w-7 object-contain" /> <span className="block text-white">{user?.totalMatches || 0}</span></div>
+            <div><img src="/images/gems.png" alt="Gems" className="h-7 w-7 object-contain" /> <span className="block text-white">{user?.totalMatches || 0}</span></div> */}
+            <Ellipsis className="h-5 w-5 rotate-90" />
           </div>
         </div>
       </div>

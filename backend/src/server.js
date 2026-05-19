@@ -28,8 +28,9 @@ const start = async () => {
     );
   }
 
-  // 2. Attach Socket.io to the same HTTP server
-  initSockets(server);
+  // 2. Attach Socket.io to the same HTTP server (exposed for REST-triggered realtime events)
+  const io = initSockets(server);
+  app.set("io", io);
 
   // 3. Listen (do this even if Mongo is temporarily down)
   server.listen(PORT, () => {

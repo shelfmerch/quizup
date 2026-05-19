@@ -172,18 +172,35 @@ const handleQuestionTimeout = async (matchId, io) => {
 };
 
 /**
+ * Persist each player's round result for achievement checks (e.g. Perfect Round).
+ */
+const accumulateRoundAnswers = async (matchId, state) => {
+  return updateActiveMatch(matchId, (s) => {
+    const log = { ...(s.playerMatchAnswers || {}) };
+    for (const playerId of [s.player1.userId, s.player2.userId]) {
+      const ans = s.roundAnswers[playerId];
+      if (ans) {
+        log[playerId] = [...(log[playerId] || []), { isCorrect: Boolean(ans.isCorrect) }];
+      }
+    }
+    return { ...s, playerMatchAnswers: log };
+  });
+};
+
+/**
  * Emit round_end with scores, then schedule the next question.
  */
 const endRound = async (matchId, io, state) => {
-  const question = state.questions[state.currentQuestionIndex];
+  const stateWithLog = (await accumulateRoundAnswers(matchId, state)) || state;
+  const question = stateWithLog.questions[stateWithLog.currentQuestionIndex];
 
   io.to(matchId).emit("round_end", {
     correctIndex: question.correctIndex,
-    player1Score: state.player1.score,
-    player2Score: state.player2.score,
+    player1Score: stateWithLog.player1.score,
+    player2Score: stateWithLog.player2.score,
     roundAnswers: {
-      [state.player1.userId]: state.roundAnswers[state.player1.userId] || null,
-      [state.player2.userId]: state.roundAnswers[state.player2.userId] || null,
+      [stateWithLog.player1.userId]: stateWithLog.roundAnswers[stateWithLog.player1.userId] || null,
+      [stateWithLog.player2.userId]: stateWithLog.roundAnswers[stateWithLog.player2.userId] || null,
     },
   });
 
