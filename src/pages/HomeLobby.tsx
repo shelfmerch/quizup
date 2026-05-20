@@ -265,17 +265,17 @@ const HomeLobby: React.FC = () => {
           {/* <Search className="h-5 w-5" /> */}
           <button
             onClick={() => navigate("/social")}
-            className="relative"
+            className="relative p-1 active:scale-95 transition-transform"
             aria-label={
               totalUnread > 0
                 ? `Chats, ${totalUnread} unread`
                 : "Chats"
             }
           >
-            <MessageCircle className="h-6 w-6" />
+            <MessageCircle className="h-7 w-7" />
             {totalUnread > 0 && (
               <span
-                className="absolute -top-1 -right-1 min-w-[10px] h-2.5 rounded-full bg-green-300 border-2 border-[#111] animate-pulse"
+                className="absolute top-0.5 right-0.5 min-w-[15px] h-4 rounded-full bg-green-300 border-2 border-[#111]"
                 aria-hidden
               />
             )}
@@ -283,7 +283,7 @@ const HomeLobby: React.FC = () => {
         </div>
       </div>
 
-      <div className="bg-[#333333] px-3 py-2 text-white">
+      <div className="bg-[#444444] px-3 py-2 text-white">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
             <img src={avatarSrc} alt="" className="h-11 w-11 rounded-full border-2 border-white object-cover" />

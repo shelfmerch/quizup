@@ -95,7 +95,7 @@ const AchievementBadge: React.FC<{ src: string; icon: string; alt: string }> = (
     <img
       src={src}
       alt={alt}
-      className="h-12 w-12 object-contain"
+      className="h-10 w-10 object-contain"
       onError={() => setErrored(true)}
     />
   );
@@ -112,13 +112,13 @@ const HistoryBubble: React.FC<{ match: MatchHistoryEntry; index: number }> = ({ 
   return (
     <div className="relative w-[76px] shrink-0 text-center">
       <span
-        className="mx-auto flex h-12 w-12 items-center justify-center rounded-full border-[3px] bg-white shadow-md"
-        style={{ borderColor: resultColor }}
+        className="mx-auto flex h-14 w-14 items-center justify-center rounded-full border-[1px] bg-white shadow-md"
+        // style={{ borderColor: resultColor }}
       >
         <img
           src={resolveMediaUrl(match.opponentAvatar, `https://api.dicebear.com/7.x/avataaars/svg?seed=${match.opponentName}`)}
           alt=""
-          className="h-9 w-9 rounded-full object-cover"
+          className="h-12 w-12 rounded-full object-cover"
         />
       </span>
       {/* <span
@@ -556,12 +556,12 @@ const ProfilePage: React.FC = () => {
           </span> */}
         </div>
         <div className="flex gap-3 overflow-x-auto pb-1">
-          {displayAchievements.slice(0, 6).map((a) => (
+          {displayAchievements.slice(0, 5).map((a) => (
             <div key={a.id} className={`w-[58px] shrink-0 text-center ${!a.isUnlocked ? "opacity-35 grayscale" : ""}`} title={a.description}>
               {/* <span className="mx-auto flex h-12 w-12 items-center justify-center rounded-lg bg-white text-xl shadow-md border border-[#dddddd]"> */}
                 <AchievementBadge src={a.src} icon={a.icon} alt={a.name} />
               {/* </span> */}
-              <p className="mt-1 line-clamp-2 text-[9px] font-black leading-[10px] text-[#444]">{a.name}</p>
+              {/* <p className="mt-1 line-clamp-2 text-[9px] font-black leading-[10px] text-[#444]">{a.name}</p> */}
             </div>
           ))}
         </div>
