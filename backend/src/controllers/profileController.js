@@ -16,17 +16,30 @@ const getProfile = async (req, res) => {
     const user = await User.findById(userId);
     if (!user) return res.status(404).json({ error: "User not found" });
 
-    const achievements = await Achievement.find({ userId }).lean();
+    // Retroactively award basic stat-based achievements
+    let modified = false;
+    if (!user.unlockedAchievements) user.unlockedAchievements = [];
+    const hasAch = (id) => user.unlockedAchievements.some((a) => a.id === id);
+
+    if (user.wins >= 1 && !hasAch("a1")) {
+      user.unlockedAchievements.push({ id: "a1", unlockedAt: new Date() });
+      modified = true;
+    }
+    if (user.winStreak >= 3 && !hasAch("a2")) {
+      user.unlockedAchievements.push({ id: "a2", unlockedAt: new Date() });
+      modified = true;
+    }
+    if (user.followers?.length > 10 && !hasAch("a6")) {
+      user.unlockedAchievements.push({ id: "a6", unlockedAt: new Date() });
+      modified = true;
+    }
+    if (user.totalMatches > 70 && !hasAch("a7")) {
+      user.unlockedAchievements.push({ id: "a7", unlockedAt: new Date() });
+      modified = true;
+    }
+    if (modified) await user.save();
 
     const profile = user.toProfile();
-    profile.achievements = achievements.map((a) => ({
-      id: a.achievementId,
-      name: a.name,
-      description: a.description,
-      icon: a.icon,
-      isUnlocked: true,
-      unlockedAt: a.unlockedAt,
-    }));
 
     const auth = req.headers.authorization;
     if (auth && auth.startsWith("Bearer ")) {

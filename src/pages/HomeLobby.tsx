@@ -260,7 +260,7 @@ const HomeLobby: React.FC = () => {
           <span className="font-display text-[17px] font-extrabold">QuizUp</span>
         </button>
         <div className="flex items-center gap-3">
-          <Search className="h-5 w-5" />
+          {/* <Search className="h-5 w-5" /> */}
           <button
             onClick={() => navigate("/people")}
             className="relative"
@@ -286,7 +286,7 @@ const HomeLobby: React.FC = () => {
               </button>
             </div>
           </div>
-          <div className="grid grid-cols-3 gap-4 text-center text-[9px] font-bold">
+          <div className="flex flex-col gap-2 justify-end text-center text-[9px] font-bold">
             {/* <div><img src="/images/win.png" alt="Win" className="h-7 w-7 object-contain" /> <span className="block text-white">{user?.wins || 0}</span></div>
             <div><img src="/images/rank.png" alt="Rank" className="h-7 w-7 object-contain" /> <span className="block text-white">{user?.winStreak || 0}</span></div>
             <div><img src="/images/gems.png" alt="Gems" className="h-7 w-7 object-contain" /> <span className="block text-white">{user?.totalMatches || 0}</span></div> */}
@@ -447,7 +447,7 @@ const HomeLobby: React.FC = () => {
                         className="coc-challenge-btn-label relative w-[76px] rounded-md py-2.5 text-xs font-bold active:translate-y-[3px] transition-transform duration-75 disabled:opacity-50"
                         style={{
                           background: "linear-gradient(180deg, #b8f04a 0%, #7ed321 45%, #4a9e12 100%)",
-                          border: "2px solid #2a1608",
+                          border: "px solid #2a1608",
                           boxShadow:
                             "0 2px 0 #2d5a0a, 0 8px 14px rgba(0,0,0,0.22), inset 0 2px 0 rgba(255,255,255,0.45)",
                         }}

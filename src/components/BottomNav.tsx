@@ -32,7 +32,7 @@ const BottomNav: React.FC = () => {
           if (isCenter) {
             return (
               <button
-                key={path}
+                key={label}
                 onClick={() => navigate(path)}
                 className="flex items-center justify-center -mt-5 flex-1"
                 aria-label="Browse topics"
@@ -54,7 +54,7 @@ const BottomNav: React.FC = () => {
           const TabIcon = Icon ?? Home;
           return (
             <button
-              key={path}
+              key={label}
               onClick={() => navigate(path)}
               className={`flex flex-col items-center justify-center gap-0.5 flex-1 h-full transition-opacity duration-200 ${
                 active ? "opacity-100" : "opacity-45 hover:opacity-80"

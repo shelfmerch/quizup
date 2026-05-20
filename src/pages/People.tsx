@@ -248,17 +248,18 @@ const People: React.FC = () => {
     activeTab === "followers" ? loadingFollowers : loadingFollowing;
 
   return (
-    <div className="h-[100dvh] flex flex-col max-w-md mx-auto overflow-hidden">
-      {/* Header */}
-      <div className="quizup-header-teal px-4 py-3 shadow-sm">
-        <h1 className="font-display font-bold text-white text-base">People</h1>
-        <p className="text-xs text-white/70 mt-0.5">
-          {followers.length} follower{followers.length !== 1 ? "s" : ""} · {following.length} following
-        </p>
-      </div>
+    <div className="flex flex-col min-h-screen">
+      <div className="sticky top-0 z-20 flex flex-col">
+        {/* Header */}
+        <div className="quizup-header-teal px-4 py-3 shadow-sm">
+          <h1 className="font-display font-bold text-white text-base">People</h1>
+          <p className="text-xs text-white/70 mt-0.5">
+            {followers.length} follower{followers.length !== 1 ? "s" : ""} · {following.length} following
+          </p>
+        </div>
 
-      {/* Tab Bar */}
-      <div className="flex bg-quizup-card border-b border-border sticky top-0 z-10">
+        {/* Tab Bar */}
+        <div className="flex bg-quizup-card border-b border-border">
         {(["followers", "following"] as Tab[]).map((tab) => {
           const count = tab === "followers" ? followers.length : following.length;
           const Icon = tab === "followers" ? Users : UserCheck;
@@ -288,6 +289,7 @@ const People: React.FC = () => {
           );
         })}
       </div>
+      </div>
 
       {/* Search */}
       <div className="px-4 pt-3 pb-1">
@@ -304,7 +306,7 @@ const People: React.FC = () => {
       </div>
 
       {/* List */}
-      <div className="flex-1 overflow-y-auto px-4 pt-3 pb-24 space-y-2">
+      <div className="px-4 pt-3 pb-24 space-y-2">
         {loading ? (
           Array.from({ length: 5 }).map((_, i) => <UserCardSkeleton key={i} />)
         ) : list.length === 0 ? (
