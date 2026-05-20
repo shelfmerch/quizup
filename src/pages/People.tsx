@@ -145,9 +145,10 @@ const UserCard: React.FC<UserCardProps> = ({
         </button>
 
         {/* Number circle */}
-        <span className="ml-1 flex items-center justify-center w-6 h-6 rounded-full bg-white/8 border border-white/10 text-[10px] font-bold text-muted-foreground shrink-0">
+        {/* <span className="ml-1 flex items-center justify-center w-6 h-6 rounded-full bg-white/8 border border-white/10 text-[10px] font-bold text-muted-foreground shrink-0">
           {index + 1}
-        </span>
+        </span> */}
+
       </div>
     </div>
   );

@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { useNavigate, useParams } from "react-router-dom";
 import { ArrowLeft, Send, Camera, Smile, MoreVertical, X } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
+import { useChatUnread } from "@/hooks/useChatUnread";
 import { chatRoomId, chatService } from "@/services/chatService";
 import { markChatRead } from "@/services/chatApi";
 import { profileService } from "@/services/profileService";
@@ -41,7 +42,7 @@ const Bubble: React.FC<BubbleProps> = ({ msg, isMe, isFirst, peerAvatar }) => {
   return (
     <div className={`flex items-end gap-1.5 ${isMe ? "flex-row-reverse" : "flex-row"}`}>
       {/* Peer avatar — only for first bubble in chain */}
-      {!isMe && (
+      {/* {!isMe && (
         <div className="w-7 shrink-0">
           {isFirst && (
             <img
@@ -51,23 +52,14 @@ const Bubble: React.FC<BubbleProps> = ({ msg, isMe, isFirst, peerAvatar }) => {
             />
           )}
         </div>
-      )}
+      )} */}
 
       <div className={`flex flex-col gap-0.5 max-w-[75%] ${isMe ? "items-end" : "items-start"}`}>
-        <div
-          className={`relative text-[14px] leading-snug shadow-sm overflow-hidden ${
-            isMediaOnly ? "p-0" : "px-3 py-2"
-          } ${
-            isMe
-              ? "bg-[#dcf8c6] text-[#111] rounded-t-2xl rounded-bl-2xl rounded-br-sm"
-              : "bg-white text-[#111] rounded-t-2xl rounded-br-2xl rounded-bl-sm"
-          }`}
-          style={{ wordBreak: "break-word" }}
-        >
+        <div className="relative mt-3">
           {/* Tail */}
           {isFirst && (
             <span
-              className={`absolute bottom-0 w-2.5 h-2.5 z-10 ${
+              className={`absolute top-0 w-2.5 h-2.5 z-10 ${
                 isMe
                   ? "right-[-7px] text-[#dcf8c6]"
                   : "left-[-7px] text-white"
@@ -76,15 +68,25 @@ const Bubble: React.FC<BubbleProps> = ({ msg, isMe, isFirst, peerAvatar }) => {
             >
               {isMe ? (
                 <svg viewBox="0 0 10 10" className="w-2.5 h-2.5 fill-[#dcf8c6]">
-                  <path d="M0 0 Q10 0 10 10 L0 10 Z" />
+                  <path d="M0 0 L10 0 Q10 10 0 10 Z" />
                 </svg>
               ) : (
                 <svg viewBox="0 0 10 10" className="w-2.5 h-2.5 fill-white">
-                  <path d="M10 0 Q0 0 0 10 L10 10 Z" />
+                  <path d="M10 0 L0 0 Q0 10 10 10 Z" />
                 </svg>
               )}
             </span>
           )}
+          <div
+            className={`relative text-[14px] leading-snug shadow-sm overflow-hidden ${
+              isMediaOnly ? "p-0" : "px-3 py-2"
+            } ${
+              isMe
+                ? "bg-[#dcf8c6] text-[#111] rounded-tl-2xl rounded-b-2xl rounded-tr-sm"
+                : "bg-white text-[#111] rounded-tr-2xl rounded-b-2xl rounded-tl-sm"
+            }`}
+            style={{ wordBreak: "break-word" }}
+          >
           {/* Media */}
           {mediaUrl && (
             <div className={isMediaOnly ? "" : "mb-1"}>
@@ -114,6 +116,7 @@ const Bubble: React.FC<BubbleProps> = ({ msg, isMe, isFirst, peerAvatar }) => {
             </div>
           )}
           {msg.text && <span>{msg.text}</span>}
+          </div>
         </div>
         {/* Timestamp (only for non-media-only) */}
         {!isMediaOnly && (
@@ -129,6 +132,7 @@ const ChatPage: React.FC = () => {
   const { peerId } = useParams<{ peerId: string }>();
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { refresh: refreshUnread } = useChatUnread();
 
   const [peer, setPeer] = useState<Profile | null>(null);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
@@ -153,8 +157,10 @@ const ChatPage: React.FC = () => {
   // Mark read on mount
   useEffect(() => {
     if (!peerId || !user?.id) return;
-    markChatRead(peerId).catch(() => {});
-  }, [peerId, user?.id]);
+    markChatRead(peerId)
+      .then(() => refreshUnread())
+      .catch(() => {});
+  }, [peerId, user?.id, refreshUnread]);
 
   // Message handler
   const handleMessage = useCallback(
@@ -175,9 +181,13 @@ const ChatPage: React.FC = () => {
 
         return [...prev, msg];
       });
-      if (peerId && msg.senderId !== user?.id) markChatRead(peerId).catch(() => {});
+      if (peerId && msg.senderId !== user?.id) {
+        markChatRead(peerId)
+          .then(() => refreshUnread())
+          .catch(() => {});
+      }
     },
-    [peerId, user?.id]
+    [peerId, user?.id, refreshUnread]
   );
   const handleHistory = useCallback((rows: ChatMessage[]) => setMessages(rows), []);
 

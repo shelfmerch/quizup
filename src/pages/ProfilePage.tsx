@@ -105,7 +105,7 @@ const HistoryBubble: React.FC<{ match: MatchHistoryEntry; index: number }> = ({ 
   const isVictory = match.result === "win";
   const isDefeat = match.result === "loss";
   const resultColor = isVictory ? "#15b78f" : isDefeat ? "#f65357" : "#8d8d8d";
-  const resultLabel = isVictory ? "Victory" : isDefeat ? "Defeat" : "Draw";
+  const resultLabel = isVictory ? <img src="/images/victory.png" alt="" /> : isDefeat ? <img src="/images/defeat.png" alt="" /> : <img src="/images/draw.png" alt="" />;
   const ResultIcon = isVictory ? Trophy : isDefeat ? XCircle : CheckCircle2;
   const badgeBg = isVictory ? "#15b78f" : isDefeat ? "#f65357" : "#8d8d8d";
 
@@ -127,13 +127,18 @@ const HistoryBubble: React.FC<{ match: MatchHistoryEntry; index: number }> = ({ 
       >
         <ResultIcon className="h-3.5 w-3.5" />
       </span> */}
-      <p className="mt-2 rounded-full px-1 py-0.5 text-[8px] font-black uppercase tracking-wide text-white" style={{ backgroundColor: resultColor }}>
+      {/* <p className="mt-2 rounded-full px-1 py-0.5 text-[8px] font-black uppercase tracking-wide text-white" style={{ backgroundColor: resultColor }}>
         {resultLabel}
-      </p>
-      <p className="mt-1 truncate text-[9px] font-black text-[#444]">{match.opponentName}</p>
+      </p> */}
+      <div className="-mt-5 flex justify-center">
+        <span className="flex items-center justify-center leading-none">
+          {resultLabel}
+        </span>
+      </div>
+      {/* <p className="-mt-3 truncate text-[9px] font-black text-[#444]">{match.opponentName}</p>
       <p className="text-[8px] font-bold uppercase" style={{ color: resultColor }}>
         {match.playerScore}-{match.opponentScore}
-      </p>
+      </p> */}
     </div>
   );
 };
@@ -545,16 +550,17 @@ const ProfilePage: React.FC = () => {
       <section className="quizup-section mt-2 px-4 py-4">
         <div className="mb-3 flex items-center justify-between">
           <h3 className="quizup-section-title">Achievements</h3>
-          <span className="text-[10px] font-black uppercase text-zinc-400">
+          <button className="quizup-see-all" onClick={() => navigate("/achievements")}>More</button>
+          {/* <span className="text-[10px] font-black uppercase text-zinc-400">
             {displayAchievements.filter((a) => a.isUnlocked).length}/{displayAchievements.length}
-          </span>
+          </span> */}
         </div>
         <div className="flex gap-3 overflow-x-auto pb-1">
           {displayAchievements.slice(0, 6).map((a) => (
             <div key={a.id} className={`w-[58px] shrink-0 text-center ${!a.isUnlocked ? "opacity-35 grayscale" : ""}`} title={a.description}>
-              <span className="mx-auto flex h-12 w-12 items-center justify-center rounded-lg bg-white text-xl shadow-md border border-[#dddddd]">
+              {/* <span className="mx-auto flex h-12 w-12 items-center justify-center rounded-lg bg-white text-xl shadow-md border border-[#dddddd]"> */}
                 <AchievementBadge src={a.src} icon={a.icon} alt={a.name} />
-              </span>
+              {/* </span> */}
               <p className="mt-1 line-clamp-2 text-[9px] font-black leading-[10px] text-[#444]">{a.name}</p>
             </div>
           ))}
@@ -564,9 +570,10 @@ const ProfilePage: React.FC = () => {
       <section className="quizup-section mt-2 px-4 py-2">
         <div className="mb-3 flex items-center justify-between">
           <h3 className="quizup-section-title">Followers</h3>
-          <span className="text-[10px] font-black uppercase text-zinc-400">
+          <button className="quizup-see-all" onClick={() => navigate("/people")}>More</button>
+          {/* <span className="text-[10px] font-black uppercase text-zinc-400">
             {followersLoading ? "…" : `${followers.length}`}
-          </span>
+          </span> */}
         </div>
         {followersLoading && (
           <div className="flex justify-center py-6">
@@ -589,8 +596,11 @@ const ProfilePage: React.FC = () => {
       </section>
 
       <section className="quizup-section px-4 py-4 mt-2">
+      <div className="mb-3 flex items-center justify-between">
         <h3 className="quizup-section-title mb-3">Followed Topics</h3>
-        <div className="flex gap-3 overflow-x-auto pb-1">
+        <button className="quizup-see-all" onClick={() => navigate("/all-categories")}>More</button>
+      </div>
+      <div className="flex gap-3 pb-1">
           {topicsToShow.map((cat, index) => (
             <TopicTile key={cat.id} category={cat} index={index} onClick={() => navigate(`/category/${cat.id}`)} />
           ))}
@@ -602,7 +612,7 @@ const ProfilePage: React.FC = () => {
           <h3 className="quizup-section-title">Game History</h3>
           <button className="quizup-see-all" onClick={() => navigate("/history")}>See all</button>
         </div>
-        <div className="flex gap-4 overflow-x-auto pb-1">
+        <div className="flex gap-2">
           {recentMatches.slice(0, 5).map((match, index) => (
             <HistoryBubble key={match.matchId} match={match} index={index} />
           ))}

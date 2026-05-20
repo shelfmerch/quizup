@@ -11,6 +11,7 @@ import { resolveMediaUrl } from "@/config/env";
 import { CategoryIcon } from "@/components/CategoryIcon";
 import { getSocket } from "@/services/socketService";
 import { LeagueModal } from "@/components/LeagueModal";
+import { useChatUnread } from "@/hooks/useChatUnread";
 
 interface IncomingChallenge {
   id: string;
@@ -107,6 +108,7 @@ const Section: React.FC<{
 
 const HomeLobby: React.FC = () => {
   const { user, refreshUser } = useAuth();
+  const { totalUnread } = useChatUnread();
   const navigate = useNavigate();
   const [apiCategories, setApiCategories] = useState<Category[]>([]);
   const [followedTopics, setFollowedTopics] = useState<Category[]>([]);
@@ -257,17 +259,26 @@ const HomeLobby: React.FC = () => {
           <Settings className="h-5 w-5" />
         </button>
         <button onClick={() => navigate("/profile")} className="flex items-center gap-2">
-          <span className="font-display text-[17px] font-extrabold">QuizUp</span>
+          <span className="font-display text-[19px] font-extrabold">QuizUp</span>
         </button>
         <div className="flex items-center gap-3">
           {/* <Search className="h-5 w-5" /> */}
           <button
-            onClick={() => navigate("/people")}
+            onClick={() => navigate("/social")}
             className="relative"
-            aria-label="Messages & People"
+            aria-label={
+              totalUnread > 0
+                ? `Chats, ${totalUnread} unread`
+                : "Chats"
+            }
           >
-            <MessageCircle className="h-5 w-5" />
-            <span className="absolute -top-1 -right-1 h-2.5 w-2.5 rounded-full bg-[#f65357] border-2 border-[#111] animate-pulse" />
+            <MessageCircle className="h-6 w-6" />
+            {totalUnread > 0 && (
+              <span
+                className="absolute -top-1 -right-1 min-w-[10px] h-2.5 rounded-full bg-green-300 border-2 border-[#111] animate-pulse"
+                aria-hidden
+              />
+            )}
           </button>
         </div>
       </div>

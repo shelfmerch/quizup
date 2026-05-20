@@ -4,6 +4,7 @@ import { GoogleOAuthProvider } from "@react-oauth/google";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { AuthProvider } from "@/hooks/useAuth";
+import { ChatUnreadProvider } from "@/hooks/useChatUnread";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import AppLayout from "@/layouts/AppLayout";
 
@@ -25,14 +26,17 @@ import CategoryDetail from "./pages/CategoryDetail";
 import AdminRoute from "@/components/AdminRoute";
 import AdminPage from "./pages/AdminPage";
 import People from "./pages/People";
+import Social from "./pages/Social";
 import AllCategories from "./pages/AllCategories";
 import OnboardingProfile from "./pages/OnboardingProfile";
 import OnboardingTopics from "./pages/OnboardingTopics";
+import AchievementsPage from "./pages/AchievementsPage";
 
 const queryClient = new QueryClient();
 
 const Shell: React.FC<{ children: React.ReactNode }> = ({ children }) => (
   <AuthProvider>
+    <ChatUnreadProvider>
     <TooltipProvider>
       <Sonner />
       <BrowserRouter>
@@ -54,6 +58,7 @@ const Shell: React.FC<{ children: React.ReactNode }> = ({ children }) => (
             <Route path="/notifications" element={<Notifications />} />
             <Route path="/category/:categoryId" element={<CategoryDetail />} />
             <Route path="/people" element={<People />} />
+            <Route path="/social" element={<Social />} />
           </Route>
 
           {/* Onboarding routes (full-screen, no bottom nav) */}
@@ -62,6 +67,7 @@ const Shell: React.FC<{ children: React.ReactNode }> = ({ children }) => (
 
           {/* Full-screen routes (no bottom nav) */}
           <Route path="/all-categories" element={<ProtectedRoute><AllCategories /></ProtectedRoute>} />
+          <Route path="/achievements" element={<ProtectedRoute><AchievementsPage /></ProtectedRoute>} />
           <Route path="/find-match/:categoryId" element={<ProtectedRoute><FindMatch /></ProtectedRoute>} />
           <Route path="/battle" element={<ProtectedRoute><BattlePage /></ProtectedRoute>} />
           <Route path="/chat/:peerId" element={<ProtectedRoute><ChatPage /></ProtectedRoute>} />
@@ -71,6 +77,7 @@ const Shell: React.FC<{ children: React.ReactNode }> = ({ children }) => (
         </Routes>
       </BrowserRouter>
     </TooltipProvider>
+    </ChatUnreadProvider>
   </AuthProvider>
 );
 

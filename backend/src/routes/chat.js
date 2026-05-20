@@ -1,10 +1,11 @@
 const express = require("express");
 const router = express.Router();
 const { requireAuth } = require("../middleware/auth");
-const { getUnreadSummary, markRead } = require("../controllers/chatController");
+const { getUnreadSummary, markRead, getConversations } = require("../controllers/chatController");
 const uploadChatMedia = require("../middleware/uploadChatMedia");
 
 router.get("/unread-summary", requireAuth, getUnreadSummary);
+router.get("/conversations", requireAuth, getConversations);
 router.put("/read", requireAuth, markRead);
 
 // Upload image/video for a chat message → returns permanent S3 URL

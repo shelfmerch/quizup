@@ -17,9 +17,30 @@ export type ChatUnreadItem = {
   avatarUrl: string;
 };
 
+export type ChatConversation = {
+  roomId: string;
+  peerId: string;
+  unreadCount: number;
+  lastMessageAt: string;
+  lastMessagePreview: string;
+  lastMessageFromMe: boolean;
+  username: string;
+  displayName: string;
+  avatarUrl: string;
+};
+
 export async function fetchChatUnreadSummary(): Promise<{ items: ChatUnreadItem[]; totalUnread: number }> {
   const res = await fetch(`${API_URL}/chat/unread-summary`, { headers: headers() });
   if (!res.ok) throw new Error("Failed to load chat notifications");
+  return res.json();
+}
+
+export async function fetchChatConversations(): Promise<{
+  conversations: ChatConversation[];
+  totalUnread: number;
+}> {
+  const res = await fetch(`${API_URL}/chat/conversations`, { headers: headers() });
+  if (!res.ok) throw new Error("Failed to load conversations");
   return res.json();
 }
 
