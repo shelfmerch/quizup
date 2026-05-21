@@ -47,6 +47,11 @@ const ConversationRow: React.FC<ConversationRowProps> = ({ conv, onOpen }) => {
     `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(conv.username)}`;
   const hasUnread = conv.unreadCount > 0;
 
+  // Mask encrypted message previews — never show raw ciphertext to the user
+  const preview = conv.lastMessagePreview?.startsWith("e2e:")
+    ? "🔒 Encrypted message"
+    : conv.lastMessagePreview;
+
   return (
     <button
       type="button"
@@ -85,7 +90,7 @@ const ConversationRow: React.FC<ConversationRowProps> = ({ conv, onOpen }) => {
               hasUnread ? "font-medium text-[#111b21]" : "text-[#667781]"
             }`}
           >
-            {conv.lastMessagePreview}
+            {preview}
           </p>
           {hasUnread && (
             <span className="shrink-0 min-w-[20px] h-5 px-1.5 rounded-full bg-[#25d366] text-white text-[11px] font-semibold flex items-center justify-center">
@@ -142,7 +147,9 @@ const Social: React.FC = () => {
       (c) =>
         c.username.toLowerCase().includes(q) ||
         c.displayName.toLowerCase().includes(q) ||
-        c.lastMessagePreview.toLowerCase().includes(q)
+        // Only search plaintext previews — skip encrypted payloads
+        (!c.lastMessagePreview?.startsWith("e2e:") &&
+          c.lastMessagePreview.toLowerCase().includes(q))
     );
   }, [conversations, query]);
 

@@ -4,6 +4,7 @@ export interface User {
   email: string;
   avatarUrl: string;
   createdAt: string;
+  publicKeyE2e?: string;
 }
 
 /** User row returned by followers / following list APIs */

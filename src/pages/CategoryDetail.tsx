@@ -236,7 +236,7 @@ const CategoryDetail: React.FC = () => {
           <button className="text-white p-1 rounded-full active:bg-black/10">
             <Search className="w-6 h-6" />
           </button>
-          <button className="text-white p-1 rounded-full active:bg-black/10 relative">
+          <button onClick={() => navigate('/social')} className="text-white p-1 rounded-full active:bg-black/10 relative">
             <MessageCircle className="w-6 h-6" />
             <div className="absolute top-0 right-0 w-3.5 h-3.5 bg-black rounded-full flex items-center justify-center text-[8px] font-bold text-white border border-[#242424]">1</div>
           </button>

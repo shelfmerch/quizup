@@ -275,9 +275,11 @@ const HomeLobby: React.FC = () => {
             <MessageCircle className="h-7 w-7" />
             {totalUnread > 0 && (
               <span
-                className="absolute top-0.5 right-0.5 min-w-[15px] h-4 rounded-full bg-green-300 border-2 border-[#111]"
+                className="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 rounded-full bg-green-400 border-1 border-[#ffffff] flex items-center justify-center text-[10px] font-bold text-[#ffffff] leading-none"
                 aria-hidden
-              />
+              >
+                {totalUnread > 99 ? "99+" : totalUnread}
+              </span>
             )}
           </button>
         </div>

@@ -705,9 +705,9 @@ const ProfilePage: React.FC = () => {
                     <AchievementBadge src={a.src} icon={a.icon} alt={a.name} className="h-16 w-16" isUnlocked={a.isUnlocked} />
                     
                     {/* Floating Glow Indicator Dot */}
-                    {a.isUnlocked && (
+                    {/* {a.isUnlocked && (
                       <span className={`absolute top-0.5 right-0.5 h-1.5 w-1.5 rounded-full ${tier.bgSolid} ring-1 ring-white animate-pulse`} />
-                    )}
+                    )} */}
                   </div>
 
                   {/* Lock Symbol */}

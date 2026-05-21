@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { ArrowLeft, Send, Camera, Smile, MoreVertical, X } from "lucide-react";
+import { ArrowLeft, Send, Camera, Smile, MoreVertical, X, Lock, Unlock } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useChatUnread } from "@/hooks/useChatUnread";
 import { chatRoomId, chatService } from "@/services/chatService";
@@ -8,6 +8,7 @@ import { markChatRead } from "@/services/chatApi";
 import { profileService } from "@/services/profileService";
 import { resolveMediaUrl } from "@/config/env";
 import { ChatMessage, Profile } from "@/types";
+import { generateE2eKeypair, deriveSharedKey, encryptMessage, decryptMessage } from "@/utils/crypto";
 
 // ── helpers ──────────────────────────────────────────────────────────────────
 const formatTime = (iso: string) =>
@@ -131,22 +132,35 @@ const Bubble: React.FC<BubbleProps> = ({ msg, isMe, isFirst, peerAvatar }) => {
 const ChatPage: React.FC = () => {
   const { peerId } = useParams<{ peerId: string }>();
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { user, refreshUser } = useAuth();
   const { refresh: refreshUnread } = useChatUnread();
 
   const [peer, setPeer] = useState<Profile | null>(null);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
+  const [decryptedMessages, setDecryptedMessages] = useState<ChatMessage[]>([]);
   const [text, setText] = useState("");
   const [mediaPreview, setMediaPreview] = useState<{ url: string; type: string; file: File } | null>(null);
   const [mediaSending, setMediaSending] = useState(false);
+
+  // E2E Encryption state
+  const [sharedKey, setSharedKey] = useState<CryptoKey | null>(null);
+  const [isE2eActive, setIsE2eActive] = useState<boolean>(false);
+  const [cryptoError, setCryptoError] = useState<string | null>(null);
+
   const bottomRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const didInitialScrollRef = useRef(false);
 
   const roomId = useMemo(() => {
     if (!user?.id || !peerId) return "";
     return chatRoomId(user.id, peerId);
   }, [user?.id, peerId]);
+
+  // Reset scroll reference on room change
+  useEffect(() => {
+    didInitialScrollRef.current = false;
+  }, [roomId]);
 
   // Load peer profile
   useEffect(() => {
@@ -162,12 +176,119 @@ const ChatPage: React.FC = () => {
       .catch(() => {});
   }, [peerId, user?.id, refreshUnread]);
 
+  // E2E Identity Key Generation, Registration, and Shared Key Derivation
+  useEffect(() => {
+    async function initE2e() {
+      if (!user?.id || !peer?.id) return;
+
+      let privateKeyJwkStr = localStorage.getItem(`quizup_e2e_private_${user.id}`);
+      let publicKeyJwkStr = localStorage.getItem(`quizup_e2e_public_${user.id}`);
+
+      if (!privateKeyJwkStr || !publicKeyJwkStr) {
+        try {
+          const { publicKeyJwk, privateKeyJwk } = await generateE2eKeypair();
+          privateKeyJwkStr = JSON.stringify(privateKeyJwk);
+          publicKeyJwkStr = JSON.stringify(publicKeyJwk);
+          localStorage.setItem(`quizup_e2e_private_${user.id}`, privateKeyJwkStr);
+          localStorage.setItem(`quizup_e2e_public_${user.id}`, publicKeyJwkStr);
+
+          await profileService.updateProfile({ publicKeyE2e: publicKeyJwkStr });
+          refreshUser().catch(console.error);
+        } catch (err) {
+          console.error("Failed to generate or upload E2E key pair:", err);
+          setCryptoError("Failed to initialize E2E keypair");
+          setSharedKey(null);
+          setIsE2eActive(false);
+          return;
+        }
+      } else if (!user.publicKeyE2e || user.publicKeyE2e !== publicKeyJwkStr) {
+        try {
+          await profileService.updateProfile({ publicKeyE2e: publicKeyJwkStr });
+          refreshUser().catch(console.error);
+        } catch (err) {
+          console.error("Failed to sync public E2E key to backend:", err);
+        }
+      }
+
+      if (peer.publicKeyE2e) {
+        try {
+          const myPrivateJwk = JSON.parse(privateKeyJwkStr);
+          const peerPublicJwk = JSON.parse(peer.publicKeyE2e);
+          const key = await deriveSharedKey(myPrivateJwk, peerPublicJwk);
+          setSharedKey(key);
+          setIsE2eActive(true);
+          setCryptoError(null);
+        } catch (err) {
+          console.error("Failed to derive shared key with peer:", err);
+          setCryptoError("Could not establish secure encryption with peer");
+          setSharedKey(null);
+          setIsE2eActive(false);
+        }
+      } else {
+        setSharedKey(null);
+        setIsE2eActive(false);
+        setCryptoError(null);
+      }
+    }
+
+    initE2e();
+  }, [user?.id, user?.publicKeyE2e, peer?.id, peer?.publicKeyE2e, refreshUser]);
+
+  // Async decryption effect for all loaded and incoming messages
+  useEffect(() => {
+    let active = true;
+
+    async function decryptAll() {
+      const decrypted = await Promise.all(
+        messages.map(async (msg) => {
+          if (msg.text && msg.text.startsWith("e2e:")) {
+            if (!sharedKey) {
+              return {
+                ...msg,
+                text: "🔑 [Encrypted Message - Key not exchangeable]",
+                mediaUrl: undefined,
+                mediaType: undefined,
+              };
+            }
+            try {
+              const decryptedText = await decryptMessage(sharedKey, msg.text);
+              const payload = JSON.parse(decryptedText);
+              return {
+                ...msg,
+                text: payload.text || "",
+                mediaUrl: payload.mediaUrl || undefined,
+                mediaType: payload.mediaType || undefined,
+              };
+            } catch (err) {
+              console.error("Failed to decrypt message:", err);
+              return {
+                ...msg,
+                text: "🚨 [Decryption Failed]",
+                mediaUrl: undefined,
+                mediaType: undefined,
+              };
+            }
+          }
+          return msg;
+        })
+      );
+
+      if (active) {
+        setDecryptedMessages(decrypted);
+      }
+    }
+
+    decryptAll();
+
+    return () => {
+      active = false;
+    };
+  }, [messages, sharedKey]);
+
   // Message handler
   const handleMessage = useCallback(
     (msg: ChatMessage & { localId?: string }) => {
       setMessages((prev) => {
-        // If this message has a localId (it was sent by us optimistically),
-        // replace the optimistic bubble instead of duplicating it
         if (msg.localId) {
           const index = prev.findIndex((m) => m.id === msg.localId);
           if (index !== -1) {
@@ -176,9 +297,7 @@ const ChatPage: React.FC = () => {
             return next;
           }
         }
-        // Avoid duplicate by ID
         if (prev.some((m) => m.id === msg.id)) return prev;
-
         return [...prev, msg];
       });
       if (peerId && msg.senderId !== user?.id) {
@@ -197,15 +316,40 @@ const ChatPage: React.FC = () => {
     return () => chatService.leaveRoom(roomId, handleMessage, handleHistory);
   }, [roomId, handleMessage, handleHistory]);
 
-  // Auto-scroll
+  // Auto-scroll: instant on first history load, smooth on every new message (sent or received)
   useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages.length]);
+    if (decryptedMessages.length === 0) return;
 
-  const handleSend = () => {
+    if (!didInitialScrollRef.current) {
+      // First batch of messages just arrived — wait one frame for layout to settle then snap to bottom
+      const timer = setTimeout(() => {
+        bottomRef.current?.scrollIntoView({ behavior: "auto" });
+        didInitialScrollRef.current = true;
+      }, 60);
+      return () => clearTimeout(timer);
+    } else {
+      // A new message was sent or received — smooth scroll to it
+      bottomRef.current?.scrollIntoView({ behavior: "smooth" });
+    }
+  }, [decryptedMessages.length]);
+
+  const handleSend = async () => {
     const trimmed = text.trim();
     if (!trimmed || !roomId) return;
-    chatService.sendMessage(roomId, trimmed);
+
+    if (isE2eActive && sharedKey) {
+      try {
+        const payload = JSON.stringify({ text: trimmed });
+        const encrypted = await encryptMessage(sharedKey, payload);
+        chatService.sendMessage(roomId, encrypted);
+      } catch (err) {
+        console.error("E2E Encryption send failed, falling back to plaintext:", err);
+        chatService.sendMessage(roomId, trimmed);
+      }
+    } else {
+      chatService.sendMessage(roomId, trimmed);
+    }
+
     setText("");
     inputRef.current?.focus();
   };
@@ -215,7 +359,6 @@ const ChatPage: React.FC = () => {
     if (!file) return;
     const url = URL.createObjectURL(file);
     setMediaPreview({ url, type: file.type, file });
-    // Reset so same file can be re-selected
     e.target.value = "";
   };
 
@@ -246,17 +389,20 @@ const ChatPage: React.FC = () => {
     setMessages((prev) => [...prev, optimistic]);
 
     const { file, url: objectUrl } = mediaPreview;
-    clearMedia(false); // Don't revoke — URL is now live in the optimistic message bubble
+    clearMedia(false);
 
     try {
-      // 1. Upload to S3
       const { mediaUrl, mediaType } = await chatService.uploadMedia(file);
       
-      // 2. Send via socket (pass localId so the server can echo it back for deduplication)
-      chatService.sendMessage(roomId, "", mediaUrl, mediaType, localId);
+      if (isE2eActive && sharedKey) {
+        const payload = JSON.stringify({ text: "", mediaUrl, mediaType });
+        const encrypted = await encryptMessage(sharedKey, payload);
+        chatService.sendMessage(roomId, encrypted, "", "", localId);
+      } else {
+        chatService.sendMessage(roomId, "", mediaUrl, mediaType, localId);
+      }
     } catch (error) {
       console.error("Media upload failed:", error);
-      // Remove optimistic message on failure
       setMessages((prev) => prev.filter((m) => m.id !== localId));
       URL.revokeObjectURL(objectUrl);
     }
@@ -267,7 +413,7 @@ const ChatPage: React.FC = () => {
     resolveMediaUrl(peer?.avatarUrl) ||
     `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(peerName)}`;
 
-  const grouped = useMemo(() => groupMessages(messages), [messages]);
+  const grouped = useMemo(() => groupMessages(decryptedMessages), [decryptedMessages]);
 
   const BRAND = "#e05a3a"; // lighter warm-red
 
@@ -308,7 +454,16 @@ const ChatPage: React.FC = () => {
         {/* Name + status */}
         <div className="flex-1 min-w-0">
           <p className="text-white font-semibold text-[15px] truncate leading-tight">{peerName}</p>
-          <p className="text-[11px] text-[#b2dfdb]">tap to view profile</p>
+          <p className="text-[11px] flex items-center gap-1 text-[#b2dfdb]">
+            {isE2eActive ? (
+              <>
+                <Lock className="w-2.5 h-2.5 inline-block" />
+                end-to-end encrypted
+              </>
+            ) : (
+              <>tap to view profile</>
+            )}
+          </p>
         </div>
 
         {/* Action icons */}
@@ -334,6 +489,31 @@ const ChatPage: React.FC = () => {
           backgroundSize: "auto",
         }}
       >
+        {/* E2E Status Banner */}
+        <div
+          className="mx-auto my-2 max-w-[280px] flex items-center gap-1.5 text-center text-[11px] px-3 py-1.5 rounded-full shadow-sm select-none"
+          style={{
+            background: isE2eActive ? "rgba(0,128,80,0.13)" : "rgba(100,100,100,0.13)",
+            color: isE2eActive ? "#1a6640" : "#555",
+            border: `1px solid ${isE2eActive ? "rgba(0,128,80,0.18)" : "rgba(100,100,100,0.15)"}`,
+          }}
+        >
+          {isE2eActive ? (
+            <Lock className="w-3 h-3 shrink-0" />
+          ) : (
+            <Unlock className="w-3 h-3 shrink-0" />
+          )}
+          <span>
+            {cryptoError
+              ? cryptoError
+              : isE2eActive
+              ? "Messages are end-to-end encrypted. No one outside this chat can read them."
+              : peer && !peer.publicKeyE2e
+              ? "Standard chat — peer hasn't enabled E2E encryption yet."
+              : "Setting up secure channel…"}
+          </span>
+        </div>
+
         {/* Empty state */}
         {messages.length === 0 && (
           <div className="flex flex-col items-center justify-center h-full gap-3 text-center py-10">
@@ -341,7 +521,15 @@ const ChatPage: React.FC = () => {
               <img src={peerAvatar} alt="" className="w-14 h-14 rounded-full border-2 border-white shadow" />
               <p className="text-[13px] text-[#111]/70 font-medium leading-snug">
                 Say hi to <span style={{ color: BRAND }} className="font-bold">{peerName}</span>!<br />
-                <span className="text-[11px] font-normal text-[#111]/50">Messages are end-to-end encrypted.</span>
+                {isE2eActive ? (
+                  <span className="text-[11px] font-normal" style={{ color: "#1a6640" }}>
+                    🔒 End-to-end encrypted
+                  </span>
+                ) : (
+                  <span className="text-[11px] font-normal text-[#111]/50">
+                    Standard chat
+                  </span>
+                )}
               </p>
             </div>
           </div>

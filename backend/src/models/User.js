@@ -76,6 +76,10 @@ const userSchema = new mongoose.Schema(
       enum: ["user", "admin"],
       default: "user",
     },
+    publicKeyE2e: {
+      type: String,
+      default: "",
+    },
   },
   { timestamps: true }
 );
@@ -145,6 +149,7 @@ userSchema.methods.toProfile = function () {
     favoriteCategory: this.favoriteCategory,
     lastActive: this.lastActive,
     createdAt: this.createdAt,
+    publicKeyE2e: this.publicKeyE2e || "",
     achievements: this.unlockedAchievements ? this.unlockedAchievements.map((a) => ({
       id: a.id,
       unlockedAt: a.unlockedAt.toISOString(),
