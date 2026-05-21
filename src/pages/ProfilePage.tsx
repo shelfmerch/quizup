@@ -95,7 +95,7 @@ const AchievementBadge: React.FC<{ src: string; icon: string; alt: string }> = (
     <img
       src={src}
       alt={alt}
-      className="h-10 w-10 object-contain"
+      className="h-24 w-24 object-contain"
       onError={() => setErrored(true)}
     />
   );
@@ -548,16 +548,16 @@ const ProfilePage: React.FC = () => {
       )}
 
       <section className="quizup-section mt-2 px-4 py-4">
-        <div className="mb-3 flex items-center justify-between">
+        <div className="mb-1 flex items-center justify-between">
           <h3 className="quizup-section-title">Achievements</h3>
           <button className="quizup-see-all" onClick={() => navigate("/achievements")}>More</button>
           {/* <span className="text-[10px] font-black uppercase text-zinc-400">
             {displayAchievements.filter((a) => a.isUnlocked).length}/{displayAchievements.length}
           </span> */}
         </div>
-        <div className="flex gap-3 overflow-x-auto pb-1">
+        <div className="flex gap-1 overflow-x-auto">
           {displayAchievements.slice(0, 5).map((a) => (
-            <div key={a.id} className={`w-[58px] shrink-0 text-center ${!a.isUnlocked ? "opacity-35 grayscale" : ""}`} title={a.description}>
+            <div key={a.id} className={`w-[80px] shrink-0 text-center ${!a.isUnlocked ? "opacity-35 grayscale" : ""}`} title={a.description}>
               {/* <span className="mx-auto flex h-12 w-12 items-center justify-center rounded-lg bg-white text-xl shadow-md border border-[#dddddd]"> */}
                 <AchievementBadge src={a.src} icon={a.icon} alt={a.name} />
               {/* </span> */}
