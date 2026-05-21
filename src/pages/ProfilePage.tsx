@@ -14,6 +14,11 @@ import {
   XCircle,
   UserCheck,
   UserPlus,
+  Lock,
+  Calendar,
+  Share2,
+  Sparkles,
+  Award,
 } from "lucide-react";
 import { toast } from "@/components/ui/sonner";
 import { CategoryIcon } from "@/components/CategoryIcon";
@@ -67,6 +72,62 @@ function playerRankLabel(level: number) {
   return "Veteran";
 }
 
+interface RarityTier {
+  name: string;
+  color: string;
+  bgGradient: string;
+  glowClass: string;
+  textClass: string;
+  bgSolid: string;
+}
+
+const ACHIEVEMENT_TIERS: Record<string, RarityTier> = {
+  legendary: {
+    name: "Legendary",
+    color: "#eab308",
+    bgGradient: "from-amber-400 via-yellow-500 to-amber-600",
+    glowClass: "shadow-[0_0_15px_rgba(234,179,8,0.45)] border-amber-400/80 hover:shadow-[0_0_25px_rgba(234,179,8,0.7)]",
+    textClass: "text-amber-500 font-extrabold tracking-widest uppercase",
+    bgSolid: "bg-amber-500",
+  },
+  epic: {
+    name: "Epic",
+    color: "#a855f7",
+    bgGradient: "from-fuchsia-500 via-purple-600 to-indigo-600",
+    glowClass: "shadow-[0_0_15px_rgba(168,85,247,0.45)] border-purple-400/80 hover:shadow-[0_0_25px_rgba(168,85,247,0.7)]",
+    textClass: "text-purple-500 font-extrabold tracking-widest uppercase",
+    bgSolid: "bg-purple-500",
+  },
+  rare: {
+    name: "Rare",
+    color: "#3b82f6",
+    bgGradient: "from-blue-400 via-indigo-500 to-cyan-500",
+    glowClass: "shadow-[0_0_12px_rgba(59,130,246,0.35)] border-blue-400/80 hover:shadow-[0_0_20px_rgba(59,130,246,0.6)]",
+    textClass: "text-blue-500 font-extrabold tracking-widest uppercase",
+    bgSolid: "bg-blue-500",
+  },
+  common: {
+    name: "Common",
+    color: "#14b8a6",
+    bgGradient: "from-teal-400 to-emerald-500",
+    glowClass: "shadow-[0_0_10px_rgba(20,184,166,0.25)] border-teal-400/80 hover:shadow-[0_0_18px_rgba(20,184,166,0.5)]",
+    textClass: "text-teal-600 font-extrabold tracking-widest uppercase",
+    bgSolid: "bg-teal-500",
+  },
+};
+
+const ACHIEVEMENT_RARITY_MAP: Record<string, keyof typeof ACHIEVEMENT_TIERS> = {
+  a1: "common",
+  a2: "rare",
+  a3: "epic",
+  a4: "legendary",
+  a5: "rare",
+  a6: "common",
+  a7: "epic",
+  a8: "legendary",
+  a9: "legendary",
+};
+
 const TopicTile: React.FC<{ category: Category; index: number; onClick: () => void }> = ({ category, index, onClick }) => {
   return (
     <button type="button" onClick={onClick} className="w-[74px] shrink-0 text-center">
@@ -79,23 +140,20 @@ const TopicTile: React.FC<{ category: Category; index: number; onClick: () => vo
       <span className="mt-1 block min-h-[24px] text-[10px] font-black leading-[11px] text-[#343434] line-clamp-2">
         {category.name}
       </span>
-      {/* <span className="block text-[8px] font-black uppercase tracking-wide text-zinc-400">
-        LVL {Math.max(1, Math.ceil((category.questionCount || 10) / 120))}
-      </span> */}
     </button>
   );
 };
 
-const AchievementBadge: React.FC<{ src: string; icon: string; alt: string }> = ({ src, icon, alt }) => {
+const AchievementBadge: React.FC<{ src: string; icon: string; alt: string; className?: string; isUnlocked?: boolean }> = ({ src, icon, alt, className = "h-24 w-24", isUnlocked = true }) => {
   const [errored, setErrored] = useState(false);
   if (errored || !src) {
-    return <span className="text-2xl leading-none" aria-label={alt}>{icon}</span>;
+    return <span className="text-2xl leading-none filter drop-shadow-sm" aria-label={alt}>{icon}</span>;
   }
   return (
     <img
       src={src}
       alt={alt}
-      className="h-24 w-24 object-contain"
+      className={`${className} object-contain transition-transform duration-300 filter drop-shadow-sm ${isUnlocked ? "" : "grayscale opacity-70"}`}
       onError={() => setErrored(true)}
     />
   );
@@ -182,6 +240,7 @@ const ProfilePage: React.FC = () => {
   const [categoriesLoading, setCategoriesLoading] = useState(false);
   const [categoriesError, setCategoriesError] = useState<string | null>(null);
   const [leagueModalOpen, setLeagueModalOpen] = useState(false);
+  const [selectedAchievement, setSelectedAchievement] = useState<typeof MOCK_ACHIEVEMENTS[number] | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const loadProfile = useCallback(async () => {
@@ -548,23 +607,279 @@ const ProfilePage: React.FC = () => {
       )}
 
       <section className="quizup-section mt-2 px-4 py-4">
-        <div className="mb-1 flex items-center justify-between">
+        <style>{`
+          @keyframes shimmer-sweep {
+            0% { transform: translateX(-150%) skewX(-15deg); }
+            50% { transform: translateX(150%) skewX(-15deg); }
+            100% { transform: translateX(150%) skewX(-15deg); }
+          }
+          .animate-shimmer-sweep {
+            position: relative;
+            overflow: hidden;
+          }
+          .animate-shimmer-sweep::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(
+              90deg,
+              transparent,
+              rgba(255, 255, 255, 0.45),
+              transparent
+            );
+            transform: translateX(-100%);
+            animation: shimmer-sweep 2.5s infinite;
+          }
+          @keyframes float-gentle {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-4px); }
+          }
+          .animate-float-gentle {
+            animation: float-gentle 4s ease-in-out infinite;
+          }
+        `}</style>
+        
+        <div className="mb-3 flex items-center justify-between">
           <h3 className="quizup-section-title">Achievements</h3>
           <button className="quizup-see-all" onClick={() => navigate("/achievements")}>More</button>
-          {/* <span className="text-[10px] font-black uppercase text-zinc-400">
-            {displayAchievements.filter((a) => a.isUnlocked).length}/{displayAchievements.length}
-          </span> */}
         </div>
-        <div className="flex gap-1 overflow-x-auto">
-          {displayAchievements.slice(0, 5).map((a) => (
-            <div key={a.id} className={`w-[80px] shrink-0 text-center ${!a.isUnlocked ? "opacity-35 grayscale" : ""}`} title={a.description}>
-              {/* <span className="mx-auto flex h-12 w-12 items-center justify-center rounded-lg bg-white text-xl shadow-md border border-[#dddddd]"> */}
-                <AchievementBadge src={a.src} icon={a.icon} alt={a.name} />
-              {/* </span> */}
-              {/* <p className="mt-1 line-clamp-2 text-[9px] font-black leading-[10px] text-[#444]">{a.name}</p> */}
+
+        {/* Completion Progress Bar Card */}
+        {/* {(() => {
+          const unlockedCount = displayAchievements.filter((a) => a.isUnlocked).length;
+          const totalCount = displayAchievements.length;
+          const percentUnlocked = totalCount > 0 ? Math.round((unlockedCount / totalCount) * 100) : 0;
+          
+          return (
+            <div className="mb-4 bg-slate-50 border border-slate-100 rounded-2xl p-3 shadow-inner">
+              <div className="flex items-center justify-between mb-1.5">
+                <span className="text-[10px] font-extrabold text-slate-500 uppercase tracking-wider">Unlock Progress</span>
+                <span className="text-[10px] font-black text-slate-800 bg-white px-2 py-0.5 rounded-full shadow-sm border border-slate-100/80 flex items-center gap-1">
+                  <Trophy className="h-3 w-3 text-amber-500" />
+                  {unlockedCount} / {totalCount}
+                </span>
+              </div>
+              <div className="h-2.5 w-full bg-slate-200 rounded-full overflow-hidden relative">
+                <div 
+                  className="h-full rounded-full bg-gradient-to-r from-teal-400 via-purple-500 to-amber-500 transition-all duration-1000 ease-out" 
+                  style={{ width: `${percentUnlocked}%` }}
+                />
+              </div>
+              <div className="flex justify-between items-center mt-1.5">
+                <p className="text-[9px] text-slate-400 font-extrabold uppercase">{percentUnlocked}% Completed</p>
+                {percentUnlocked === 100 && (
+                  <p className="text-[9px] text-emerald-500 font-black flex items-center gap-0.5 uppercase tracking-wide">
+                    <Sparkles className="h-2.5 w-2.5 animate-pulse" /> Ultimate Master
+                  </p>
+                )}
+              </div>
             </div>
-          ))}
+          );
+        })()} */}
+
+        {/* Grid and Badges list */}
+        <div className="flex gap-1 scrollbar-none">
+          {displayAchievements.slice(0, 5).map((a) => {
+            const rarityKey = ACHIEVEMENT_RARITY_MAP[a.id] || "common";
+            const tier = ACHIEVEMENT_TIERS[rarityKey];
+            
+            return (
+              <button
+                key={a.id}
+                type="button"
+                onClick={() => setSelectedAchievement(a)}
+                className="group w-[82px] shrink-0 text-center flex flex-col items-center focus:outline-none"
+              >
+                <div 
+                  className={`relative h-16 w-16 flex items-center justify-center rounded-2xl bg-white border-2 p-1.5 transition-all duration-300 ${
+                    a.isUnlocked 
+                      ? `bg-gradient-to-br ${tier.bgGradient} p-[2px] ${tier.glowClass} scale-100 hover:scale-110 hover:-rotate-2 active:scale-95 cursor-pointer`
+                      : 'border-slate-200 opacity-40 bg-slate-50'
+                  }`}
+                >
+                  {/* Badge Inner Frame */}
+                  <div className={`h-full w-full rounded-[14px] bg-white flex items-center justify-center overflow-hidden relative ${a.isUnlocked ? 'animate-shimmer-sweep' : ''}`}>
+                    <AchievementBadge src={a.src} icon={a.icon} alt={a.name} className="h-16 w-16" isUnlocked={a.isUnlocked} />
+                    
+                    {/* Floating Glow Indicator Dot */}
+                    {a.isUnlocked && (
+                      <span className={`absolute top-0.5 right-0.5 h-1.5 w-1.5 rounded-full ${tier.bgSolid} ring-1 ring-white animate-pulse`} />
+                    )}
+                  </div>
+
+                  {/* Lock Symbol */}
+                  {!a.isUnlocked && (
+                    <div className="absolute inset-0 flex items-center justify-center bg-slate-950/10 rounded-2xl backdrop-blur-[0.5px]">
+                      <div className="bg-white/95 p-1 rounded-lg shadow-sm border border-slate-200">
+                        <Lock className="h-3 w-3 text-slate-500" />
+                      </div>
+                    </div>
+                  )}
+                </div>
+                
+                {/* Achievement Name */}
+                <p className={`mt-1.5 line-clamp-1 text-[9px] font-black leading-tight max-w-[76px] transition-colors ${
+                  a.isUnlocked ? 'text-slate-800 group-hover:text-slate-950' : 'text-slate-400'
+                }`}>
+                  {a.name}
+                </p>
+                <span className={`text-[7px] font-black uppercase tracking-wider ${
+                  a.isUnlocked ? tier.textClass : 'text-slate-400'
+                }`}>
+                  {tier.name}
+                </span>
+              </button>
+            );
+          })}
         </div>
+
+        {/* Premium Interactive Modal */}
+        {selectedAchievement && (() => {
+          const a = selectedAchievement;
+          const unlocked = p.achievements?.find((x) => x.id === a.id);
+          const isUnlocked = !!unlocked;
+          const unlockedAt = unlocked?.unlockedAt;
+          const rarityKey = ACHIEVEMENT_RARITY_MAP[a.id] || "common";
+          const tier = ACHIEVEMENT_TIERS[rarityKey];
+
+          return (
+            <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/60 sm:items-center backdrop-blur-md transition-all">
+              {/* Modal Box */}
+              <div className="w-full max-w-md bg-white rounded-t-[32px] sm:rounded-[32px] overflow-hidden shadow-2xl border border-slate-100 flex flex-col relative animate-slide-up">
+                {/* Accent Banner */}
+                <div className={`h-3 w-full bg-gradient-to-r ${tier.bgGradient}`} />
+                
+                {/* Close x */}
+                <button
+                  type="button"
+                  className="absolute top-4 right-4 w-8 h-8 flex items-center justify-center rounded-full bg-slate-100 hover:bg-slate-200 text-slate-500 hover:text-slate-800 transition-colors z-10 shadow-sm"
+                  onClick={() => setSelectedAchievement(null)}
+                >
+                  ✕
+                </button>
+
+                <div className="px-6 pt-8 pb-6 flex flex-col items-center text-center">
+                  {/* Glowing Frame */}
+                  <div className={`relative h-28 w-28 flex items-center justify-center rounded-3xl bg-white border-[3px] p-2.5 shadow-xl transition-transform ${
+                    isUnlocked 
+                      ? `bg-gradient-to-br ${tier.bgGradient} ${tier.glowClass} animate-float-gentle`
+                      : 'border-slate-200'
+                  }`}>
+                    <div className="h-full w-full rounded-[20px] bg-white flex items-center justify-center overflow-hidden relative shadow-inner">
+                      <AchievementBadge src={a.src} icon={a.icon} alt={a.name} className="h-16 w-16" isUnlocked={isUnlocked} />
+                      {isUnlocked && (
+                        <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-white/20 to-transparent pointer-events-none animate-shimmer-sweep" />
+                      )}
+                    </div>
+                    
+                    {/* Status Badge */}
+                    <div className={`absolute -bottom-2 -right-2 flex h-8 w-8 items-center justify-center rounded-full border-2 border-white shadow-md ${
+                      isUnlocked ? 'bg-emerald-500 text-white' : 'bg-slate-400 text-white'
+                    }`}>
+                      {isUnlocked ? <Sparkles className="h-4 w-4" /> : <Lock className="h-3.5 w-3.5" />}
+                    </div>
+                  </div>
+
+                  {/* Title & Rarity */}
+                  <div className="mt-6">
+                    <span className={`inline-block px-3 py-1 rounded-full text-[9px] font-black tracking-widest ${
+                      isUnlocked 
+                        ? `${tier.bgSolid} text-white`
+                        : 'bg-slate-100 text-slate-500'
+                    } uppercase mb-2 shadow-sm`}>
+                      {tier.name} Achievement
+                    </span>
+                    <h3 className="text-xl font-black text-slate-900 leading-tight">
+                      {a.name}
+                    </h3>
+                  </div>
+
+                  {/* Description */}
+                  <p className="mt-3 text-slate-600 font-semibold text-sm max-w-xs leading-relaxed">
+                    {a.description}
+                  </p>
+
+                  <div className="w-full border-t border-slate-100 my-5" />
+
+                  {/* Earned Status Info */}
+                  <div className="w-full flex flex-col items-center">
+                    {isUnlocked ? (
+                      <div className="flex flex-col items-center gap-1.5">
+                        <div className="flex items-center gap-1.5 text-emerald-600 font-bold text-sm bg-emerald-50 px-4 py-1.5 rounded-full border border-emerald-100">
+                          <CheckCircle2 className="h-4 w-4" />
+                          Unlocked!
+                        </div>
+                        {unlockedAt && (
+                          <p className="text-xs text-slate-400 font-semibold mt-1 flex items-center gap-1">
+                            <Calendar className="h-3 w-3" />
+                            Earned on {new Date(unlockedAt).toLocaleDateString(undefined, { dateStyle: 'medium' })}
+                          </p>
+                        )}
+                      </div>
+                    ) : (
+                      <div className="flex flex-col items-center gap-1.5 w-full">
+                        <div className="flex items-center gap-1.5 text-slate-500 font-bold text-sm bg-slate-50 px-4 py-1.5 rounded-full border border-slate-200">
+                          <Lock className="h-4 w-4" />
+                          Locked
+                        </div>
+                        <p className="text-xs text-slate-400 font-semibold mt-1 max-w-[240px]">
+                          Challenge yourself in battles to satisfy this requirement and claim this reward!
+                        </p>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Actions */}
+                  <div className="w-full mt-6 grid grid-cols-2 gap-3">
+                    <button
+                      type="button"
+                      onClick={() => setSelectedAchievement(null)}
+                      className="h-11 rounded-xl border border-slate-200 text-slate-700 bg-white font-bold text-sm hover:bg-slate-50 transition active:scale-[0.98] shadow-sm"
+                    >
+                      Close
+                    </button>
+                    {isUnlocked ? (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          if (navigator.share) {
+                            navigator.share({
+                              title: `Unlocked Achievement: ${a.name}!`,
+                              text: `I just unlocked the "${a.name}" achievement in Quiz Blitz Arena! Can you beat my score?`,
+                              url: window.location.href,
+                            }).catch(console.error);
+                          } else {
+                            navigator.clipboard.writeText(`I just unlocked the "${a.name}" achievement in Quiz Blitz Arena!`);
+                            toast.success("Copied share message to clipboard!");
+                          }
+                        }}
+                        className="h-11 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white font-extrabold text-sm flex items-center justify-center gap-2 transition active:scale-[0.98] shadow-md shadow-indigo-600/10"
+                      >
+                        <Share2 className="h-4 w-4" />
+                        Share
+                      </button>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setSelectedAchievement(null);
+                          navigate("/categories");
+                        }}
+                        className="h-11 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-extrabold text-sm flex items-center justify-center gap-2 transition active:scale-[0.98] shadow-md shadow-slate-950/10"
+                      >
+                        <Swords className="h-4 w-4" />
+                        Play Now
+                      </button>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </div>
+          );
+        })()}
       </section>
 
       <section className="quizup-section mt-2 px-4 py-2">
