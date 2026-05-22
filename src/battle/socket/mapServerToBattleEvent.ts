@@ -35,14 +35,21 @@ export function mapRoundEndToEvent(
   payload: RoundEndPayload,
   myUserId: string,
   opponentUserId: string,
+  mySeat: "player1" | "player2",
   currentQuestion: Question
 ): BattleEvent {
+  // Server emits scores keyed by SEAT; translate to me/opponent for the reducer.
+  const myScore =
+    mySeat === "player1" ? payload.player1Score : payload.player2Score;
+  const opponentScore =
+    mySeat === "player1" ? payload.player2Score : payload.player1Score;
+
   return {
     type: "SHOW_ANSWER",
     payload: {
       correctIndex: payload.correctIndex,
-      player1Score: payload.player1Score,
-      player2Score: payload.player2Score,
+      myScore,
+      opponentScore,
       myAnswer: payload.roundAnswers[myUserId] ?? null,
       opponentAnswer: payload.roundAnswers[opponentUserId] ?? null,
       question: currentQuestion,
@@ -55,6 +62,7 @@ export function mapMatchEndToEvent(
   mySeat: "player1" | "player2"
 ): BattleEvent {
   const mySlot = mySeat === "player1" ? payload.player1 : payload.player2;
+  const oppSlot = mySeat === "player1" ? payload.player2 : payload.player1;
   const myMatchResult: MatchResultData = {
     matchScore: mySlot.score,
     levelBonus: mySlot.levelBonus,
@@ -66,8 +74,8 @@ export function mapMatchEndToEvent(
   return {
     type: "END_MATCH",
     winnerId: payload.winnerId,
-    player1Score: payload.player1.score,
-    player2Score: payload.player2.score,
+    myScore: mySlot.score,
+    opponentScore: oppSlot.score,
     myMatchResult,
   };
 }

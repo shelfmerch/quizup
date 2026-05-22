@@ -144,8 +144,8 @@ export function useBattleController(config: BattleControllerConfig | null) {
         dispatch({
           type: "END_MATCH",
           winnerId: null,
-          player1Score: s.match.player1.score,
-          player2Score: s.match.player2.score,
+          myScore: s.match.player1.score,
+          opponentScore: s.match.player2.score,
         });
         return;
       }
@@ -234,6 +234,7 @@ export function useBattleController(config: BattleControllerConfig | null) {
           payload,
           session.myUserId,
           session.opponentUserId,
+          session.mySeat,
           q
         )
       );
@@ -365,8 +366,8 @@ export function useBattleController(config: BattleControllerConfig | null) {
       dispatch({
         type: "END_MATCH",
         winnerId: null,
-        player1Score: state.match.player1.score,
-        player2Score: state.match.player2.score,
+        myScore: state.match.player1.score,
+        opponentScore: state.match.player2.score,
       });
       return;
     }

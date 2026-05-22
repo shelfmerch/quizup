@@ -18,17 +18,21 @@ export function calcLocalOpponentPoints(isCorrect: boolean): number {
   return 100 + Math.floor(Math.random() * 80);
 }
 
+/**
+ * Local mode has no server seat — the "me" player is always `match.player1`,
+ * so myScore/opponentScore map directly to player1/player2 scores.
+ */
 export function buildLocalRoundReveal(state: BattleCoreState): {
   correctIndex: number;
-  player1Score: number;
-  player2Score: number;
+  myScore: number;
+  opponentScore: number;
 } | null {
   const q = state.currentQuestion;
   if (!q || q.correctIndex < 0) return null;
   return {
     correctIndex: q.correctIndex,
-    player1Score: state.match.player1.score,
-    player2Score: state.match.player2.score,
+    myScore: state.match.player1.score,
+    opponentScore: state.match.player2.score,
   };
 }
 

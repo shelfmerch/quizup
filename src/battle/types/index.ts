@@ -26,10 +26,15 @@ export interface ServerRoundAnswer {
   points: number;
 }
 
+/**
+ * Round result, expressed in **me / opponent** terms.
+ * Server seat is translated upstream by `mapRoundEndToEvent` so the reducer
+ * never has to know which seat the local user occupies.
+ */
 export interface RoundResultPayload {
   correctIndex: number;
-  player1Score: number;
-  player2Score: number;
+  myScore: number;
+  opponentScore: number;
   myAnswer: ServerRoundAnswer | null;
   opponentAnswer: ServerRoundAnswer | null;
 }

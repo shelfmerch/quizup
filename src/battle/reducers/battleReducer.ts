@@ -18,15 +18,21 @@ function setPhase(state: BattleCoreState, phase: BattleCoreState["phase"]): Batt
   return { ...state, phase };
 }
 
+/**
+ * In the client-side `Match`, `player1` is ALWAYS the local user ("me") and
+ * `player2` is the opponent — regardless of which server seat each user holds.
+ * The mapping layer has already translated server seat scores into me/opponent
+ * before reaching the reducer, so this assignment is direct.
+ */
 function applyScores(
   match: Match,
-  player1Score: number,
-  player2Score: number
+  myScore: number,
+  opponentScore: number
 ): Match {
   return {
     ...match,
-    player1: { ...match.player1, score: player1Score },
-    player2: { ...match.player2, score: player2Score },
+    player1: { ...match.player1, score: myScore },
+    player2: { ...match.player2, score: opponentScore },
   };
 }
 
@@ -136,7 +142,7 @@ export function battleReducer(state: BattleCoreState, event: BattleEvent): Battl
       const oppPick = payload.opponentAnswer?.selectedIndex ?? null;
       return bumpVersion({
         ...setPhase(state, "answer_reveal"),
-        match: applyScores(state.match, payload.player1Score, payload.player2Score),
+        match: applyScores(state.match, payload.myScore, payload.opponentScore),
         currentQuestion: withCorrect,
         playerAnswer: myPick === null ? -1 : myPick,
         opponentAnswer: oppPick,
@@ -150,7 +156,7 @@ export function battleReducer(state: BattleCoreState, event: BattleEvent): Battl
     case "END_MATCH":
       return bumpVersion({
         ...setPhase(state, "match_end"),
-        match: applyScores(state.match, event.player1Score, event.player2Score),
+        match: applyScores(state.match, event.myScore, event.opponentScore),
         winnerId: event.winnerId,
         myMatchResult: event.myMatchResult ?? state.myMatchResult,
         roundEndTimestamp: null,
@@ -165,7 +171,7 @@ export function battleReducer(state: BattleCoreState, event: BattleEvent): Battl
     case "SYNC_SCORES":
       return bumpVersion({
         ...state,
-        match: applyScores(state.match, event.player1Score, event.player2Score),
+        match: applyScores(state.match, event.myScore, event.opponentScore),
       });
 
     default:

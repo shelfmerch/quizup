@@ -38,8 +38,8 @@ export const battleService = {
         {
           type: "END_MATCH",
           winnerId: null,
-          player1Score: state.match.player1.score,
-          player2Score: state.match.player2.score,
+          myScore: state.match.player1.score,
+          opponentScore: state.match.player2.score,
         }
       ) as unknown as BattleState;
     }

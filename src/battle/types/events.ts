@@ -20,12 +20,14 @@ export type BattleEvent =
   | {
       type: "END_MATCH";
       winnerId: string | null;
-      player1Score: number;
-      player2Score: number;
+      /** Score for the local user (always mapped client-side). */
+      myScore: number;
+      /** Score for the opponent (always mapped client-side). */
+      opponentScore: number;
       myMatchResult?: MatchResultData | null;
     }
   | { type: "PLAYER_DISCONNECTED"; userId: string }
   | { type: "RECONNECT_PLAYER" }
-  | { type: "SYNC_SCORES"; player1Score: number; player2Score: number };
+  | { type: "SYNC_SCORES"; myScore: number; opponentScore: number };
 
 export type BattleEventType = BattleEvent["type"];
