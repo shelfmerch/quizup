@@ -14,6 +14,7 @@ import { toast } from "sonner";
 import { generateE2eKeypair, deriveSharedKey, encryptMessage, decryptMessage } from "@/utils/crypto";
 import { useOnlineStatus } from "@/hooks/useOnlineStatus";
 import { OnlineIndicator } from "@/components/ui/OnlineIndicator";
+import { CategoryIcon } from "@/components/CategoryIcon";
 
 
 // ── helpers ──────────────────────────────────────────────────────────────────
@@ -28,6 +29,7 @@ interface IncomingChallenge {
   to?: { userId: string; username: string };
   categoryId: string;
   categoryName: string;
+  categoryIcon?: string;
   createdAt?: string;
 }
 
@@ -195,9 +197,18 @@ const IncomingChallengeCard: React.FC<IncomingChallengeCardProps> = ({
         <Swords className="w-4 h-4" />
         <span className="text-[11px] font-bold uppercase tracking-wide">Challenge</span>
       </div>
-      <p className="text-[13px] text-[#111] leading-snug">
-        <span className="font-bold">{peerName}</span> challenges you in{" "}
-        <span className="font-bold text-[#128c7e]">{challenge.categoryName}</span>
+      <p className="text-[13px] text-[#111] leading-snug flex items-center justify-center gap-1.5 flex-wrap">
+        <span className="font-bold">{peerName}</span>
+        <span>challenges you in</span>
+        <span className="inline-flex items-center gap-1 font-bold text-[#128c7e]">
+          <CategoryIcon
+            category={{ name: challenge.categoryName, icon: challenge.categoryIcon }}
+            size={18}
+            style="fluency"
+            className="h-4 w-4 object-contain"
+          />
+          {challenge.categoryName}
+        </span>
       </p>
     </div>
     <div className="flex border-t border-black/5">
@@ -1053,8 +1064,13 @@ const ChatPage: React.FC = () => {
                     onClick={() => sendChallengeForCategory(cat.id)}
                     className="w-full flex items-center gap-4 px-4 py-3 rounded-2xl bg-white border border-slate-200 shadow-sm text-left hover:border-[#128c7e] transition-colors disabled:opacity-60"
                   >
-                    <div className="w-10 h-10 rounded-xl bg-slate-100 flex items-center justify-center text-xl">
-                      <span>{cat.icon}</span>
+                    <div className="w-10 h-10 rounded-xl bg-slate-100 flex items-center justify-center overflow-hidden">
+                      <CategoryIcon
+                        category={cat}
+                        size={40}
+                        style="fluency"
+                        className="h-9 w-9 object-contain"
+                      />
                     </div>
                     <div className="min-w-0 flex-1">
                       <p className="text-[15px] font-bold text-slate-900 truncate">{cat.name}</p>

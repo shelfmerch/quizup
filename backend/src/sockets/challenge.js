@@ -43,6 +43,7 @@ function _serializeChallenge(ch) {
     to: { userId: ch.toUserId, username: ch.toUsername },
     categoryId: ch.categoryId,
     categoryName: ch.categoryName,
+    categoryIcon: ch.categoryIcon || "",
     createdAt: ch.createdAt,
   };
 }
@@ -109,6 +110,7 @@ module.exports = function registerChallenge(socket, io) {
 
       const category = await Category.findOne({ slug: catId }).lean();
       const categoryName = category ? category.name : catId;
+      const categoryIcon = category?.icon ? String(category.icon).trim() : "🎯";
 
       // avoid duplicate pending between same pair+category
       const outgoing = _getSet(outgoingIdsByUser, socket.userId);
@@ -129,6 +131,7 @@ module.exports = function registerChallenge(socket, io) {
         toUsername: targetUser.username,
         categoryId: catId,
         categoryName,
+        categoryIcon,
         createdAt: new Date().toISOString(),
       };
 

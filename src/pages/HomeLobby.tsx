@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Ellipsis, MessageCircle, Search, Settings, Swords, Loader2 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
@@ -19,16 +19,17 @@ interface IncomingChallenge {
   from: { userId: string; username: string; avatarUrl: string };
   categoryId: string;
   categoryName: string;
+  categoryIcon?: string;
 }
 
-interface SearchingUser {
+interface SearchingQueueUser {
   userId: string;
   username: string;
   avatarUrl: string;
   level: number;
   categoryId: string;
   categoryName: string;
-  queuedAt: string;
+  categoryIcon?: string;
 }
 
 const TILE_COLORS = ["#f65357", "#0dbf9d", "#20b7d5", "#ffc233", "#ff8d2c", "#8d65e7"];
@@ -99,6 +100,18 @@ const TopicTile: React.FC<{ category: Category; index: number; onClick: () => vo
   );
 };
 
+const ChallengeBattleIcon: React.FC<{ variant?: "default" | "muted" }> = ({ variant = "default" }) => (
+  <div
+    className={`flex h-14 w-14 shrink-0 items-center justify-center rounded-xl border-2 shadow-inner ${
+      variant === "muted"
+        ? "border-slate-200 bg-slate-50 text-slate-400"
+        : "border-[#c4a574] bg-gradient-to-br from-amber-50 to-amber-100 text-[#b45309]"
+    }`}
+  >
+    <Swords className="h-7 w-7" strokeWidth={2.25} />
+  </div>
+);
+
 const Section: React.FC<{
   title: string;
   onSeeAll?: () => void;
@@ -129,113 +142,86 @@ const HomeLobby: React.FC = () => {
   const [challengeResponding, setChallengeResponding] = useState(false);
   const [leagueModalOpen, setLeagueModalOpen] = useState(false);
 
-  // Matchmaking queue state
-  const [searchingUsers, setSearchingUsers] = useState<SearchingUser[]>([]);
-  const [skippedUserIds, setSkippedUserIds] = useState<Set<string>>(new Set());
-  const [currentQueueIndex, setCurrentQueueIndex] = useState(0);
+  // Real matchmaking queue (players on Find Match waiting for opponents)
+  const [searchingUsers, setSearchingUsers] = useState<SearchingQueueUser[]>([]);
+  const [searchingIndex, setSearchingIndex] = useState(0);
+  const [queueRefreshing, setQueueRefreshing] = useState(true);
   const [queueLoading, setQueueLoading] = useState(false);
   const [isQueueTransitioning, setIsQueueTransitioning] = useState(false);
-
-  const lastOpponentKeyRef = useRef<string | null>(null);
-
-  const activeSuggestions = useMemo(() => {
-    return searchingUsers.filter((u) => !skippedUserIds.has(`${u.userId}-${u.categoryId}`));
-  }, [searchingUsers, skippedUserIds]);
 
   const allTopics = useMemo(() => mergeTopics(apiCategories), [apiCategories]);
   const tournaments = useMemo(() => allTopics.slice(0, 5), [allTopics]);
   const dailyChallenges = useMemo(() => allTopics.slice(5, 9), [allTopics]);
   const followed = followedTopics.length ? followedTopics.slice(0, 5) : allTopics.slice(9, 14);
 
-  // Derive queueOpponent from real-time activeSuggestions state
   const queueOpponent = useMemo(() => {
-    if (activeSuggestions.length === 0) return null;
-    const item = activeSuggestions[currentQueueIndex % activeSuggestions.length];
-    if (!item) return null;
-    return {
-      user: {
-        userId: item.userId,
-        username: item.username,
-        avatarUrl: item.avatarUrl,
-        level: item.level,
-      },
-      category: {
-        id: item.categoryId,
-        name: item.categoryName,
-        icon: "swords",
-        color: "#20b7d5",
+    const u = searchingUsers[searchingIndex];
+    if (!u) return null;
+    const category =
+      allTopics.find((t) => t.id === u.categoryId) ||
+      ({
+        id: u.categoryId,
+        name: u.categoryName,
+        icon: u.categoryIcon || "🎯",
+        color: "0 0% 50%",
         questionCount: 0,
         description: "",
-      } as Category,
+      } satisfies Category);
+    return {
+      user: {
+        userId: u.userId,
+        username: u.username,
+        avatarUrl: u.avatarUrl,
+        level: u.level,
+      },
+      category,
     };
-  }, [activeSuggestions, currentQueueIndex]);
+  }, [searchingUsers, searchingIndex, allTopics]);
 
-  const showNextQueueOpponent = () => {
-    if (isQueueTransitioning || activeSuggestions.length <= 1) return;
-    setIsQueueTransitioning(true);
-    setTimeout(() => {
-      setCurrentQueueIndex((prev) => {
-        const nextIdx = (prev + 1) % activeSuggestions.length;
-        const nextOpponent = activeSuggestions[nextIdx];
-        if (nextOpponent) {
-          lastOpponentKeyRef.current = `${nextOpponent.userId}-${nextOpponent.categoryId}`;
-        }
-        return nextIdx;
-      });
-      setIsQueueTransitioning(false);
-    }, 250);
-  };
+  const refreshSearchingQueue = useCallback(() => {
+    try {
+      getSocket().emit("queue:get_searching");
+    } catch {
+      setSearchingUsers([]);
+      setQueueRefreshing(false);
+    }
+  }, []);
 
-  // Synchronize index and tracking key when active suggestions change
   useEffect(() => {
-    if (activeSuggestions.length === 0) {
-      lastOpponentKeyRef.current = null;
-      setCurrentQueueIndex(0);
+    if (!user?.id || incomingChallenge) return;
+    let socket: ReturnType<typeof getSocket>;
+    try {
+      socket = getSocket();
+    } catch {
+      setQueueRefreshing(false);
       return;
     }
 
-    const lastKey = lastOpponentKeyRef.current;
-    if (lastKey) {
-      const idx = activeSuggestions.findIndex(
-        (u) => `${u.userId}-${u.categoryId}` === lastKey
-      );
-      if (idx !== -1) {
-        setCurrentQueueIndex(idx);
-        return;
-      }
-    }
+    const onSearchingUsers = ({ users }: { users?: SearchingQueueUser[] }) => {
+      const list = Array.isArray(users) ? users : [];
+      setSearchingUsers(list);
+      setSearchingIndex((idx) => (list.length === 0 ? 0 : Math.min(idx, list.length - 1)));
+      setQueueRefreshing(false);
+      setIsQueueTransitioning(false);
+    };
 
-    // Default to the first active suggestion
-    setCurrentQueueIndex(0);
-    const firstItem = activeSuggestions[0];
-    if (firstItem) {
-      lastOpponentKeyRef.current = `${firstItem.userId}-${firstItem.categoryId}`;
-    }
-  }, [activeSuggestions]);
+    socket.on("queue:searching_users", onSearchingUsers);
+    refreshSearchingQueue();
 
-  // Poll real-time matchmaking queue data from the backend
-  useEffect(() => {
-    if (!user?.id) return;
-    let socket: ReturnType<typeof getSocket>;
-    try { socket = getSocket(); } catch { return; }
+    const interval = setInterval(refreshSearchingQueue, 4000);
 
-    socket.emit("queue:get_searching");
+    return () => {
+      clearInterval(interval);
+      socket.off("queue:searching_users", onSearchingUsers);
+    };
+  }, [user?.id, incomingChallenge, refreshSearchingQueue]);
 
-    const interval = setInterval(() => {
-      socket.emit("queue:get_searching");
-    }, 4000);
-
-    return () => clearInterval(interval);
-  }, [user?.id]);
-
-  // Handle auto-cycling through active queue seekers
-  useEffect(() => {
-    if (incomingChallenge || queueLoading || activeSuggestions.length <= 1) return;
-    const interval = setInterval(() => {
-      showNextQueueOpponent();
-    }, 8000);
-    return () => clearInterval(interval);
-  }, [incomingChallenge, queueLoading, activeSuggestions.length, isQueueTransitioning]);
+  const skipQueueOpponent = () => {
+    if (searchingUsers.length <= 1) return;
+    setIsQueueTransitioning(true);
+    setSearchingIndex((i) => (i + 1) % searchingUsers.length);
+    setTimeout(() => setIsQueueTransitioning(false), 250);
+  };
 
   const startQueueBattle = async () => {
     if (!queueOpponent || queueLoading) return;
@@ -250,20 +236,6 @@ const HomeLobby: React.FC = () => {
       toast.error("Failed to start battle", { position: "top-center" });
       setQueueLoading(false);
     }
-  };
-
-  const skipQueueOpponent = () => {
-    if (!queueOpponent) return;
-    const key = `${queueOpponent.user.userId}-${queueOpponent.category.id}`;
-    setSkippedUserIds((prev) => {
-      const next = new Set(prev);
-      next.add(key);
-      return next;
-    });
-    setIsQueueTransitioning(true);
-    setTimeout(() => {
-      setIsQueueTransitioning(false);
-    }, 250);
   };
 
   // keep latest phase ref so cleanup effect can read it
@@ -321,20 +293,14 @@ const HomeLobby: React.FC = () => {
       });
     };
 
-    const onSearchingUsers = ({ users }: { users: SearchingUser[] }) => {
-      setSearchingUsers(users);
-    };
-
     socket.on("challenge:received", onReceived);
     socket.on("challenge:cancelled", onCancelled);
     socket.on("match_found", onMatchFound);
-    socket.on("queue:searching_users", onSearchingUsers);
 
     return () => {
       socket.off("challenge:received", onReceived);
       socket.off("challenge:cancelled", onCancelled);
       socket.off("match_found", onMatchFound);
-      socket.off("queue:searching_users", onSearchingUsers);
     };
   }, [user?.id, user?.avatarUrl, user?.level, user?.username, navigate]);
 
@@ -524,51 +490,55 @@ const HomeLobby: React.FC = () => {
                     Incoming Challenge!
                   </h3> */}
 
-                  <div className="flex items-center gap-3">
-                    <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl border-[3px] border-[#c4a574] bg-white/60 shadow-[inset_0_2px_6px_rgba(61,41,20,0.08)]">
-                    <CategoryIcon
-                      category={
-                        allTopics.find((t) => t.id === incomingChallenge.categoryId) || {
-                          name: incomingChallenge.categoryName,
-                        }
-                      }
-                      size={74}
-                      style="fluency"
-                      className="h-12 w-12 object-contain"
-                    />
-                    </div>
+                  <div className="flex flex-row items-center gap-3">
+                    <ChallengeBattleIcon />
 
-                    <div className="min-w-0 flex-1 text-left">
-                      <div className="mb-0.5 flex items-center gap-2">
-                        <img
-                          src={resolveMediaUrl(
-                            incomingChallenge.from.avatarUrl,
-                            `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(incomingChallenge.from.username)}`
-                          )}
-                          alt=""
-                          className="h-6 w-6 shrink-0 rounded-full border-2 border-[#999999] object-cover shadow-sm"
+                    <div className="flex min-w-0 flex-1 flex-row items-center gap-2.5">
+                      <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl border-2 border-[#c4a574] bg-white/60 shadow-[inset_0_2px_6px_rgba(61,41,20,0.08)]">
+                        <CategoryIcon
+                          category={
+                            allTopics.find((t) => t.id === incomingChallenge.categoryId) || {
+                              name: incomingChallenge.categoryName,
+                              icon: incomingChallenge.categoryIcon,
+                            }
+                          }
+                          size={48}
+                          style="fluency"
+                          className="h-9 w-9 object-contain"
                         />
-                        <p className="truncate font-display text-[14px] font-black text-[#3d2914]">
-                          {incomingChallenge.from.username}
+                      </div>
+
+                      <div className="min-w-0 flex-1 text-left">
+                        <div className="flex items-center gap-2">
+                          <img
+                            src={resolveMediaUrl(
+                              incomingChallenge.from.avatarUrl,
+                              `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(incomingChallenge.from.username)}`
+                            )}
+                            alt=""
+                            className="h-7 w-7 shrink-0 rounded-full border-2 border-[#999999] object-cover shadow-sm"
+                          />
+                          <p className="truncate font-display text-[14px] font-black text-[#3d2914]">
+                            {incomingChallenge.from.username}
+                          </p>
+                        </div>
+                        <p className="mt-0.5 font-body text-[11px] font-semibold leading-snug text-[#5c4030] flex flex-wrap items-center gap-1">
+                          <span>challenges you in</span>
+                          <span className="font-bold text-[#3d2914]">{incomingChallenge.categoryName}</span>
                         </p>
                       </div>
-                      <p className="font-body text-[12px] font-semibold leading-snug text-[#5c4030]">
-                        challenges you in{" "}
-                        <span className="font-bold text-[#3d2914]">{incomingChallenge.categoryName}</span>
-                      </p>
                     </div>
 
-                    <div className="flex shrink-0 flex-col gap-2">
+                    <div className="flex shrink-0 flex-row items-center gap-2">
                       <button
                         type="button"
                         disabled={challengeResponding}
                         onClick={() => respondToChallenge("reject")}
-                        className="coc-challenge-btn-label relative w-[76px] rounded-md py-2.5 text-xs font-bold active:translate-y-[3px] transition-transform duration-75 disabled:opacity-50"
+                        className="coc-challenge-btn-label relative rounded-md px-3 py-2 text-[10px] font-bold active:translate-y-[2px] transition-transform duration-75 disabled:opacity-50 whitespace-nowrap"
                         style={{
                           background: "linear-gradient(180deg, #ffb347 0%, #ff7b2e 45%, #e84a1a 100%)",
-                          border: "px solid #2a1608",
                           boxShadow:
-                            "0 2px 0 #8b2e0a, 0 8px 14px rgba(0,0,0,0.22), inset 0 2px 0 rgba(255,255,255,0.45)",
+                            "0 2px 0 #8b2e0a, 0 4px 10px rgba(0,0,0,0.18), inset 0 2px 0 rgba(255,255,255,0.45)",
                         }}
                       >
                         Decline
@@ -577,12 +547,11 @@ const HomeLobby: React.FC = () => {
                         type="button"
                         disabled={challengeResponding}
                         onClick={() => respondToChallenge("accept")}
-                        className="coc-challenge-btn-label relative w-[76px] rounded-md py-2.5 text-xs font-bold active:translate-y-[3px] transition-transform duration-75 disabled:opacity-50"
+                        className="coc-challenge-btn-label relative rounded-md px-3 py-2 text-[10px] font-bold active:translate-y-[2px] transition-transform duration-75 disabled:opacity-50 whitespace-nowrap"
                         style={{
                           background: "linear-gradient(180deg, #b8f04a 0%, #7ed321 45%, #4a9e12 100%)",
-                          border: "px solid #2a1608",
                           boxShadow:
-                            "0 2px 0 #2d5a0a, 0 8px 14px rgba(0,0,0,0.22), inset 0 2px 0 rgba(255,255,255,0.45)",
+                            "0 2px 0 #2d5a0a, 0 4px 10px rgba(0,0,0,0.18), inset 0 2px 0 rgba(255,255,255,0.45)",
                         }}
                       >
                         {challengeResponding ? "…" : "Accept"}
@@ -591,7 +560,7 @@ const HomeLobby: React.FC = () => {
                   </div>
                 </div>
               </div>
-            ) : queueOpponent ? (
+            ) : (
               <div
                 className="relative mx-auto max-w-lg"
                 style={{
@@ -599,96 +568,128 @@ const HomeLobby: React.FC = () => {
                 }}
               >
                 <div
-                  className={`relative rounded-lg px-3 pb-3 pt-4 transition-all duration-300 ${
+                  className={`relative rounded-lg px-3 pb-3 pt-3.5 transition-all duration-300 ${
                     isQueueTransitioning ? "opacity-0 transform translate-y-2 scale-95" : "opacity-100 transform translate-y-0 scale-100"
                   }`}
                   style={{
-                    background: "linear-gradient(180deg, #ffffffff 0%, #ffffffff 100%)",
-                    border: "2px solid #9c9184ff",
-                    boxShadow:
-                      "0 0px 0 #2a1a0c, 0 8px 20px rgba(0,0,0,0.28), inset 0 2px 0 rgba(255,255,255,0.85), inset 0 -3px 0 rgba(61,41,20,0.12)",
+                    background: "linear-gradient(180deg, #ffffffff 0%, #fefefe 100%)",
+                    border: "2px solid #e2e8f0",
+                    boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03)",
                   }}
                 >
-                  <div className="flex items-center gap-3">
-                    <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl border-[3px] border-[#c4a574] bg-white/60 shadow-[inset_0_2px_6px_rgba(61,41,20,0.08)]">
-                      <CategoryIcon
-                        category={queueOpponent.category}
-                        size={74}
-                        style="fluency"
-                        className="h-12 w-12 object-contain"
-                      />
+                  {queueRefreshing && !queueOpponent ? (
+                    <div className="flex flex-row items-center gap-3 py-2">
+                      <ChallengeBattleIcon variant="muted" />
+                      <div className="flex flex-1 items-center justify-center py-3">
+                        <Loader2 className="w-6 h-6 text-slate-300 animate-spin" />
+                      </div>
                     </div>
+                  ) : queueOpponent ? (
+                    <div className="flex flex-row items-center gap-3">
+                      <ChallengeBattleIcon />
 
-                    <div className="min-w-0 flex-1 text-left">
-                      <div className="mb-0.5 flex items-center gap-2">
-                        <img
-                          src={resolveMediaUrl(
-                            queueOpponent.user.avatarUrl,
-                            `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(queueOpponent.user.username)}`
+                      <div className="relative min-w-0 flex-1">
+                        <div className="absolute top-0 right-0 flex items-center gap-1 rounded-full border border-green-200 bg-green-50 px-1.5 py-0.5">
+                          <span className="relative flex h-1.5 w-1.5">
+                            <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-green-400 opacity-75" />
+                            <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-green-500" />
+                          </span>
+                          <span className="text-[8px] font-black uppercase tracking-wider text-green-600">In queue</span>
+                        </div>
+
+                        <div className="flex flex-row items-center gap-2.5 pr-16">
+                          <div className="relative shrink-0">
+                            <img
+                              src={resolveMediaUrl(
+                                queueOpponent.user.avatarUrl,
+                                `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(queueOpponent.user.username)}`
+                              )}
+                              alt=""
+                              className="h-12 w-12 rounded-full border-2 border-[#ffb347] object-cover bg-amber-50/50 shadow-sm"
+                            />
+                            <span className="absolute -bottom-1 -right-1 rounded-full border border-white bg-amber-500 px-1 py-0.5 text-[8px] font-black text-white shadow">
+                              {queueOpponent.user.level}
+                            </span>
+                          </div>
+
+                          <div className="min-w-0 flex-1 text-left">
+                            <p className="truncate font-display text-[14px] font-extrabold text-[#3d2914]">
+                              {queueOpponent.user.username}
+                            </p>
+                            <p className="mt-0.5 flex flex-row flex-wrap items-center gap-1 font-body text-[11px] font-semibold leading-snug text-[#718096]">
+                              <span>Searching in</span>
+                              <span className="inline-flex items-center gap-1 rounded bg-slate-100 px-1.5 py-0.5 text-[10px] font-bold text-slate-700">
+                                <CategoryIcon
+                                  category={queueOpponent.category}
+                                  size={16}
+                                  style="fluency"
+                                  className="inline-block h-3.5 w-3.5 object-contain"
+                                />
+                                {queueOpponent.category.name}
+                              </span>
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="flex shrink-0 flex-row items-center gap-2">
+                        <button
+                          type="button"
+                          disabled={queueLoading || searchingUsers.length <= 1}
+                          onClick={skipQueueOpponent}
+                          className="relative rounded-md px-3 py-2 text-center text-[10px] font-black tracking-wide text-white transition-all duration-75 active:translate-y-[2px] disabled:opacity-50 whitespace-nowrap"
+                          style={{
+                            background: "linear-gradient(180deg, #ffb347 0%, #ff7b2e 45%, #e84a1a 100%)",
+                            boxShadow: "0 2px 0 #8b2e0a, 0 4px 6px rgba(0,0,0,0.15), inset 0 1.5px 0 rgba(255,255,255,0.4)",
+                            textShadow: "0 1px 0 #2a1608",
+                          }}
+                        >
+                          Skip
+                        </button>
+                        <button
+                          type="button"
+                          disabled={queueLoading}
+                          onClick={startQueueBattle}
+                          className="relative flex items-center justify-center gap-1 rounded-md px-3 py-2 text-center text-[10px] font-black tracking-wide text-white transition-all duration-75 active:translate-y-[2px] disabled:opacity-50 whitespace-nowrap"
+                          style={{
+                            background: "linear-gradient(180deg, #b8f04a 0%, #7ed321 45%, #4a9e12 100%)",
+                            boxShadow: "0 2px 0 #2d5a0a, 0 4px 6px rgba(0,0,0,0.15), inset 0 1.5px 0 rgba(255,255,255,0.4)",
+                            textShadow: "0 1px 0 #2d5a0a",
+                          }}
+                        >
+                          {queueLoading ? (
+                            <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                          ) : (
+                            "Battle"
                           )}
-                          alt=""
-                          className="h-6 w-6 shrink-0 rounded-full border-2 border-[#999999] object-cover shadow-sm"
-                        />
-                        <p className="truncate font-display text-[14px] font-black text-[#3d2914]">
-                          {queueOpponent.user.username}
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="flex flex-row items-center gap-3 py-1">
+                      <ChallengeBattleIcon variant="muted" />
+                      <div className="min-w-0 flex-1 text-left">
+                        <p className="font-display text-[13px] font-bold text-[#3d2914]">
+                          No one is searching right now
+                        </p>
+                        <p className="mt-0.5 text-[10px] font-semibold leading-snug text-[#718096]">
+                          Players show up when someone uses Find Match.
                         </p>
                       </div>
-                      <p className="font-body text-[12px] font-semibold leading-snug text-[#5c4030]">
-                        wants to match in{" "}
-                        <span className="font-bold text-[#3d2914]">{queueOpponent.category.name}</span>
-                      </p>
-                    </div>
-
-                    <div className="flex shrink-0 flex-col gap-2">
                       <button
                         type="button"
-                        disabled={queueLoading}
-                        onClick={skipQueueOpponent}
-                        className="coc-challenge-btn-label relative w-[76px] rounded-md py-2.5 text-xs font-bold active:translate-y-[3px] transition-transform duration-75 disabled:opacity-50"
-                        style={{
-                          background: "linear-gradient(180deg, #ffb347 0%, #ff7b2e 45%, #e84a1a 100%)",
-                          border: "px solid #2a1608",
-                          boxShadow:
-                            "0 2px 0 #8b2e0a, 0 8px 14px rgba(0,0,0,0.22), inset 0 2px 0 rgba(255,255,255,0.45)",
-                        }}
-                      >
-                        Skip
-                      </button>
-                      <button
-                        type="button"
-                        disabled={queueLoading}
-                        onClick={startQueueBattle}
-                        className="coc-challenge-btn-label relative w-[76px] rounded-md py-2.5 text-xs font-bold active:translate-y-[3px] transition-transform duration-75 disabled:opacity-50"
+                        onClick={() => navigate("/categories")}
+                        className="shrink-0 rounded-md px-3 py-2 text-[10px] font-black text-white whitespace-nowrap"
                         style={{
                           background: "linear-gradient(180deg, #b8f04a 0%, #7ed321 45%, #4a9e12 100%)",
-                          border: "px solid #2a1608",
-                          boxShadow:
-                            "0 2px 0 #2d5a0a, 0 8px 14px rgba(0,0,0,0.22), inset 0 2px 0 rgba(255,255,255,0.45)",
+                          boxShadow: "0 2px 0 #2d5a0a, inset 0 1.5px 0 rgba(255,255,255,0.4)",
                         }}
                       >
-                        {queueLoading ? "…" : "Battle"}
+                        Find match
                       </button>
                     </div>
-                  </div>
+                  )}
                 </div>
-              </div>
-            ) : (
-              <div className="flex items-center justify-between py-4 px-4 border-2 border-dashed border-slate-200 rounded-xl bg-slate-50/50 gap-3">
-                <div className="flex items-center gap-3 min-w-0">
-                  <div className="flex items-center justify-center w-10 h-10 rounded-full bg-slate-200/50 shrink-0">
-                    <Swords className="w-5 h-5 text-slate-400" />
-                  </div>
-                  <div className="min-w-0">
-                    <p className="text-[13px] font-bold text-slate-600 leading-tight truncate">No active challenges</p>
-                    <p className="text-[10px] font-semibold text-slate-400 mt-0.5 truncate">Find someone to play</p>
-                  </div>
-                </div>
-                <button
-                  onClick={() => navigate("/leaderboard")}
-                  className="bg-[#f65357] text-white px-4 py-2.5 rounded-lg font-bold text-[11px] shadow-sm active:scale-95 transition-transform whitespace-nowrap shrink-0"
-                >
-                  Challenge
-                </button>
               </div>
             )}
           </Section>

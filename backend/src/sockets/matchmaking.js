@@ -126,20 +126,23 @@ const registerMatchmaking = (socket, io) => {
       const catSlugs = [...new Set(queueEntries.map((q) => q.categoryId))];
       const categories = await Category.find({ slug: { $in: catSlugs } }).lean();
       const catMap = {};
-      categories.forEach((c) => { catMap[c.slug] = c.name; });
+      categories.forEach((c) => {
+        catMap[c.slug] = { name: c.name, icon: c.icon || "" };
+      });
 
       const result = queueEntries
         .map((q) => {
           const u = userMap[q.userId.toString()];
           if (!u) return null;
+          const cat = catMap[q.categoryId];
           return {
-            odoc: String(q.userId),
             userId: u._id.toString(),
             username: u.username,
             avatarUrl: u.avatarUrl || "",
             level: u.level || 1,
             categoryId: q.categoryId,
-            categoryName: catMap[q.categoryId] || q.categoryId,
+            categoryName: cat?.name || q.categoryId,
+            categoryIcon: cat?.icon || "",
             queuedAt: q.createdAt,
           };
         })

@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { isCategoryIconImage, resolveCategoryIconUrl } from "@/lib/categoryIcon";
 import { getCategoryIconSlug } from "./Icons8Icon";
 
 interface CategoryIconProps {
@@ -15,28 +16,26 @@ export const CategoryIcon: React.FC<CategoryIconProps> = ({
   style = "animated-fluency"
 }) => {
   const [errored, setErrored] = useState(false);
-  const iconRaw = category.icon;
+  const iconRaw = category.icon?.trim();
+  const iconSrc = resolveCategoryIconUrl(iconRaw);
 
-  if (iconRaw && !errored) {
-    // Basic check to see if it's likely a URL
-    if (iconRaw.startsWith("http") || iconRaw.startsWith("/") || iconRaw.startsWith("data:image")) {
-      // For actual image uploads/links, we want them larger and with less padding
-      // to fill the category tile better.
-      const imgUrlClass = `${className} p-0.5 scale-95`;
-      return (
-        <img
-          src={iconRaw}
-          alt={category.name}
-          width={size}
-          height={size}
-          className={imgUrlClass}
-          onError={() => setErrored(true)}
-          draggable={false}
-          style={{ objectFit: "contain" }}
-        />
-      );
-    }
-    // Else treat as emoji
+  if (iconSrc && !errored) {
+    const imgUrlClass = `${className} p-0.5 scale-95`;
+    return (
+      <img
+        src={iconSrc}
+        alt={category.name}
+        width={size}
+        height={size}
+        className={imgUrlClass}
+        onError={() => setErrored(true)}
+        draggable={false}
+        style={{ objectFit: "contain" }}
+      />
+    );
+  }
+
+  if (iconRaw && !isCategoryIconImage(iconRaw) && !errored) {
     const emojiClass = `${className} p-1.5 scale-[0.8]`;
     return (
       <span

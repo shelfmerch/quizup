@@ -820,8 +820,13 @@ const ProfilePage: React.FC = () => {
                     onClick={() => sendChallengeForCategory(cat.id)}
                     className="w-full flex items-center gap-4 px-4 py-3 rounded-2xl bg-white border border-slate-200 shadow-sm text-left hover:border-quizup-purple transition-colors disabled:opacity-60"
                   >
-                    <div className="w-10 h-10 rounded-xl bg-slate-100 flex items-center justify-center text-xl">
-                      <span>{cat.icon}</span>
+                    <div className="w-10 h-10 rounded-xl bg-slate-100 flex items-center justify-center overflow-hidden">
+                      <CategoryIcon
+                        category={cat}
+                        size={40}
+                        style="fluency"
+                        className="h-9 w-9 object-contain"
+                      />
                     </div>
                     <div className="min-w-0 flex-1">
                       <p className="text-[15px] font-bold text-slate-900 truncate">{cat.name}</p>
