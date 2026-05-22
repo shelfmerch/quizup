@@ -186,15 +186,34 @@ const registerBattle = (socket, io) => {
 
   // ── disconnect ────────────────────────────────────────────────────────────
   socket.on("disconnect", async () => {
-    battlePresence.clearUser(socket.userId);
     const matchId = socket.currentMatchId;
-    if (!matchId) return;
+    if (!matchId) {
+      battlePresence.clearUser(socket.userId);
+      return;
+    }
 
     try {
       const state = await getActiveMatch(matchId);
-      if (!state || state.status !== "in_progress") return;
+      if (!state || state.status !== "in_progress") {
+        battlePresence.clearUser(socket.userId);
+        return;
+      }
 
-      // Remove from connected list
+      const isP1 = state.player1.userId === socket.userId;
+      const isP2 = state.player2.userId === socket.userId;
+      const trackedSocketId = isP1
+        ? state.player1.socketId
+        : isP2
+          ? state.player2.socketId
+          : null;
+
+      // Ignore stale disconnects when a newer socket already replaced this one (e.g. second tab / reconnect)
+      if (trackedSocketId && trackedSocketId !== socket.id) {
+        return;
+      }
+
+      battlePresence.clearUser(socket.userId);
+
       await updateActiveMatch(matchId, (s) => ({
         ...s,
         connectedPlayers: (s.connectedPlayers || []).filter((id) => id !== socket.userId),

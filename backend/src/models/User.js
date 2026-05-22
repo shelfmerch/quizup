@@ -36,7 +36,9 @@ const userSchema = new mongoose.Schema(
     bio: { type: String, default: "", maxlength: 200 },
     country: { type: String, default: "" },
     avatarUrl: { type: String, default: "" },
-    avatarPrivacy: { type: String, enum: ["public", "followers_only"], default: "public" },
+    avatarPrivacy: { type: String, enum: ["public", "private", "followers_only"], default: "public" },
+    /** When avatarPrivacy is private, only these follower user ids may see the profile photo */
+    avatarAllowedFollowers: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
     favoriteCategory: { type: String, default: "" },
     lastActive: { type: Date, default: Date.now },
 
@@ -121,19 +123,37 @@ userSchema.methods.addXP = function (amount) {
   }
 };
 
+userSchema.methods.getAvatarPrivacy = function () {
+  const raw = this.avatarPrivacy || "public";
+  return raw === "followers_only" ? "private" : raw;
+};
+
+userSchema.methods.canViewerSeeAvatar = function (viewerId) {
+  if (this.getAvatarPrivacy() === "public") return true;
+  if (!viewerId) return false;
+  const ownerId = this._id.toString();
+  if (viewerId === ownerId) return true;
+  const allowed = (this.avatarAllowedFollowers || []).map((id) => id.toString());
+  return allowed.includes(viewerId);
+};
+
 /**
  * Return a safe public-facing profile object (no hash, no internal fields).
+ * @param {string|null} viewerId - authenticated viewer; null hides private avatars
  */
-userSchema.methods.toProfile = function () {
-  return {
-    id: this._id.toString(),
+userSchema.methods.toProfile = function (viewerId = null) {
+  const ownerId = this._id.toString();
+  const privacy = this.getAvatarPrivacy();
+  const showAvatar = this.canViewerSeeAvatar(viewerId);
+  const profile = {
+    id: ownerId,
     username: this.username,
     email: this.email,
     role: this.role || "user",
     displayName: this.displayName,
     bio: this.bio,
     country: this.country,
-    avatarUrl: this.avatarUrl,
+    avatarUrl: showAvatar ? this.avatarUrl : "",
     level: this.level,
     xp: this.xp,
     xpToNextLevel: this.xpToNextLevel,
@@ -145,7 +165,7 @@ userSchema.methods.toProfile = function () {
     bestWinStreak: this.bestWinStreak,
     followers: this.followers.length,
     following: this.following.length,
-    avatarPrivacy: this.avatarPrivacy || "public",
+    avatarPrivacy: privacy,
     favoriteCategory: this.favoriteCategory,
     lastActive: this.lastActive,
     createdAt: this.createdAt,
@@ -156,6 +176,10 @@ userSchema.methods.toProfile = function () {
       isUnlocked: true
     })) : [],
   };
+  if (viewerId === ownerId) {
+    profile.avatarAllowedFollowers = (this.avatarAllowedFollowers || []).map((id) => id.toString());
+  }
+  return profile;
 };
 
 module.exports = mongoose.model("User", userSchema);

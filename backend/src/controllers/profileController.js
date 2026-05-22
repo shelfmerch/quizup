@@ -39,16 +39,19 @@ const getProfile = async (req, res) => {
     }
     if (modified) await user.save();
 
-    const profile = user.toProfile();
-
+    let viewerId = null;
     const auth = req.headers.authorization;
     if (auth && auth.startsWith("Bearer ")) {
       const payload = verifyToken(auth.slice(7));
-      if (payload && payload.sub && payload.sub !== userId) {
-        const viewer = await User.findById(payload.sub).select("following").lean();
-        if (viewer) {
-          profile.isFollowing = (viewer.following || []).some((id) => id.toString() === userId);
-        }
+      if (payload?.sub) viewerId = payload.sub;
+    }
+
+    const profile = user.toProfile(viewerId);
+
+    if (viewerId && viewerId !== userId) {
+      const viewer = await User.findById(viewerId).select("following").lean();
+      if (viewer) {
+        profile.isFollowing = (viewer.following || []).some((id) => id.toString() === userId);
       }
     }
 
@@ -64,7 +67,9 @@ const updateProfile = [
   body("displayName").optional().trim().isLength({ max: 50 }),
   body("bio").optional().trim().isLength({ max: 200 }),
   body("country").optional().trim().isLength({ max: 60 }),
-  body("avatarPrivacy").optional().isIn(["public", "followers_only"]),
+  body("avatarPrivacy").optional().isIn(["public", "private", "followers_only"]),
+  body("avatarAllowedFollowers").optional().isArray(),
+  body("avatarAllowedFollowers.*").optional().isMongoId(),
   body("publicKeyE2e").optional().isString(),
 
   async (req, res) => {
@@ -74,19 +79,35 @@ const updateProfile = [
     }
 
     try {
+      const user = await User.findById(req.user._id);
+      if (!user) return res.status(404).json({ error: "User not found" });
+
       const allowed = ["displayName", "bio", "country", "favoriteCategory", "avatarPrivacy", "publicKeyE2e"];
       const updates = {};
       for (const key of allowed) {
-        if (req.body[key] !== undefined) updates[key] = req.body[key];
+        if (req.body[key] !== undefined) {
+          updates[key] = req.body[key] === "followers_only" ? "private" : req.body[key];
+        }
       }
 
-      const user = await User.findByIdAndUpdate(
-        req.user._id,
-        { $set: updates },
-        { new: true, runValidators: true }
-      );
+      if (req.body.avatarAllowedFollowers !== undefined) {
+        const followerIds = new Set((user.followers || []).map((id) => id.toString()));
+        const incoming = Array.isArray(req.body.avatarAllowedFollowers)
+          ? req.body.avatarAllowedFollowers
+          : [];
+        updates.avatarAllowedFollowers = incoming.filter(
+          (id) => mongoose.Types.ObjectId.isValid(id) && followerIds.has(id)
+        );
+      }
 
-      return res.json({ user: user.toProfile() });
+      if (updates.avatarPrivacy === "public") {
+        updates.avatarAllowedFollowers = [];
+      }
+
+      Object.assign(user, updates);
+      await user.save();
+
+      return res.json({ user: user.toProfile(req.user._id.toString()) });
     } catch (err) {
       console.error("[Profile] updateProfile error:", err);
       return res.status(500).json({ error: "Server error" });

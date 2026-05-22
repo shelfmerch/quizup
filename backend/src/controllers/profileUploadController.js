@@ -25,7 +25,7 @@ const uploadAvatar = [
       );
 
       if (!user) return res.status(404).json({ error: "User not found" });
-      return res.json({ user: user.toProfile() });
+      return res.json({ user: user.toProfile(req.user._id.toString()) });
     } catch (err) {
       console.error("[Profile] uploadAvatar error:", err);
       return res.status(500).json({ error: err.message || "Server error" });

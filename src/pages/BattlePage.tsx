@@ -51,6 +51,10 @@ function parseBattleNav(state: unknown): { online: OnlineBattleInit | null; loca
 }
 
 /** Subtitle under display name (screenshot-style; we only have level in match state). */
+function categoryDetailPath(categoryId: string | undefined): string {
+  return categoryId ? `/category/${categoryId}` : "/home";
+}
+
 function playerTagline(p: MatchPlayer): string {
   if (p.level <= 2) return "Beginner";
   if (p.level <= 5) return "Rising star";
@@ -242,6 +246,8 @@ const BattlePage: React.FC = () => {
   const endSfxPlayedRef = useRef(false);
   const countdownTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const matchMusicStartedRef = useRef(false);
+  const battlePhaseRef = useRef(state?.phase);
+  battlePhaseRef.current = state?.phase;
 
   // Result breakdown from the server (online only; null until match_end received)
   const { myMatchResult } = isOnline ? onlineBattle : { myMatchResult: null };
@@ -335,10 +341,6 @@ const BattlePage: React.FC = () => {
     return () => clearTimeout(t);
   }, [isOnline, localMatch, navigate, startNextRound]);
 
-  const match = state?.match;
-
-  if (!state || !match) return null;
-
   // ─── Battle audio: start once per match; stop at end; victory/defeat once ──
   useEffect(() => {
     if (!state) return;
@@ -375,20 +377,21 @@ const BattlePage: React.FC = () => {
     };
   }, []);
 
-  // ─── Emit leave_match when navigating away from an active online battle ────
+  // Tab close / refresh only — do NOT emit leave_match on React unmount (HMR, remounts).
   useEffect(() => {
     if (!isOnline || !onlineInit) return;
-    return () => {
-      // Only fire if the match wasn't already finished normally
-      if (state?.phase !== "match_end") {
-        try {
-          getSocket().emit("leave_match", { matchId: onlineInit.matchId });
-        } catch {
-          // Socket may already be gone — ignore
-        }
+
+    const emitLeaveIfActive = () => {
+      if (battlePhaseRef.current === "match_end") return;
+      try {
+        getSocket().emit("leave_match", { matchId: onlineInit.matchId });
+      } catch {
+        // ignore
       }
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+
+    window.addEventListener("pagehide", emitLeaveIfActive);
+    return () => window.removeEventListener("pagehide", emitLeaveIfActive);
   }, [isOnline, onlineInit?.matchId]);
 
   // ─── Countdown SFX: play 6s after each question appears ────────────────────
@@ -415,7 +418,10 @@ const BattlePage: React.FC = () => {
     };
   }, [state?.phase, state?.currentQuestion?.id]);
 
+  const match = state?.match;
   const showManualNext = !isOnline;
+
+  if (!state || !match) return null;
 
   if (state.phase === "match_end") {
     const winner = getWinner();
@@ -471,10 +477,10 @@ const BattlePage: React.FC = () => {
             onClick={() => {
               stopVictorySfx();
               stopDefeatSfx();
-              navigate("/home");
+              navigate(categoryDetailPath(match.categoryId));
             }}
             className="absolute left-4 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center transition-colors"
-            aria-label="Back to Home"
+            aria-label="Back to topic"
           >
             <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />

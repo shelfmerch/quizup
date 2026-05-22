@@ -410,11 +410,20 @@ const handlePlayerDisconnect = async (matchId, userId, io) => {
 
   const graceTimer = setTimeout(async () => {
     disconnectTimers.delete(timerKey);
-    // If still disconnected and match still active → abandon
     const current = await getActiveMatch(matchId);
-    if (current && current.status === "in_progress") {
-      await finalizeMatch(matchId, io, "abandoned");
+    if (!current || current.status !== "in_progress") return;
+
+    // Player may have reconnected (new socket + join_match_room) during grace period
+    if ((current.connectedPlayers || []).includes(userId)) return;
+
+    const isP1 = current.player1.userId === userId;
+    const socketId = isP1 ? current.player1.socketId : current.player2.socketId;
+    if (socketId) {
+      const live = io.sockets.sockets.get(socketId);
+      if (live?.connected) return;
     }
+
+    await finalizeMatch(matchId, io, "abandoned");
   }, GRACE_PERIOD_MS);
 
   disconnectTimers.set(timerKey, graceTimer);

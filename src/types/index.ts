@@ -37,7 +37,9 @@ export interface Profile extends User {
   achievements: Achievement[];
   favoriteCategory: string;
   lastActive: string;
-  avatarPrivacy?: "public" | "followers_only";
+  avatarPrivacy?: "public" | "private";
+  /** Follower user ids allowed to see profile photo when avatarPrivacy is private */
+  avatarAllowedFollowers?: string[];
 }
 
 export interface ChatMessage {

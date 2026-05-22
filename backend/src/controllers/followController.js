@@ -24,7 +24,7 @@ const followUser = async (req, res) => {
     await evaluateConnectionAchievements(targetId, io);
 
     const me = await User.findById(meId);
-    return res.json({ ok: true, user: me.toProfile() });
+    return res.json({ ok: true, user: me.toProfile(meId) });
   } catch (err) {
     console.error("[Follow] followUser error:", err);
     return res.status(500).json({ error: "Server error" });
@@ -44,7 +44,7 @@ const unfollowUser = async (req, res) => {
     await User.findByIdAndUpdate(targetId, { $pull: { followers: meId } });
 
     const me = await User.findById(meId);
-    return res.json({ ok: true, user: me.toProfile() });
+    return res.json({ ok: true, user: me.toProfile(meId) });
   } catch (err) {
     console.error("[Follow] unfollowUser error:", err);
     return res.status(500).json({ error: "Server error" });

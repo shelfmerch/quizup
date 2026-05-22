@@ -1,9 +1,17 @@
 import React, { useEffect, useRef, useState } from "react";
-import { ArrowLeft, Camera, Check, ChevronRight, Globe, Lock, Loader2, X } from "lucide-react";
+import { ArrowLeft, Camera, Check, ChevronRight, Globe, Lock, Loader2, UserCheck, X } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { profileService } from "@/services/profileService";
 import { resolveMediaUrl } from "@/config/env";
+import { ProfileFollowUser } from "@/types";
+
+type AvatarPrivacy = "public" | "private";
+
+const normalizeAvatarPrivacy = (value: unknown): AvatarPrivacy => {
+  if (value === "private" || value === "followers_only") return "private";
+  return "public";
+};
 
 // ── Edit Profile Modal ────────────────────────────────────────────────────────
 const EditProfileModal: React.FC<{ onClose: () => void }> = ({ onClose }) => {
@@ -11,10 +19,15 @@ const EditProfileModal: React.FC<{ onClose: () => void }> = ({ onClose }) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [displayName, setDisplayName] = useState(user?.username || "");
-  const [bio, setBio] = useState((user as any)?.bio || "");
-  const [avatarPrivacy, setAvatarPrivacy] = useState<"public" | "followers_only">(
-    (user as any)?.avatarPrivacy || "public"
+  const [bio, setBio] = useState(user?.bio || "");
+  const [avatarPrivacy, setAvatarPrivacy] = useState<AvatarPrivacy>(
+    normalizeAvatarPrivacy(user?.avatarPrivacy)
   );
+  const [allowedFollowerIds, setAllowedFollowerIds] = useState<Set<string>>(
+    () => new Set(user?.avatarAllowedFollowers ?? [])
+  );
+  const [followers, setFollowers] = useState<ProfileFollowUser[]>([]);
+  const [followersLoading, setFollowersLoading] = useState(false);
   const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
   const [avatarFile, setAvatarFile] = useState<File | null>(null);
   const [saving, setSaving] = useState(false);
@@ -22,8 +35,37 @@ const EditProfileModal: React.FC<{ onClose: () => void }> = ({ onClose }) => {
 
   const currentAvatar =
     avatarPreview ||
-    resolveMediaUrl((user as any)?.avatarUrl) ||
+    resolveMediaUrl(user?.avatarUrl) ||
     `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(user?.username || "u")}`;
+
+  useEffect(() => {
+    if (!user?.id) return;
+    let cancelled = false;
+    setFollowersLoading(true);
+    profileService
+      .getFollowers(user.id)
+      .then((rows) => {
+        if (!cancelled) setFollowers(rows);
+      })
+      .catch(() => {
+        if (!cancelled) setFollowers([]);
+      })
+      .finally(() => {
+        if (!cancelled) setFollowersLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [user?.id]);
+
+  const toggleAllowedFollower = (followerId: string) => {
+    setAllowedFollowerIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(followerId)) next.delete(followerId);
+      else next.add(followerId);
+      return next;
+    });
+  };
 
   const handleAvatarPick = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -46,7 +88,9 @@ const EditProfileModal: React.FC<{ onClose: () => void }> = ({ onClose }) => {
         displayName,
         bio,
         avatarPrivacy,
-      } as any);
+        avatarAllowedFollowers:
+          avatarPrivacy === "private" ? Array.from(allowedFollowerIds) : [],
+      });
       await refreshUser();
       onClose();
     } catch (err: any) {
@@ -168,31 +212,99 @@ const EditProfileModal: React.FC<{ onClose: () => void }> = ({ onClose }) => {
             )}
           </button>
 
-          {/* Followers only option */}
+          {/* Private option */}
           <button
             type="button"
-            onClick={() => setAvatarPrivacy("followers_only")}
+            onClick={() => setAvatarPrivacy("private")}
             className={`w-full flex items-center gap-3 px-4 py-3.5 border-t border-slate-100 transition-colors ${
-              avatarPrivacy === "followers_only" ? "bg-blue-50" : "active:bg-slate-50"
+              avatarPrivacy === "private" ? "bg-blue-50" : "active:bg-slate-50"
             }`}
           >
             <div
               className={`w-9 h-9 rounded-full flex items-center justify-center shrink-0 ${
-                avatarPrivacy === "followers_only" ? "bg-blue-500" : "bg-slate-100"
+                avatarPrivacy === "private" ? "bg-blue-500" : "bg-slate-100"
               }`}
             >
-              <Lock className={`w-4 h-4 ${avatarPrivacy === "followers_only" ? "text-white" : "text-slate-400"}`} />
+              <Lock className={`w-4 h-4 ${avatarPrivacy === "private" ? "text-white" : "text-slate-400"}`} />
             </div>
             <div className="flex-1 text-left">
-              <p className={`text-[14px] font-semibold ${avatarPrivacy === "followers_only" ? "text-blue-700" : "text-slate-800"}`}>
-                Followers Only
+              <p className={`text-[14px] font-semibold ${avatarPrivacy === "private" ? "text-blue-700" : "text-slate-800"}`}>
+                Private
               </p>
-              <p className="text-[11px] text-slate-400">Only people you follow back can see your photo</p>
+              <p className="text-[11px] text-slate-400">Choose which followers can see your profile photo</p>
             </div>
-            {avatarPrivacy === "followers_only" && (
+            {avatarPrivacy === "private" && (
               <Check className="w-4 h-4 text-blue-500 shrink-0" />
             )}
           </button>
+
+          {avatarPrivacy === "private" && (
+            <div className="border-t border-slate-100 bg-slate-50/80 px-4 py-3">
+              <p className="text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-2">
+                Allowed followers
+              </p>
+              {followersLoading ? (
+                <div className="flex items-center justify-center py-6">
+                  <Loader2 className="w-5 h-5 text-slate-400 animate-spin" />
+                </div>
+              ) : followers.length === 0 ? (
+                <p className="text-[12px] text-slate-400 py-2 text-center">
+                  No followers yet. When someone follows you, you can allow them here.
+                </p>
+              ) : (
+                <ul className="max-h-48 overflow-y-auto space-y-1.5">
+                  {followers.map((person) => {
+                    const selected = allowedFollowerIds.has(person.id);
+                    const thumb =
+                      resolveMediaUrl(person.avatarUrl) ||
+                      `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(person.username)}`;
+                    return (
+                      <li key={person.id}>
+                        <button
+                          type="button"
+                          onClick={() => toggleAllowedFollower(person.id)}
+                          className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl border transition-colors ${
+                            selected
+                              ? "bg-blue-100 border-blue-200"
+                              : "bg-white border-slate-100 active:bg-slate-50"
+                          }`}
+                        >
+                          <img
+                            src={thumb}
+                            alt=""
+                            className="w-9 h-9 rounded-full object-cover shrink-0 border border-white shadow-sm"
+                          />
+                          <div className="flex-1 min-w-0 text-left">
+                            <p className="text-[13px] font-semibold text-slate-800 truncate">
+                              {person.displayName || person.username}
+                            </p>
+                            <p className="text-[11px] text-slate-400 truncate">@{person.username}</p>
+                          </div>
+                          <div
+                            className={`w-6 h-6 rounded-full flex items-center justify-center shrink-0 ${
+                              selected ? "bg-blue-500" : "bg-slate-200"
+                            }`}
+                          >
+                            {selected ? (
+                              <UserCheck className="w-3.5 h-3.5 text-white" />
+                            ) : (
+                              <span className="w-2.5 h-2.5 rounded-full bg-white" />
+                            )}
+                          </div>
+                        </button>
+                      </li>
+                    );
+                  })}
+                </ul>
+              )}
+              {followers.length > 0 && (
+                <p className="text-[11px] text-slate-400 mt-2 text-center">
+                  {allowedFollowerIds.size} of {followers.length} follower
+                  {followers.length !== 1 ? "s" : ""} selected
+                </p>
+              )}
+            </div>
+          )}
         </div>
 
         {error && (

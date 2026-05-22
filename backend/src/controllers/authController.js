@@ -76,7 +76,7 @@ const signup = [
 
       const token = signToken(user._id.toString());
 
-      return res.status(201).json({ token, user: user.toProfile() });
+      return res.status(201).json({ token, user: user.toProfile(user._id.toString()) });
     } catch (err) {
       console.error("[Auth] signup error:", err);
       return res.status(500).json({ error: "Server error during signup" });
@@ -116,7 +116,7 @@ const login = [
 
       const token = signToken(user._id.toString());
 
-      return res.json({ token, user: user.toProfile() });
+      return res.json({ token, user: user.toProfile(user._id.toString()) });
     } catch (err) {
       console.error("[Auth] login error:", err);
       return res.status(500).json({ error: "Server error during login" });
@@ -182,7 +182,7 @@ const googleLogin = [
       }
 
       const token = signToken(user._id.toString());
-      return res.json({ token, user: user.toProfile() });
+      return res.json({ token, user: user.toProfile(user._id.toString()) });
     } catch (err) {
       console.error("[Auth] google login error:", err);
       return res.status(401).json({ error: "Google sign-in failed" });
@@ -196,7 +196,7 @@ const getMe = async (req, res) => {
     // req.user is the lean object from middleware; fetch fresh for accuracy
     const user = await User.findById(req.user._id);
     if (!user) return res.status(404).json({ error: "User not found" });
-    return res.json({ user: user.toProfile() });
+    return res.json({ user: user.toProfile(user._id.toString()) });
   } catch (err) {
     console.error("[Auth] getMe error:", err);
     return res.status(500).json({ error: "Server error" });

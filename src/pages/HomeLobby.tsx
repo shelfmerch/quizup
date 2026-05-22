@@ -724,7 +724,7 @@ const HomeLobby: React.FC = () => {
             )}
           </Section>
 
-          <Section title="Daily Challenges">
+          <Section title="Unlock Community">
             <div className="grid grid-cols-4 gap-2">
               {dailyChallenges.map((cat, index) => (
                 <button
