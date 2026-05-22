@@ -491,7 +491,7 @@ const HomeLobby: React.FC = () => {
                   </h3> */}
 
                   <div className="flex flex-row items-center gap-3">
-                    <ChallengeBattleIcon />
+                    {/* <ChallengeBattleIcon /> */}
 
                     <div className="flex min-w-0 flex-1 flex-row items-center gap-2.5">
                       <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl border-2 border-[#c4a574] bg-white/60 shadow-[inset_0_2px_6px_rgba(61,41,20,0.08)]">
@@ -586,16 +586,30 @@ const HomeLobby: React.FC = () => {
                     </div>
                   ) : queueOpponent ? (
                     <div className="flex flex-row items-center gap-3">
-                      <ChallengeBattleIcon />
+                      {/* <ChallengeBattleIcon /> */}
+
+                      {/* <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl border-2 border-[#c4a574] bg-white/60 shadow-[inset_0_2px_6px_rgba(61,41,20,0.08)]">
+                        <CategoryIcon
+                          category={
+                            allTopics.find((t) => t.id === queueOpponent.categoryId) || {
+                              name: queueOpponent.categoryName,
+                              icon: queueOpponent.categoryIcon,
+                            }
+                          }
+                          size={48}
+                          style="fluency"
+                          className="h-9 w-9 object-contain"
+                        />
+                      </div> */}
 
                       <div className="relative min-w-0 flex-1">
-                        <div className="absolute top-0 right-0 flex items-center gap-1 rounded-full border border-green-200 bg-green-50 px-1.5 py-0.5">
+                        {/* <div className="absolute top-0 right-0 flex items-center gap-1 rounded-full border border-green-200 bg-green-50 px-1.5 py-0.5">
                           <span className="relative flex h-1.5 w-1.5">
                             <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-green-400 opacity-75" />
                             <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-green-500" />
                           </span>
                           <span className="text-[8px] font-black uppercase tracking-wider text-green-600">In queue</span>
-                        </div>
+                        </div> */}
 
                         <div className="flex flex-row items-center gap-2.5 pr-16">
                           <div className="relative shrink-0">
@@ -617,13 +631,13 @@ const HomeLobby: React.FC = () => {
                               {queueOpponent.user.username}
                             </p>
                             <p className="mt-0.5 flex flex-row flex-wrap items-center gap-1 font-body text-[11px] font-semibold leading-snug text-[#718096]">
-                              <span>Searching in</span>
+                              {/* <span>Searching in</span> */}
                               <span className="inline-flex items-center gap-1 rounded bg-slate-100 px-1.5 py-0.5 text-[10px] font-bold text-slate-700">
                                 <CategoryIcon
                                   category={queueOpponent.category}
-                                  size={16}
+                                  size={24}
                                   style="fluency"
-                                  className="inline-block h-3.5 w-3.5 object-contain"
+                                  className="inline-block h-7 w-7 object-contain"
                                 />
                                 {queueOpponent.category.name}
                               </span>

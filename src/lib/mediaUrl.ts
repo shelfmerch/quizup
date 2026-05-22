@@ -1,13 +1,13 @@
 import { API_BASE } from "@/config/env";
 
-const OUR_S3_HOST_RE = /^https?:\/\/([^/]+)\//i;
-
-/** Our bucket host, e.g. quiz-blitz-arena.s3.ap-south-2.amazonaws.com */
+/** Virtual-hosted S3 URLs (private bucket → API media proxy). */
 function isOurS3HttpUrl(url: string): boolean {
-  const m = url.match(OUR_S3_HOST_RE);
-  if (!m) return false;
-  const host = m[1].toLowerCase();
-  return host.startsWith("quiz-blitz-arena.s3.") && host.endsWith(".amazonaws.com");
+  try {
+    const host = new URL(url.trim()).hostname.toLowerCase();
+    return host.includes(".s3.") && host.endsWith(".amazonaws.com");
+  } catch {
+    return false;
+  }
 }
 
 /** Private bucket → load via API proxy; public https and legacy /uploads unchanged. */

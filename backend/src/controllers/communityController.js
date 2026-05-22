@@ -39,8 +39,8 @@ const createPost = async (req, res) => {
     const newPost = await CommunityPost.create({
       categoryId,
       authorId: req.user._id,
-      content: content.trim(),
-      imageUrl: imageUrl || null
+      content: (content || "").trim(),
+      imageUrl: imageUrl || null,
     });
 
     const populatedPost = await CommunityPost.findById(newPost._id)
@@ -75,7 +75,7 @@ const likePost = async (req, res) => {
     const post = await CommunityPost.findById(postId);
     if (!post) return res.status(404).json({ error: "Post not found" });
 
-    const liked = post.likes.includes(req.user._id);
+    const liked = post.likes.some(id => id.toString() === req.user._id.toString());
     if (liked) {
       post.likes = post.likes.filter(id => id.toString() !== req.user._id.toString());
     } else {
@@ -88,4 +88,44 @@ const likePost = async (req, res) => {
   }
 };
 
-module.exports = { getPosts, createPost, getStatus, likePost };
+async function countCategoryMatches(userId, categoryId) {
+  return Match.countDocuments({
+    categoryId,
+    $or: [{ "player1.userId": userId }, { "player2.userId": userId }],
+    status: { $in: ["completed", "finalizing"] },
+  });
+}
+
+const addComment = async (req, res) => {
+  try {
+    const { postId } = req.params;
+    const { text } = req.body;
+
+    if (!text?.trim()) {
+      return res.status(400).json({ error: "Comment is required" });
+    }
+
+    const post = await CommunityPost.findById(postId);
+    if (!post) return res.status(404).json({ error: "Post not found" });
+
+    const count = await countCategoryMatches(req.user._id, post.categoryId);
+    if (count < 25) {
+      return res.status(403).json({ error: "You must unlock the community to comment." });
+    }
+
+    post.comments.push({ authorId: req.user._id, text: text.trim().slice(0, 500) });
+    await post.save();
+
+    const updated = await CommunityPost.findById(postId)
+      .populate("authorId", "username avatarUrl displayName")
+      .populate("comments.authorId", "username avatarUrl displayName")
+      .lean();
+
+    res.status(201).json({ post: updated });
+  } catch (err) {
+    console.error("addComment error:", err);
+    res.status(500).json({ error: "Server error" });
+  }
+};
+
+module.exports = { getPosts, createPost, getStatus, likePost, addComment };

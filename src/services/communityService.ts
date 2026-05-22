@@ -1,18 +1,27 @@
 import { API_URL } from "@/config/env";
 
+export interface CommunityAuthor {
+  _id: string;
+  username: string;
+  avatarUrl: string;
+  displayName: string;
+}
+
+export interface CommunityComment {
+  _id: string;
+  authorId: CommunityAuthor;
+  text: string;
+  createdAt: string;
+}
+
 export interface CommunityPost {
   _id: string;
   categoryId: string;
-  authorId: {
-    _id: string;
-    username: string;
-    avatarUrl: string;
-    displayName: string;
-  };
+  authorId: CommunityAuthor;
   content: string;
   imageUrl: string | null;
   likes: string[];
-  comments: any[];
+  comments: CommunityComment[];
   createdAt: string;
   updatedAt: string;
 }
@@ -68,21 +77,33 @@ export const communityService = {
     return data;
   },
 
+  addComment: async (postId: string, text: string): Promise<CommunityPost> => {
+    const res = await fetch(`${API_URL}/community/post/${postId}/comments`, {
+      method: "POST",
+      headers: getAuthHeaders(),
+      body: JSON.stringify({ text }),
+    });
+    const data = await res.json();
+    if (!res.ok) throw { response: { data } };
+    return data.post;
+  },
+
   uploadImage: async (file: File): Promise<string> => {
     const formData = new FormData();
     formData.append("image", file);
-    
-    // We only need the Authorization header, fetch will set Content-Type with the boundary
+
     const token = localStorage.getItem("quizup_token");
     const headers = token ? { Authorization: `Bearer ${token}` } : {};
-    
+
     const res = await fetch(`${API_URL}/community/upload-image`, {
       method: "POST",
       headers,
       body: formData,
     });
-    if (!res.ok) throw new Error("Failed to upload image");
-    const data = await res.json();
-    return data.imageUrl;
-  }
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      throw { response: { data }, message: (data as { error?: string }).error || "Failed to upload image" };
+    }
+    return (data as { imageUrl: string }).imageUrl;
+  },
 };

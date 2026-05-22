@@ -4,7 +4,7 @@ const communityPostSchema = new mongoose.Schema(
   {
     categoryId: { type: String, required: true, index: true },
     authorId: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
-    content: { type: String, required: true, maxlength: 1000 },
+    content: { type: String, default: "", maxlength: 1000 },
     imageUrl: { type: String, default: null },
     likes: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
     comments: [

@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useLayoutEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { ArrowLeft, MessageCircle, Search, Users } from "lucide-react";
 import { fetchChatConversations, type ChatConversation } from "@/services/chatApi";
@@ -165,6 +165,12 @@ const Social: React.FC = () => {
           c.lastMessagePreview.toLowerCase().includes(q))
     );
   }, [conversations, query]);
+
+  useLayoutEffect(() => {
+    window.scrollTo(0, 0);
+    document.documentElement.scrollTop = 0;
+    document.body.scrollTop = 0;
+  }, []);
 
   return (
     <div className="flex flex-col min-h-screen bg-white">
