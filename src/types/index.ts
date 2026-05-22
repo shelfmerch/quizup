@@ -25,6 +25,8 @@ export interface Profile extends User {
   level: number;
   xp: number;
   xpToNextLevel: number;
+  /** Lifetime XP (bar XP + completed level thresholds). */
+  totalXp?: number;
   totalMatches: number;
   wins: number;
   losses: number;

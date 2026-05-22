@@ -1,23 +1,24 @@
 const User = require("../models/User");
+const { computeTotalXp } = require("../utils/progression");
 
-// GET /api/leaderboard  — global top 50 by total XP (cumulative score proxy)
+// GET /api/leaderboard  — global top 50 by lifetime total XP
 const getGlobalLeaderboard = async (req, res) => {
   try {
-    const users = await User.find({ totalMatches: { $gt: 0 } })
-      .sort({ xp: -1, wins: -1 })
-      .limit(50)
-      .lean();
+    const users = await User.find({ totalMatches: { $gt: 0 } }).lean();
 
-    const entries = users.map((u, i) => ({
-      rank: i + 1,
-      userId: u._id.toString(),
-      username: u.username,
-      avatarUrl: u.avatarUrl,
-      score: u.xp,
-      wins: u.wins,
-      level: u.level,
-      country: u.country || "🌍",
-    }));
+    const entries = users
+      .map((u) => ({
+        userId: u._id.toString(),
+        username: u.username,
+        avatarUrl: u.avatarUrl,
+        score: computeTotalXp(u.level, u.xp),
+        wins: u.wins,
+        level: u.level,
+        country: u.country || "🌍",
+      }))
+      .sort((a, b) => b.score - a.score || b.wins - a.wins)
+      .slice(0, 50)
+      .map((entry, i) => ({ ...entry, rank: i + 1 }));
 
     return res.json({ leaderboard: entries });
   } catch (err) {

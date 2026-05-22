@@ -11,6 +11,7 @@ import { resolveMediaUrl } from "@/config/env";
 import { CategoryIcon } from "@/components/CategoryIcon";
 import { getSocket } from "@/services/socketService";
 import { LeagueModal } from "@/components/LeagueModal";
+import { computeTotalXp, getLeagueFromXp, leagueBadgeSrc } from "@/lib/progression";
 import { useChatUnread } from "@/hooks/useChatUnread";
 import { toast } from "sonner";
 
@@ -33,43 +34,6 @@ interface SearchingQueueUser {
 }
 
 const TILE_COLORS = ["#f65357", "#0dbf9d", "#20b7d5", "#ffc233", "#ff8d2c", "#8d65e7"];
-
-type LeagueKey =
-  | "unranked"
-  | "bronze"
-  | "silver"
-  | "gold"
-  | "crystal"
-  | "master"
-  | "champion"
-  | "titan"
-  | "legend";
-
-const LEAGUES: Array<{ key: LeagueKey; name: string; minLevel: number; minXpInclusive: number; badgeUrl: string }> = [
-  { key: "legend",   name: "Legend",   minLevel: 9, minXpInclusive: 20000, badgeUrl: "/leagues/legend.svg" },
-  { key: "titan",    name: "Titan",    minLevel: 7, minXpInclusive: 15000, badgeUrl: "/leagues/titan.png" },
-  { key: "champion", name: "Champion", minLevel: 6, minXpInclusive: 13000, badgeUrl: "/leagues/champion.png" },
-  { key: "master",   name: "Master",   minLevel: 5, minXpInclusive: 10000, badgeUrl: "/leagues/master.png" },
-  { key: "crystal",  name: "Crystal",  minLevel: 4, minXpInclusive: 7000,  badgeUrl: "/leagues/crystal.png" },
-  { key: "gold",     name: "Gold",     minLevel: 3, minXpInclusive: 5000,  badgeUrl: "/leagues/gold.png" },
-  { key: "silver",   name: "Silver",   minLevel: 2, minXpInclusive: 2000,  badgeUrl: "/leagues/silver.png" },
-  { key: "bronze",   name: "Bronze",   minLevel: 1, minXpInclusive: 1000,  badgeUrl: "/leagues/bronze.png" },
-  { key: "unranked", name: "Unranked", minLevel: 0, minXpInclusive: 0,     badgeUrl: "/leagues/unranked.png" },
-];
-
-function getLeagueFromXp(xpRaw: unknown) {
-  const xp = typeof xpRaw === "number" && Number.isFinite(xpRaw) ? Math.max(0, Math.floor(xpRaw)) : 0;
-  for (const league of LEAGUES) {
-    if (xp >= league.minXpInclusive) return league;
-  }
-  return LEAGUES[LEAGUES.length - 1];
-}
-
-/** Public-folder league art (respects Vite `base`). */
-function leagueBadgeSrc(badgeUrl: string): string {
-  const path = badgeUrl.startsWith("/") ? badgeUrl.slice(1) : badgeUrl;
-  return `${import.meta.env.BASE_URL}${path}`;
-}
 
 function mergeTopics(apiList: Category[]): Category[] {
   const byId = new Map<string, Category>();
@@ -379,7 +343,8 @@ const HomeLobby: React.FC = () => {
     };
   }, []);
 
-  const league = getLeagueFromXp(user?.xp);
+  const totalXp = user?.totalXp ?? computeTotalXp(user?.level, user?.xp);
+  const league = getLeagueFromXp(totalXp);
   const avatarSrc = resolveMediaUrl(
     user?.avatarUrl,
     `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(user?.username || "player")}`
@@ -799,7 +764,11 @@ const HomeLobby: React.FC = () => {
         <Bell className="h-5 w-5" />
       </button> */}
 
-      <LeagueModal isOpen={leagueModalOpen} onClose={() => setLeagueModalOpen(false)} currentXp={user?.xp || 0} />
+      <LeagueModal
+        isOpen={leagueModalOpen}
+        onClose={() => setLeagueModalOpen(false)}
+        currentXp={totalXp}
+      />
     </div>
   );
 };

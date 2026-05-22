@@ -32,6 +32,7 @@ import { getSocket } from "@/services/socketService";
 import { profileService } from "@/services/profileService";
 import { Category, MatchFoundPayload, MatchHistoryEntry, Profile, ProfileFollowUser } from "@/types";
 import { LeagueModal } from "@/components/LeagueModal";
+import { computeTotalXp, getLeagueFromXp } from "@/lib/progression";
 import {
   AchievementModal,
   AchievementBadge,
@@ -39,38 +40,7 @@ import {
   ACHIEVEMENT_RARITY_MAP,
 } from "@/components/AchievementModal";
 
-type LeagueKey =
-  | "unranked"
-  | "bronze"
-  | "silver"
-  | "gold"
-  | "crystal"
-  | "master"
-  | "champion"
-  | "titan"
-  | "legend";
-
-const LEAGUES: Array<{ key: LeagueKey; name: string; minLevel: number; minXpInclusive: number; badgeUrl: string }> = [
-  { key: "legend",   name: "Legend",   minLevel: 9, minXpInclusive: 20000, badgeUrl: "/leagues/legend.svg" },
-  { key: "titan",    name: "Titan",    minLevel: 7, minXpInclusive: 15000, badgeUrl: "/leagues/titan.png" },
-  { key: "champion", name: "Champion", minLevel: 6, minXpInclusive: 13000, badgeUrl: "/leagues/champion.png" },
-  { key: "master",   name: "Master",   minLevel: 5, minXpInclusive: 10000, badgeUrl: "/leagues/master.png" },
-  { key: "crystal",  name: "Crystal",  minLevel: 4, minXpInclusive: 7000,  badgeUrl: "/leagues/crystal.png" },
-  { key: "gold",     name: "Gold",     minLevel: 3, minXpInclusive: 5000,  badgeUrl: "/leagues/gold.png" },
-  { key: "silver",   name: "Silver",   minLevel: 2, minXpInclusive: 2000,  badgeUrl: "/leagues/silver.png" },
-  { key: "bronze",   name: "Bronze",   minLevel: 1, minXpInclusive: 1000,  badgeUrl: "/leagues/bronze.png" },
-  { key: "unranked", name: "Unranked", minLevel: 0, minXpInclusive: 0,     badgeUrl: "/leagues/unranked.png" },
-];
-
 const TILE_COLORS = ["#f65357", "#1fb7c9", "#ffca32", "#f65357", "#8d65e7", "#15b78f"];
-
-function getLeagueFromXp(xpRaw: unknown) {
-  const xp = typeof xpRaw === "number" && Number.isFinite(xpRaw) ? Math.max(0, Math.floor(xpRaw)) : 0;
-  for (const league of LEAGUES) {
-    if (xp >= league.minXpInclusive) return league;
-  }
-  return LEAGUES[LEAGUES.length - 1];
-}
 
 function playerRankLabel(level: number) {
   if (level <= 2) return "Beginner";
@@ -429,7 +399,8 @@ const ProfilePage: React.FC = () => {
     );
   }
 
-  const league = getLeagueFromXp(p.xp);
+  const totalXp = p.totalXp ?? computeTotalXp(p.level, p.xp);
+  const league = getLeagueFromXp(totalXp);
   const avatarSrc = resolveMediaUrl(
     p.avatarUrl,
     `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(p.username)}`
@@ -841,7 +812,7 @@ const ProfilePage: React.FC = () => {
         </div>
       )}
       
-      <LeagueModal isOpen={leagueModalOpen} onClose={() => setLeagueModalOpen(false)} currentXp={p.xp || 0} />
+      <LeagueModal isOpen={leagueModalOpen} onClose={() => setLeagueModalOpen(false)} currentXp={totalXp} />
 
       <BottomNav />
     </div>

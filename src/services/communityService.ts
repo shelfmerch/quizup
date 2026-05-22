@@ -20,6 +20,7 @@ export interface CommunityPost {
   authorId: CommunityAuthor;
   content: string;
   imageUrl: string | null;
+  videoUrl?: string | null;
   likes: string[];
   comments: CommunityComment[];
   createdAt: string;
@@ -47,11 +48,19 @@ export const communityService = {
     return data.posts;
   },
 
-  createPost: async (categoryId: string, content: string, imageUrl?: string): Promise<CommunityPost> => {
+  createPost: async (
+    categoryId: string,
+    content: string,
+    media?: { imageUrl?: string; videoUrl?: string }
+  ): Promise<CommunityPost> => {
     const res = await fetch(`${API_URL}/community/${categoryId}/posts`, {
       method: "POST",
       headers: getAuthHeaders(),
-      body: JSON.stringify({ content, imageUrl }),
+      body: JSON.stringify({
+        content,
+        imageUrl: media?.imageUrl,
+        videoUrl: media?.videoUrl,
+      }),
     });
     const data = await res.json();
     if (!res.ok) throw { response: { data } };
@@ -105,5 +114,24 @@ export const communityService = {
       throw { response: { data }, message: (data as { error?: string }).error || "Failed to upload image" };
     }
     return (data as { imageUrl: string }).imageUrl;
+  },
+
+  uploadVideo: async (file: File): Promise<string> => {
+    const formData = new FormData();
+    formData.append("video", file);
+
+    const token = localStorage.getItem("quizup_token");
+    const headers = token ? { Authorization: `Bearer ${token}` } : {};
+
+    const res = await fetch(`${API_URL}/community/upload-video`, {
+      method: "POST",
+      headers,
+      body: formData,
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      throw { response: { data }, message: (data as { error?: string }).error || "Failed to upload video" };
+    }
+    return (data as { videoUrl: string }).videoUrl;
   },
 };

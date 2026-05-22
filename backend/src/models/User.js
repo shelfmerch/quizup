@@ -1,5 +1,6 @@
 const mongoose = require("mongoose");
 const bcrypt = require("bcryptjs");
+const { computeTotalXp } = require("../utils/progression");
 
 const userSchema = new mongoose.Schema(
   {
@@ -123,6 +124,10 @@ userSchema.methods.addXP = function (amount) {
   }
 };
 
+userSchema.methods.getTotalXp = function () {
+  return computeTotalXp(this.level, this.xp);
+};
+
 userSchema.methods.getAvatarPrivacy = function () {
   const raw = this.avatarPrivacy || "public";
   return raw === "followers_only" ? "private" : raw;
@@ -157,6 +162,7 @@ userSchema.methods.toProfile = function (viewerId = null) {
     level: this.level,
     xp: this.xp,
     xpToNextLevel: this.xpToNextLevel,
+    totalXp: this.getTotalXp(),
     totalMatches: this.totalMatches,
     wins: this.wins,
     losses: this.losses,

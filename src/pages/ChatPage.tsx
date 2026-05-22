@@ -15,6 +15,7 @@ import { generateE2eKeypair, deriveSharedKey, encryptMessage, decryptMessage, pa
 import { useOnlineStatus } from "@/hooks/useOnlineStatus";
 import { OnlineIndicator } from "@/components/ui/OnlineIndicator";
 import { CategoryIcon } from "@/components/CategoryIcon";
+import { EmojiPicker } from "@/components/EmojiPicker";
 import { GifPicker } from "@/components/GifPicker";
 import { GiphyGif } from "@/services/giphyService";
 
@@ -263,6 +264,7 @@ const ChatPage: React.FC = () => {
   const [categoriesError, setCategoriesError] = useState<string | null>(null);
   const [incomingChallenge, setIncomingChallenge] = useState<IncomingChallenge | null>(null);
   const [challengeLog, setChallengeLog] = useState<ChallengeLogEntry[]>([]);
+  const [emojiPickerOpen, setEmojiPickerOpen] = useState(false);
   const [gifPickerOpen, setGifPickerOpen] = useState(false);
 
   const bottomRef = useRef<HTMLDivElement>(null);
@@ -764,6 +766,11 @@ const ChatPage: React.FC = () => {
     setMediaSending(false);
   };
 
+  const handleEmojiSelect = (emoji: string) => {
+    setText((prev) => prev + emoji);
+    inputRef.current?.focus();
+  };
+
   const handleSendGif = async (gif: GiphyGif) => {
     if (!roomId || !user?.id) return;
     setGifPickerOpen(false);
@@ -1043,6 +1050,13 @@ const ChatPage: React.FC = () => {
         </div>
       )}
 
+      <EmojiPicker
+        open={emojiPickerOpen}
+        onClose={() => setEmojiPickerOpen(false)}
+        onSelect={handleEmojiSelect}
+        brandColor={BRAND}
+      />
+
       <GifPicker
         open={gifPickerOpen}
         onClose={() => setGifPickerOpen(false)}
@@ -1067,13 +1081,31 @@ const ChatPage: React.FC = () => {
         <div className="flex-1 flex items-center bg-white rounded-full px-4 gap-2 shadow-sm min-h-[44px]">
           <button
             type="button"
-            onClick={() => setGifPickerOpen((open) => !open)}
-            className={`shrink-0 transition-opacity ${gifPickerOpen ? "opacity-100" : "opacity-60 hover:opacity-100"}`}
+            onClick={() => {
+              setGifPickerOpen(false);
+              setEmojiPickerOpen((open) => !open);
+            }}
+            className={`shrink-0 transition-opacity ${emojiPickerOpen ? "opacity-100" : "opacity-60 hover:opacity-100"}`}
+            style={{ color: BRAND }}
+            aria-label={emojiPickerOpen ? "Close emoji picker" : "Insert emoji"}
+            aria-expanded={emojiPickerOpen}
+          >
+            <Smile className="w-5 h-5" />
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              setEmojiPickerOpen(false);
+              setGifPickerOpen((open) => !open);
+            }}
+            className={`shrink-0 text-[11px] font-bold px-1.5 py-0.5 rounded-md transition-opacity ${
+              gifPickerOpen ? "opacity-100" : "opacity-60 hover:opacity-100"
+            }`}
             style={{ color: BRAND }}
             aria-label={gifPickerOpen ? "Close GIF picker" : "Send a GIF"}
             aria-expanded={gifPickerOpen}
           >
-            <Smile className="w-5 h-5" />
+            GIF
           </button>
           <input
             ref={inputRef}

@@ -11,6 +11,12 @@ import { MOCK_ACHIEVEMENTS } from "@/data/mock-data";
 import Icons8Icon from "@/components/Icons8Icon";
 import { useAuth } from "@/hooks/useAuth";
 import { authService } from "@/services/authService";
+import {
+  computeTotalXp,
+  getLeagueFromXp,
+  levelProgressPercent,
+  xpRemainingToNextLevel,
+} from "@/lib/progression";
 
 function parseBattleNav(state: unknown): { online: OnlineBattleInit | null; localMatch: Match | null } {
   if (
@@ -141,45 +147,22 @@ function VerticalTimerBar({
   );
 }
 
-type LeagueKey =
-  | "unranked"
-  | "bronze"
-  | "silver"
-  | "gold"
-  | "crystal"
-  | "master"
-  | "champion"
-  | "titan"
-  | "legend";
-
-const LEAGUES: Array<{ key: LeagueKey; name: string; minLevel: number; minXpInclusive: number; badgeUrl: string }> = [
-  { key: "legend",   name: "Legend",   minLevel: 9, minXpInclusive: 20000, badgeUrl: "/leagues/legend.svg" },
-  { key: "titan",    name: "Titan",    minLevel: 7, minXpInclusive: 15000, badgeUrl: "/leagues/titan.png" },
-  { key: "champion", name: "Champion", minLevel: 6, minXpInclusive: 13000, badgeUrl: "/leagues/champion.png" },
-  { key: "master",   name: "Master",   minLevel: 5, minXpInclusive: 10000, badgeUrl: "/leagues/master.png" },
-  { key: "crystal",  name: "Crystal",  minLevel: 4, minXpInclusive: 7000,  badgeUrl: "/leagues/crystal.png" },
-  { key: "gold",     name: "Gold",     minLevel: 3, minXpInclusive: 5000,  badgeUrl: "/leagues/gold.png" },
-  { key: "silver",   name: "Silver",   minLevel: 2, minXpInclusive: 2000,  badgeUrl: "/leagues/silver.png" },
-  { key: "bronze",   name: "Bronze",   minLevel: 1, minXpInclusive: 1000,  badgeUrl: "/leagues/bronze.png" },
-  { key: "unranked", name: "Unranked", minLevel: 0, minXpInclusive: 0,     badgeUrl: "/leagues/unranked.png" },
-];
-
-function getLeagueFromXp(xpRaw: unknown) {
-  const xp = typeof xpRaw === "number" && Number.isFinite(xpRaw) ? Math.max(0, Math.floor(xpRaw)) : 0;
-  for (const league of LEAGUES) {
-    if (xp >= league.minXpInclusive) return league;
-  }
-  return LEAGUES[LEAGUES.length - 1];
-}
-
-
-
-function CircleProgress({ level, xpGained, xpToNext }: { level: number, xpGained: number, xpToNext: number }) {
+function CircleProgress({
+  level,
+  xpGained,
+  xpToNext,
+  progressPercent,
+}: {
+  level: number;
+  xpGained: number;
+  xpToNext: number;
+  progressPercent: number;
+}) {
   const radius = 70;
   const stroke = 20;
   const normalizedRadius = radius - stroke * 0.5;
   const circumference = normalizedRadius * 2 * Math.PI;
-  const progress = 30; // 30% remaining (white)
+  const progress = Math.min(100, Math.max(0, progressPercent));
   const strokeDashoffset = circumference - (progress / 100) * circumference;
 
   return (
@@ -260,22 +243,26 @@ const BattlePage: React.FC = () => {
   const [showDedicatedAchievements, setShowDedicatedAchievements] = useState(false);
   const achievementsScreenShownRef = useRef(false);
 
-  const xpBeforeMatchRef = useRef<number | null>(null);
+  const progressionBeforeRef = useRef<{ totalXp: number; level: number } | null>(null);
   const [leaguePromotion, setLeaguePromotion] = useState<{
     from: ReturnType<typeof getLeagueFromXp>;
     to: ReturnType<typeof getLeagueFromXp>;
   } | null>(null);
+  const [levelPromotion, setLevelPromotion] = useState<{ from: number; to: number } | null>(null);
 
   useEffect(() => {
-    if (xpBeforeMatchRef.current !== null) return;
-    const xp = typeof user?.xp === "number" && Number.isFinite(user.xp) ? user.xp : null;
-    xpBeforeMatchRef.current = xp;
-  }, [user?.xp]);
+    if (progressionBeforeRef.current !== null) return;
+    if (user?.level == null || user?.xp == null) return;
+    progressionBeforeRef.current = {
+      totalXp: computeTotalXp(user.level, user.xp),
+      level: user.level,
+    };
+  }, [user?.level, user?.xp]);
 
   useEffect(() => {
     if (state?.phase !== "match_end") return;
     if (!user?.id) return;
-    if (xpBeforeMatchRef.current === null) return;
+    if (progressionBeforeRef.current === null) return;
 
     let cancelled = false;
     (async () => {
@@ -283,14 +270,20 @@ const BattlePage: React.FC = () => {
         await refreshUser();
         if (cancelled) return;
         const fresh = authService.getCurrentUser();
-        const afterXp =
-          typeof fresh?.xp === "number" && Number.isFinite(fresh.xp) ? fresh.xp : null;
-        if (afterXp === null) return;
+        if (!fresh) return;
 
-        const from = getLeagueFromXp(xpBeforeMatchRef.current ?? 0);
-        const to = getLeagueFromXp(afterXp);
-        if (from.key !== to.key) {
-          setLeaguePromotion({ from, to });
+        const afterTotalXp = computeTotalXp(fresh.level, fresh.xp);
+        const afterLevel = fresh.level ?? 1;
+        const before = progressionBeforeRef.current!;
+
+        const fromLeague = getLeagueFromXp(before.totalXp);
+        const toLeague = getLeagueFromXp(afterTotalXp);
+        if (fromLeague.key !== toLeague.key) {
+          setLeaguePromotion({ from: fromLeague, to: toLeague });
+        }
+
+        if (afterLevel > before.level) {
+          setLevelPromotion({ from: before.level, to: afterLevel });
         }
       } catch {
         // ignore
@@ -300,7 +293,7 @@ const BattlePage: React.FC = () => {
     return () => {
       cancelled = true;
     };
-  }, [refreshUser, state?.phase, user?.id, user?.xp]);
+  }, [refreshUser, state?.phase, user?.id, user?.level, user?.xp]);
 
   useEffect(() => {
     if (state?.phase === "match_end" && unlockedAchievements.length > 0 && !achievementsScreenShownRef.current) {
@@ -498,6 +491,19 @@ const BattlePage: React.FC = () => {
             Epic Unlocks!
           </h1>
           <div className="flex flex-col gap-4 mt-8 w-full px-8 relative z-10">
+            {levelPromotion && (
+              <div className="glass-card rounded-3xl p-5 border-violet-200 flex items-center gap-4 shadow-xl shadow-violet-500/10 animate-in slide-in-from-bottom-8 duration-700">
+                <div className="w-14 h-14 rounded-full bg-gradient-to-br from-violet-500 to-fuchsia-600 flex items-center justify-center shrink-0 shadow-lg">
+                  <span className="text-2xl font-black text-white">{levelPromotion.to}</span>
+                </div>
+                <div className="min-w-0">
+                  <p className="text-[11px] font-bold text-violet-600 uppercase tracking-widest">Level up</p>
+                  <p className="font-extrabold text-xl text-slate-900 truncate">
+                    Level {levelPromotion.from} → {levelPromotion.to}
+                  </p>
+                </div>
+              </div>
+            )}
             {leaguePromotion && (
               <div className="glass-card rounded-3xl p-5 border-emerald-200 flex items-center gap-4 shadow-xl shadow-emerald-500/10 animate-in slide-in-from-bottom-8 duration-700">
                 <img src={leaguePromotion.to.badgeUrl} alt="" className="w-14 h-14 object-contain shrink-0 drop-shadow-md" />
@@ -530,6 +536,10 @@ const BattlePage: React.FC = () => {
     const xpPenalty  = myMatchResult?.xpPenalty ?? 0;
     // Loser's netXp is always negative (0 gained − penalty); winner's is +xpGained
     const netXp      = myMatchResult?.netXp ?? (winner === 'opponent' ? -xpPenalty : xpGained);
+    const displayLevel = user?.level ?? state.match.player1.level ?? 1;
+    const totalXp = computeTotalXp(displayLevel, user?.xp ?? 0);
+    const xpToNext = xpRemainingToNextLevel(user?.xp, user?.xpToNextLevel);
+    const ringProgress = levelProgressPercent(user?.xp, user?.xpToNextLevel);
     const p1Color = winner === 'player' ? 'border-[#1dd15d]' : winner === 'opponent' ? 'border-[#f24242]' : 'border-slate-500';
     const p2Color = winner === 'opponent' ? 'border-[#1dd15d]' : winner === 'player' ? 'border-[#f24242]' : 'border-slate-500';
 
@@ -633,30 +643,59 @@ const BattlePage: React.FC = () => {
               </div>
             )}
 
-            {/* TOTAL XP (Loser Only) */}
-            {winner === 'opponent' && (
-              <div className="flex flex-col items-center min-w-[72px] sm:min-w-[84px]">
-                <span className="text-[10px] sm:text-xs font-bold text-slate-100 uppercase tracking-widest text-center h-8 flex items-end justify-center mb-1.5 leading-tight">
-                  Total<br/>XP
-                </span>
-                <div className="w-full h-12 sm:h-14 px-2 rounded-xl border-2 flex items-center justify-center font-display font-black text-xl sm:text-2xl tabular-nums bg-[#1f1f1f] border-[#b392ff] text-[#b392ff] shadow-[0_4px_12px_rgba(179,146,255,0.15)]">
-                  {user?.xp || 0}
-                </div>
+            {/* TOTAL XP (lifetime) */}
+            <div className="flex flex-col items-center min-w-[72px] sm:min-w-[84px]">
+              <span className="text-[10px] sm:text-xs font-bold text-slate-100 uppercase tracking-widest text-center h-8 flex items-end justify-center mb-1.5 leading-tight">
+                Total<br/>XP
+              </span>
+              <div className="w-full h-12 sm:h-14 px-2 rounded-xl border-2 flex items-center justify-center font-display font-black text-xl sm:text-2xl tabular-nums bg-[#1f1f1f] border-[#b392ff] text-[#b392ff] shadow-[0_4px_12px_rgba(179,146,255,0.15)]">
+                {totalXp.toLocaleString()}
               </div>
-            )}
+            </div>
 
           </div>
         </div>
 
+        {levelPromotion && !showDedicatedAchievements && (
+          <div className="mx-6 mb-2 rounded-2xl border border-violet-400/40 bg-violet-500/15 px-4 py-3 flex items-center gap-3 shrink-0">
+            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-violet-500 to-fuchsia-600 flex items-center justify-center shrink-0">
+              <span className="text-lg font-black text-white">{levelPromotion.to}</span>
+            </div>
+            <div>
+              <p className="text-[10px] font-bold text-violet-300 uppercase tracking-widest">Level up</p>
+              <p className="font-bold text-white">
+                Level {levelPromotion.from} → {levelPromotion.to}
+              </p>
+            </div>
+          </div>
+        )}
+
         <div className="shrink-0 flex-1 flex flex-col justify-center min-h-[160px]">
-          <CircleProgress 
-            level={user?.level || state.match.player1.level || 1} 
-            xpGained={netXp} 
-            xpToNext={user?.xpToNextLevel ? Math.max(0, user.xpToNextLevel - (user?.xp || 0)) : 0} 
+          <CircleProgress
+            level={displayLevel}
+            xpGained={netXp}
+            xpToNext={xpToNext}
+            progressPercent={ringProgress}
           />
         </div>
 
-        <div className="grid grid-cols-2 gap-3 px-6 pb-8 mt-auto shrink-0">
+        <div className="grid grid-cols-2 gap-3 px-6 pb-8 mt-auto shrink-0">    
+          <button onClick={() => {
+              stopVictorySfx();
+              stopDefeatSfx();
+              navigate("/home");
+            }} 
+            className="h-14 rounded-2xl font-black text-sm sm:text-base text-white active:translate-y-[4px] active:shadow-[0_0px_0_#a23900] transition-all duration-75 flex items-center justify-between px-4"
+            style={{
+              background: "linear-gradient(to bottom, #ffc107, #ff9800, #e65100)",
+              boxShadow: "0 4px 0 #a23900, 0 8px 16px rgba(255,152,0,0.4), inset 0 1px 0 rgba(255,255,255,0.3)",
+            }}>
+            <span className="drop-shadow-md">Return</span>
+            <div className="w-7 h-7 rounded-full bg-white/20 flex items-center justify-center shadow-inner border border-white/30">
+               <svg className="w-3.5 h-3.5 drop-shadow-sm" fill="currentColor" viewBox="0 0 20 20"><path d="M11.3 1.046A1 1 0 0112 2v5h4a1 1 0 01.82 1.573l-7 10A1 1 0 018 18v-5H4a1 1 0 01-.82-1.573l7-10a1 1 0 011.12-.38z" /></svg>
+            </div>
+          </button>
+
           <button onClick={() => {
               stopVictorySfx();
               stopDefeatSfx();
@@ -669,22 +708,6 @@ const BattlePage: React.FC = () => {
             }}>
             <span className="drop-shadow-md">Rematch</span>
             <div className="w-7 h-7 rounded-full bg-white/20 flex items-center justify-center shadow-inner border border-white/20">
-               <svg className="w-3.5 h-3.5 drop-shadow-sm" fill="currentColor" viewBox="0 0 20 20"><path d="M11.3 1.046A1 1 0 0112 2v5h4a1 1 0 01.82 1.573l-7 10A1 1 0 018 18v-5H4a1 1 0 01-.82-1.573l7-10a1 1 0 011.12-.38z" /></svg>
-            </div>
-          </button>
-          
-          <button onClick={() => {
-              stopVictorySfx();
-              stopDefeatSfx();
-              navigate("/home");
-            }} 
-            className="h-14 rounded-2xl font-black text-sm sm:text-base text-white active:translate-y-[4px] active:shadow-[0_0px_0_#a23900] transition-all duration-75 flex items-center justify-between px-4"
-            style={{
-              background: "linear-gradient(to bottom, #ffc107, #ff9800, #e65100)",
-              boxShadow: "0 4px 0 #a23900, 0 8px 16px rgba(255,152,0,0.4), inset 0 1px 0 rgba(255,255,255,0.3)",
-            }}>
-            <span className="drop-shadow-md">Play New</span>
-            <div className="w-7 h-7 rounded-full bg-white/20 flex items-center justify-center shadow-inner border border-white/30">
                <svg className="w-3.5 h-3.5 drop-shadow-sm" fill="currentColor" viewBox="0 0 20 20"><path d="M11.3 1.046A1 1 0 0112 2v5h4a1 1 0 01.82 1.573l-7 10A1 1 0 018 18v-5H4a1 1 0 01-.82-1.573l7-10a1 1 0 011.12-.38z" /></svg>
             </div>
           </button>

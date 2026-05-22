@@ -7,28 +7,7 @@ import { useOnlineStatus } from "@/hooks/useOnlineStatus";
 import { OnlineIndicator } from "@/components/ui/OnlineIndicator";
 
 
-// ─── League helpers ────────────────────────────────────────────────────────────
-type LeagueKey = "unranked" | "bronze" | "silver" | "gold" | "crystal" | "master" | "champion" | "titan" | "legend";
-
-const LEAGUES: Array<{ key: LeagueKey; name: string; minXpInclusive: number; badgeUrl: string }> = [
-  { key: "legend",   name: "Legend",   minXpInclusive: 20000, badgeUrl: "/leagues/legend.svg" },
-  { key: "titan",    name: "Titan",    minXpInclusive: 15000, badgeUrl: "/leagues/titan.png" },
-  { key: "champion", name: "Champion", minXpInclusive: 13000, badgeUrl: "/leagues/champion.png" },
-  { key: "master",   name: "Master",   minXpInclusive: 10000, badgeUrl: "/leagues/master.png" },
-  { key: "crystal",  name: "Crystal",  minXpInclusive: 7000,  badgeUrl: "/leagues/crystal.png" },
-  { key: "gold",     name: "Gold",     minXpInclusive: 5000,  badgeUrl: "/leagues/gold.png" },
-  { key: "silver",   name: "Silver",   minXpInclusive: 2000,  badgeUrl: "/leagues/silver.png" },
-  { key: "bronze",   name: "Bronze",   minXpInclusive: 1000,  badgeUrl: "/leagues/bronze.png" },
-  { key: "unranked", name: "Unranked", minXpInclusive: 0,     badgeUrl: "/leagues/unranked.png" },
-];
-
-function getLeagueFromXp(xpRaw: unknown) {
-  const xp = typeof xpRaw === "number" && Number.isFinite(xpRaw) ? Math.max(0, Math.floor(xpRaw)) : 0;
-  for (const league of LEAGUES) {
-    if (xp >= league.minXpInclusive) return league;
-  }
-  return LEAGUES[LEAGUES.length - 1];
-}
+import { getLeagueFromXp } from "@/lib/progression";
 
 // ─── Podium skeleton ───────────────────────────────────────────────────────────
 const PodiumSkeleton: React.FC = () => (

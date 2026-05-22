@@ -20,10 +20,14 @@ const getPosts = async (req, res) => {
 const createPost = async (req, res) => {
   try {
     const { categoryId } = req.params;
-    const { content, imageUrl } = req.body;
-    
-    if ((!content || !content.trim()) && !imageUrl) {
-      return res.status(400).json({ error: "Content or image is required" });
+    const { content, imageUrl, videoUrl } = req.body;
+
+    if ((!content || !content.trim()) && !imageUrl && !videoUrl) {
+      return res.status(400).json({ error: "Content, image, or video is required" });
+    }
+
+    if (imageUrl && videoUrl) {
+      return res.status(400).json({ error: "Post cannot include both an image and a video" });
     }
 
     const count = await Match.countDocuments({
@@ -41,6 +45,7 @@ const createPost = async (req, res) => {
       authorId: req.user._id,
       content: (content || "").trim(),
       imageUrl: imageUrl || null,
+      videoUrl: videoUrl || null,
     });
 
     const populatedPost = await CommunityPost.findById(newPost._id)

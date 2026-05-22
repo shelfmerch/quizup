@@ -8,6 +8,7 @@ import {
   MessageSquare,
   Share2,
   Image as ImageIcon,
+  Video,
   X,
   Send,
   RefreshCw,
@@ -119,9 +120,11 @@ const CommunityFeed: React.FC<CommunityFeedProps> = ({
 
   const [newPostContent, setNewPostContent] = useState("");
   const [isPosting, setIsPosting] = useState(false);
-  const [imageFile, setImageFile] = useState<File | null>(null);
-  const [imagePreview, setImagePreview] = useState<string | null>(null);
-  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [mediaFile, setMediaFile] = useState<File | null>(null);
+  const [mediaPreview, setMediaPreview] = useState<string | null>(null);
+  const [mediaKind, setMediaKind] = useState<"image" | "video" | null>(null);
+  const imageInputRef = useRef<HTMLInputElement>(null);
+  const videoInputRef = useRef<HTMLInputElement>(null);
 
   const [expandedPosts, setExpandedPosts] = useState<Set<string>>(new Set());
   const [commentDrafts, setCommentDrafts] = useState<Record<string, string>>({});
@@ -166,33 +169,52 @@ const CommunityFeed: React.FC<CommunityFeedProps> = ({
     toast.success("Feed updated", { position: "top-center", duration: 1500 });
   };
 
-  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files?.[0]) {
-      setImageFile(e.target.files[0]);
-      setImagePreview(URL.createObjectURL(e.target.files[0]));
-    }
+  const setMediaAttachment = (file: File, kind: "image" | "video") => {
+    if (mediaPreview) URL.revokeObjectURL(mediaPreview);
+    setMediaFile(file);
+    setMediaKind(kind);
+    setMediaPreview(URL.createObjectURL(file));
   };
 
-  const removeImage = () => {
-    setImageFile(null);
-    setImagePreview(null);
-    if (fileInputRef.current) fileInputRef.current.value = "";
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) setMediaAttachment(file, "image");
+    e.target.value = "";
+  };
+
+  const handleVideoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) setMediaAttachment(file, "video");
+    e.target.value = "";
+  };
+
+  const removeMedia = () => {
+    if (mediaPreview) URL.revokeObjectURL(mediaPreview);
+    setMediaFile(null);
+    setMediaPreview(null);
+    setMediaKind(null);
+    if (imageInputRef.current) imageInputRef.current.value = "";
+    if (videoInputRef.current) videoInputRef.current.value = "";
   };
 
   const handlePost = async () => {
-    if (!newPostContent.trim() && !imageFile) return;
+    if (!newPostContent.trim() && !mediaFile) return;
     setIsPosting(true);
     try {
-      let uploadedUrl: string | null = null;
-      if (imageFile) uploadedUrl = await communityService.uploadImage(imageFile);
-      const post = await communityService.createPost(
-        categoryId,
-        newPostContent,
-        uploadedUrl || undefined
-      );
+      let imageUrl: string | undefined;
+      let videoUrl: string | undefined;
+      if (mediaFile && mediaKind === "video") {
+        videoUrl = await communityService.uploadVideo(mediaFile);
+      } else if (mediaFile && mediaKind === "image") {
+        imageUrl = await communityService.uploadImage(mediaFile);
+      }
+      const post = await communityService.createPost(categoryId, newPostContent, {
+        imageUrl,
+        videoUrl,
+      });
       setPosts((prev) => [post, ...prev]);
       setNewPostContent("");
-      removeImage();
+      removeMedia();
       toast.success("Posted to the community!", { position: "top-center" });
     } catch (err: unknown) {
       const e = err as { response?: { data?: { error?: string } }; message?: string };
@@ -423,21 +445,29 @@ const CommunityFeed: React.FC<CommunityFeedProps> = ({
             />
 
             <AnimatePresence>
-              {imagePreview && (
+              {mediaPreview && (
                 <motion.div
                   initial={{ opacity: 0, height: 0 }}
                   animate={{ opacity: 1, height: "auto" }}
                   exit={{ opacity: 0, height: 0 }}
-                  className="relative mt-3 inline-block"
+                  className="relative mt-3 inline-block max-w-full"
                 >
-                  <img
-                    src={imagePreview}
-                    alt="Preview"
-                    className="max-h-44 w-auto rounded-lg border border-[#e5e7eb] object-cover shadow-sm"
-                  />
+                  {mediaKind === "video" ? (
+                    <video
+                      src={mediaPreview}
+                      controls
+                      className="max-h-44 max-w-full rounded-lg border border-[#e5e7eb] bg-black shadow-sm"
+                    />
+                  ) : (
+                    <img
+                      src={mediaPreview}
+                      alt="Preview"
+                      className="max-h-44 w-auto rounded-lg border border-[#e5e7eb] object-cover shadow-sm"
+                    />
+                  )}
                   <button
                     type="button"
-                    onClick={removeImage}
+                    onClick={removeMedia}
                     className="absolute -right-2 -top-2 rounded-full border border-[#e5e7eb] bg-white p-1.5 text-[#65676b] shadow-md transition-colors hover:bg-[#f0f2f5] hover:text-[#242424]"
                   >
                     <X className="h-3.5 w-3.5" />
@@ -449,22 +479,41 @@ const CommunityFeed: React.FC<CommunityFeedProps> = ({
             <div className="mt-3 flex items-center justify-between border-t border-[#f0f2f5] pt-3">
               <input
                 type="file"
-                ref={fileInputRef}
+                ref={imageInputRef}
                 onChange={handleImageChange}
                 accept="image/*"
                 className="hidden"
               />
+              <input
+                type="file"
+                ref={videoInputRef}
+                onChange={handleVideoChange}
+                accept="video/mp4,video/quicktime,video/webm,video/x-matroska,.mp4,.mov,.webm,.mkv"
+                className="hidden"
+              />
+              <div className="flex items-center gap-1">
+                <button
+                  type="button"
+                  onClick={() => imageInputRef.current?.click()}
+                  disabled={!!mediaFile && mediaKind === "video"}
+                  className="flex items-center gap-2 rounded-lg px-2.5 py-2 text-[13px] font-semibold text-[#65676b] transition-colors hover:bg-[#f0f2f5] hover:text-[#242424] disabled:opacity-40"
+                >
+                  <ImageIcon className="h-[18px] w-[18px]" style={{ color: accentColor }} />
+                  Photo
+                </button>
+                <button
+                  type="button"
+                  onClick={() => videoInputRef.current?.click()}
+                  disabled={!!mediaFile && mediaKind === "image"}
+                  className="flex items-center gap-2 rounded-lg px-2.5 py-2 text-[13px] font-semibold text-[#65676b] transition-colors hover:bg-[#f0f2f5] hover:text-[#242424] disabled:opacity-40"
+                >
+                  <Video className="h-[18px] w-[18px]" style={{ color: accentColor }} />
+                  Video
+                </button>
+              </div>
               <button
                 type="button"
-                onClick={() => fileInputRef.current?.click()}
-                className="flex items-center gap-2 rounded-lg px-2.5 py-2 text-[13px] font-semibold text-[#65676b] transition-colors hover:bg-[#f0f2f5] hover:text-[#242424]"
-              >
-                <ImageIcon className="h-[18px] w-[18px]" style={{ color: accentColor }} />
-                Photo
-              </button>
-              <button
-                type="button"
-                disabled={(!newPostContent.trim() && !imageFile) || isPosting}
+                disabled={(!newPostContent.trim() && !mediaFile) || isPosting}
                 onClick={handlePost}
                 style={{ backgroundColor: accentColor }}
                 className="flex items-center gap-2 rounded-lg px-5 py-2 text-[13px] font-bold text-white shadow-sm transition-all hover:brightness-105 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50"
@@ -556,7 +605,19 @@ const CommunityFeed: React.FC<CommunityFeedProps> = ({
                       </p>
                     )}
 
-                    {post.imageUrl && (
+                    {post.videoUrl && (
+                      <div className="mt-3 overflow-hidden rounded-lg border border-[#e5e7eb] bg-black">
+                        <video
+                          src={resolveQuestionImageUrl(post.videoUrl)!}
+                          controls
+                          playsInline
+                          className="max-h-[360px] w-full"
+                          preload="metadata"
+                        />
+                      </div>
+                    )}
+
+                    {post.imageUrl && !post.videoUrl && (
                       <div className="mt-3 overflow-hidden rounded-lg border border-[#e5e7eb] bg-[#f8f9fa]">
                         <img
                           src={resolveQuestionImageUrl(post.imageUrl)!}

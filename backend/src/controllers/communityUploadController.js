@@ -1,4 +1,5 @@
 const uploadPostImage = require("../middleware/uploadPostImage");
+const uploadPostVideo = require("../middleware/uploadPostVideo");
 const { resolveUploadedImageUrl } = require("../middleware/createS3Upload");
 
 function sendUploadedImage(req, res) {
@@ -19,6 +20,24 @@ function sendUploadedImage(req, res) {
   }
 }
 
+function sendUploadedVideo(req, res) {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ error: "No video file provided" });
+    }
+
+    const videoUrl = resolveUploadedImageUrl(req.file);
+    if (!videoUrl) {
+      return res.status(500).json({ error: "Upload did not return a file URL" });
+    }
+
+    return res.json({ videoUrl });
+  } catch (err) {
+    console.error("[Community] upload-video error:", err);
+    return res.status(500).json({ error: err.message || "Server error" });
+  }
+}
+
 /** Multer wrapper — surfaces validation/S3 errors as 4xx instead of generic 500. */
 function uploadCommunityImage(req, res) {
   uploadPostImage.single("image")(req, res, (err) => {
@@ -33,4 +52,17 @@ function uploadCommunityImage(req, res) {
   });
 }
 
-module.exports = { uploadCommunityImage };
+function uploadCommunityVideo(req, res) {
+  uploadPostVideo.single("video")(req, res, (err) => {
+    if (err) {
+      console.error("[Community] multer video upload error:", err);
+      if (err.code === "LIMIT_FILE_SIZE") {
+        return res.status(413).json({ error: "Video must be 50 MB or smaller" });
+      }
+      return res.status(400).json({ error: err.message || "Invalid video upload" });
+    }
+    return sendUploadedVideo(req, res);
+  });
+}
+
+module.exports = { uploadCommunityImage, uploadCommunityVideo };
