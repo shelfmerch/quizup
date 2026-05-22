@@ -48,6 +48,7 @@ const Shell: React.FC<{ children: React.ReactNode }> = ({ children }) => (
 
           {/* Protected app routes with bottom nav */}
           <Route element={<ProtectedRoute><AppLayout /></ProtectedRoute>}>
+            <Route path="/all-categories" element={<ProtectedRoute><AllCategories /></ProtectedRoute>} />
             <Route path="/home" element={<HomeLobby />} />
             <Route path="/categories" element={<Categories />} />
             <Route path="/leaderboard" element={<Leaderboard />} />
@@ -66,7 +67,6 @@ const Shell: React.FC<{ children: React.ReactNode }> = ({ children }) => (
           <Route path="/onboarding/topics" element={<ProtectedRoute><OnboardingTopics /></ProtectedRoute>} />
 
           {/* Full-screen routes (no bottom nav) */}
-          <Route path="/all-categories" element={<ProtectedRoute><AllCategories /></ProtectedRoute>} />
           <Route path="/achievements" element={<ProtectedRoute><AchievementsPage /></ProtectedRoute>} />
           <Route path="/find-match/:categoryId" element={<ProtectedRoute><FindMatch /></ProtectedRoute>} />
           <Route path="/battle" element={<ProtectedRoute><BattlePage /></ProtectedRoute>} />

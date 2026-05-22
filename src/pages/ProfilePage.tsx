@@ -448,7 +448,7 @@ const ProfilePage: React.FC = () => {
         </button>
         <h1 className="font-display text-[17px] font-black">QuizUp</h1>
         <div className="flex items-center gap-4">
-          <button aria-label="Search"><Search className="h-5 w-5" /></button>
+          {/* <button aria-label="Search"><Search className="h-5 w-5" /></button> */}
           <button onClick={() => !isOwnProfile && navigate(`/chat/${p.id}`)} aria-label="Chat">
             <MessageCircle className="h-5 w-5" />
           </button>

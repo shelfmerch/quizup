@@ -6,8 +6,7 @@ import { fetchPublicCategories } from "@/services/categoryService";
 import { motion } from "framer-motion";
 import { useAuth } from "@/hooks/useAuth";
 import { getSocket } from "@/services/socketService";
-
-import { API_BASE } from "@/config/env";
+import { CategoryIcon } from "@/components/CategoryIcon";
 
 const FindMatch: React.FC = () => {
   const { categoryId } = useParams<{ categoryId: string }>();
@@ -24,16 +23,20 @@ const FindMatch: React.FC = () => {
   });
 
   useEffect(() => {
+    if (!categoryId) return;
+
     const mock = MOCK_CATEGORIES.find((c) => c.id === categoryId);
     if (mock) {
       setTopicMeta({ name: mock.name, icon: mock.icon });
-      return;
     }
+
     let cancelled = false;
     fetchPublicCategories()
       .then((list) => {
         const c = list.find((x) => x.id === categoryId);
-        if (!cancelled && c) setTopicMeta({ name: c.name, icon: c.icon });
+        if (!cancelled && c) {
+          setTopicMeta({ name: c.name, icon: c.icon });
+        }
       })
       .catch(() => {});
     return () => {
@@ -123,8 +126,13 @@ const FindMatch: React.FC = () => {
       </div>
 
       <div className="flex-1 flex flex-col items-center justify-center px-6">
-        <div className="w-32 h-32 rounded-full bg-white shadow-xl flex items-center justify-center text-6xl mb-8 border border-slate-100">
-          <span className="drop-shadow-lg">{topicMeta.icon}</span>
+        <div className="w-32 h-32 rounded-full bg-white shadow-xl flex items-center justify-center mb-8 border border-slate-100 overflow-hidden">
+          <CategoryIcon
+            category={{ name: topicMeta.name, icon: topicMeta.icon }}
+            size={96}
+            style="fluency"
+            className="h-24 w-24 object-contain drop-shadow-lg"
+          />
         </div>
 
         {error ? (
@@ -139,7 +147,7 @@ const FindMatch: React.FC = () => {
           </div>
         ) : (
           <>
-            <p className="text-slate-900 font-display font-black text-2xl mb-2 tracking-tight">Finding Opponent</p>
+            <p className="text-slate-500 font-display font-black text-2xl mb-2 tracking-tight">Finding Opponent</p>
             <p className="text-slate-400 text-sm mb-12 text-center font-medium">Searching the live matchmaking queue...</p>
 
             <div className="relative w-24 h-24 mb-12">
@@ -160,7 +168,7 @@ const FindMatch: React.FC = () => {
               </div>
             </div>
 
-            <button type="button" onClick={() => navigate(-1)} className="px-8 py-3 rounded-full border border-slate-200 text-sm font-bold text-slate-400 hover:bg-white hover:text-slate-600 transition-all shadow-sm">
+            <button type="button" onClick={() => navigate(-1)} className="px-8 py-3 mt-10 rounded-full border border-slate-200 text-sm font-bold text-slate-400 hover:bg-white hover:text-slate-600 transition-all shadow-sm">
               Cancel Search
             </button>
           </>

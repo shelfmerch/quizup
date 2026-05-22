@@ -3,8 +3,9 @@ import { useNavigate } from "react-router-dom";
 import { MOCK_CATEGORIES } from "@/data/mock-data";
 import { fetchPublicCategories } from "@/services/categoryService";
 import { Category } from "@/types";
-import { ArrowLeft, Search } from "lucide-react";
+import { ArrowLeft } from "lucide-react";
 import { CategoryIcon } from "@/components/CategoryIcon";
+import { TopicSearchTrigger } from "@/components/TopicSearchOverlay";
 
 const TILE_COLORS = ["#ff6b4a", "#ffd24f", "#18b9cf", "#895de8", "#f65357", "#20c997"];
 
@@ -58,9 +59,11 @@ const AllCategories: React.FC = () => {
           <ArrowLeft className="h-5 w-5" />
         </button>
         <h1 className="font-display text-[17px] font-extrabold flex-1 text-center">All Topics</h1>
-        <div className="w-8 flex justify-end">
-          <Search className="h-5 w-5 text-white" />
-        </div>
+        <TopicSearchTrigger
+          categories={categories}
+          className="text-white w-8 flex justify-end rounded-full active:bg-white/10"
+          iconClassName="h-5 w-5 text-white"
+        />
       </div>
 
       {loading ? (

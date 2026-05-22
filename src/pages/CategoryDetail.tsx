@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { motion } from "framer-motion";
-import { ArrowLeft, Play, Trophy, Star, Users, BookOpen, Search, MessageCircle } from "lucide-react";
+import { ArrowLeft, Play, Trophy, Star, Users, BookOpen, MessageCircle } from "lucide-react";
 import { fetchPublicCategories } from "@/services/categoryService";
 import { leaderboardService } from "@/services/leaderboardService";
 import { MOCK_CATEGORIES } from "@/data/mock-data";
@@ -11,6 +11,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { fetchFollowedCategories, followCategory, unfollowCategory } from "@/services/categoryService";
 import { CategoryIcon } from "@/components/CategoryIcon";
 import CommunityFeed from "@/components/community/CommunityFeed";
+import { TopicSearchTrigger } from "@/components/TopicSearchOverlay";
 
 const CATEGORY_THEMES: Record<
   string,
@@ -162,12 +163,14 @@ const CategoryDetail: React.FC = () => {
           {category.name}
         </h1>
         <div className="flex items-center gap-3">
-          <button className="text-white p-1 rounded-full active:bg-black/10">
-            <Search className="w-6 h-6" />
-          </button>
+          <TopicSearchTrigger
+            categories={allCategories}
+            className="text-white p-1 rounded-full active:bg-black/10"
+            iconClassName="w-6 h-6"
+          />
           <button onClick={() => navigate('/social')} className="text-white p-1 rounded-full active:bg-black/10 relative">
             <MessageCircle className="w-6 h-6" />
-            <div className="absolute top-0 right-0 w-3.5 h-3.5 bg-black rounded-full flex items-center justify-center text-[8px] font-bold text-white border border-[#242424]">1</div>
+            {/* <div className="absolute top-0 right-0 w-3.5 h-3.5 bg-black rounded-full flex items-center justify-center text-[8px] font-bold text-white border border-[#242424]">1</div> */}
           </button>
         </div>
       </div>

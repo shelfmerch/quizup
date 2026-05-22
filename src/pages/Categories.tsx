@@ -3,8 +3,9 @@ import { useNavigate } from "react-router-dom";
 import { MOCK_CATEGORIES } from "@/data/mock-data";
 import { fetchPublicCategories } from "@/services/categoryService";
 import { Category } from "@/types";
-import { Search, MessageCircle } from "lucide-react";
+import { MessageCircle } from "lucide-react";
 import { CategoryIcon } from "@/components/CategoryIcon";
+import { TopicSearchTrigger } from "@/components/TopicSearchOverlay";
 
 const GROUPS = ["General", "Education", "TV", "Movies", "Sports", "Music"];
 const TILE_COLORS = ["#ff6b4a", "#ffd24f", "#18b9cf", "#895de8", "#f65357", "#20c997"];
@@ -67,7 +68,7 @@ const Categories: React.FC = () => {
         <div className="w-8" />
         <h1 className="font-display text-[17px] font-extrabold">Topics</h1>
         <div className="flex items-center gap-3">
-          <Search className="h-5 w-5" />
+          <TopicSearchTrigger categories={categories} className="text-white rounded-full p-1 active:bg-white/10" />
           <MessageCircle className="h-5 w-5" />
         </div>
       </div>

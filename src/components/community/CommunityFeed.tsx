@@ -1,5 +1,8 @@
-import React, { useCallback, useEffect, useRef, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { MOCK_CATEGORIES } from "@/data/mock-data";
+import { EXTRA_HOME_TOPICS } from "@/data/extraTopics";
+import { Category } from "@/types";
 import {
   Heart,
   MessageSquare,
@@ -21,6 +24,36 @@ import {
   CategoryStatus,
 } from "@/services/communityService";
 import { resolveMediaUrl, resolveQuestionImageUrl } from "@/lib/mediaUrl";
+
+const CATEGORY_THEMES: Record<
+  string,
+  { header: string; accent: string; glow: string }
+> = {
+  "quizup-header-red": { header: "quizup-header-red", accent: "#e05252", glow: "rgba(224,82,82,0.35)" },
+  "quizup-header-green": { header: "quizup-header-green", accent: "#2dbd7e", glow: "rgba(45,189,126,0.35)" },
+  "quizup-header-teal": { header: "quizup-header-teal", accent: "#1aaa9b", glow: "rgba(26,170,155,0.35)" },
+  "quizup-header-blue": { header: "quizup-header-blue", accent: "#3d8ef0", glow: "rgba(61,142,240,0.35)" },
+  "quizup-header-purple": { header: "quizup-header-purple", accent: "#9966cc", glow: "rgba(153,102,204,0.35)" },
+  "quizup-header-orange": { header: "quizup-header-orange", accent: "#e87030", glow: "rgba(232,112,48,0.35)" },
+  "bg-white": { header: "bg-white", accent: "#555555", glow: "rgba(200,200,200,0.35)" },
+};
+
+const CATEGORY_COLORS = [
+  "quizup-header-red",
+  "quizup-header-green",
+  "quizup-header-teal",
+  "quizup-header-blue",
+  "quizup-header-purple",
+  "quizup-header-orange",
+  "bg-white",
+];
+
+function mergeAllCategories(): Category[] {
+  const byId = new Map<string, Category>();
+  MOCK_CATEGORIES.forEach((c) => byId.set(c.id, c));
+  EXTRA_HOME_TOPICS.forEach((c) => { if (!byId.has(c.id)) byId.set(c.id, c); });
+  return Array.from(byId.values());
+}
 
 function formatRelativeTime(iso: string): string {
   const d = new Date(iso);
@@ -94,6 +127,8 @@ const CommunityFeed: React.FC<CommunityFeedProps> = ({
   const [commentDrafts, setCommentDrafts] = useState<Record<string, string>>({});
   const [commentBusy, setCommentBusy] = useState<Record<string, boolean>>({});
   const [likeBusy, setLikeBusy] = useState<Set<string>>(new Set());
+  const [apiCategories, setApiCategories] = useState<Category[]>([]);
+
 
   const loadPosts = useCallback(async () => {
     setLoadingPosts(true);
@@ -259,6 +294,28 @@ const CommunityFeed: React.FC<CommunityFeedProps> = ({
     }
   };
 
+    // Find the category from merged data
+    const allCategories = useMemo(() => {
+      const local = mergeAllCategories();
+      const byId = new Map<string, Category>();
+      local.forEach((c) => byId.set(c.id, c));
+      apiCategories.forEach((c) => byId.set(c.id, c)); // API wins
+      return Array.from(byId.values());
+    }, [apiCategories]);
+  
+    const category = useMemo(
+      () => allCategories.find((c) => c.id === categoryId) ?? null,
+      [allCategories, categoryId]
+    );
+
+    // Determine theme color based on list order
+    const themeKey = useMemo(() => {
+      const idx = allCategories.findIndex((c) => c.id === categoryId);
+      return CATEGORY_COLORS[idx % CATEGORY_COLORS.length];
+    }, [allCategories, categoryId]);
+  
+    const theme = CATEGORY_THEMES[themeKey] ?? CATEGORY_THEMES["quizup-header-teal"];
+
   const matchesLeft = Math.max(0, 25 - (communityStatus?.playedMatches || 0));
   const progressPct = Math.min(100, ((communityStatus?.playedMatches || 0) / 25) * 100);
 
@@ -321,7 +378,7 @@ const CommunityFeed: React.FC<CommunityFeedProps> = ({
   return (
     <div className="space-y-3">
       {/* Section header */}
-      <div className="flex items-center justify-between border-b border-[#e5e7eb] pb-3">
+      {/* <div className='flex items-center justify-between border-b border-[#e5e7eb] pb-3 w-full'>
         <div className="flex items-center gap-2.5">
           <div
             className="flex h-9 w-9 items-center justify-center rounded-lg border border-[#e5e7eb] bg-white shadow-sm"
@@ -345,7 +402,7 @@ const CommunityFeed: React.FC<CommunityFeedProps> = ({
         >
           <RefreshCw className={`h-4 w-4 ${refreshing ? "animate-spin" : ""}`} />
         </button>
-      </div>
+      </div> */}
 
       {/* Composer */}
       <div className="rounded-xl border border-[#e5e7eb] bg-white p-4 shadow-[0_1px_2px_rgba(0,0,0,0.06)]">
