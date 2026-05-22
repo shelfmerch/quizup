@@ -17,4 +17,7 @@ export const API_URL = API_BASE ? `${API_BASE}/api` : "/api";
  */
 export const SOCKET_URL = trimSlash(import.meta.env.VITE_SOCKET_URL ?? API_BASE);
 
+/** Giphy API key for in-chat GIF search (client-side; set `VITE_GIPHY_API_KEY` in `.env`). */
+export const GIPHY_API_KEY = (import.meta.env.VITE_GIPHY_API_KEY ?? "").trim();
+
 export { resolveMediaUrl } from "@/lib/mediaUrl";

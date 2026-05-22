@@ -15,6 +15,8 @@ import { generateE2eKeypair, deriveSharedKey, encryptMessage, decryptMessage, pa
 import { useOnlineStatus } from "@/hooks/useOnlineStatus";
 import { OnlineIndicator } from "@/components/ui/OnlineIndicator";
 import { CategoryIcon } from "@/components/CategoryIcon";
+import { GifPicker } from "@/components/GifPicker";
+import { GiphyGif } from "@/services/giphyService";
 
 
 // ── helpers ──────────────────────────────────────────────────────────────────
@@ -261,6 +263,7 @@ const ChatPage: React.FC = () => {
   const [categoriesError, setCategoriesError] = useState<string | null>(null);
   const [incomingChallenge, setIncomingChallenge] = useState<IncomingChallenge | null>(null);
   const [challengeLog, setChallengeLog] = useState<ChallengeLogEntry[]>([]);
+  const [gifPickerOpen, setGifPickerOpen] = useState(false);
 
   const bottomRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -761,6 +764,41 @@ const ChatPage: React.FC = () => {
     setMediaSending(false);
   };
 
+  const handleSendGif = async (gif: GiphyGif) => {
+    if (!roomId || !user?.id) return;
+    setGifPickerOpen(false);
+
+    const localId = `local-${Date.now()}`;
+    const optimistic: ChatMessage = {
+      id: localId,
+      roomId,
+      senderId: user.id,
+      senderName: user.username ?? "",
+      senderAvatar: user.avatarUrl ?? "",
+      text: "",
+      mediaUrl: gif.url,
+      mediaType: "image/gif",
+      createdAt: new Date().toISOString(),
+      read: true,
+    };
+    setMessages((prev) => [...prev, optimistic]);
+
+    try {
+      if (isE2eActive && sharedKey) {
+        const payload = JSON.stringify({ text: "", mediaUrl: gif.url, mediaType: "image/gif" });
+        const encrypted = await encryptMessage(sharedKey, payload);
+        chatService.sendMessage(roomId, encrypted, "", "", localId);
+      } else {
+        chatService.sendMessage(roomId, "", gif.url, "image/gif", localId);
+      }
+    } catch (error) {
+      console.error("GIF send failed:", error);
+      setMessages((prev) => prev.filter((m) => m.id !== localId));
+      toast.error("Could not send GIF", { position: "top-center" });
+    }
+    inputRef.current?.focus();
+  };
+
   const handleSendMedia = async () => {
     if (!mediaPreview || !roomId || mediaSending) return;
     setMediaSending(true);
@@ -1005,6 +1043,13 @@ const ChatPage: React.FC = () => {
         </div>
       )}
 
+      <GifPicker
+        open={gifPickerOpen}
+        onClose={() => setGifPickerOpen(false)}
+        onSelect={handleSendGif}
+        brandColor={BRAND}
+      />
+
       {/* ── Input bar ───────────────────────────────────────────────────── */}
       {/* Hidden file input */}
       <input
@@ -1020,7 +1065,14 @@ const ChatPage: React.FC = () => {
       >
         {/* Text field */}
         <div className="flex-1 flex items-center bg-white rounded-full px-4 gap-2 shadow-sm min-h-[44px]">
-          <button className="opacity-60 hover:opacity-100 shrink-0" style={{ color: BRAND }}>
+          <button
+            type="button"
+            onClick={() => setGifPickerOpen((open) => !open)}
+            className={`shrink-0 transition-opacity ${gifPickerOpen ? "opacity-100" : "opacity-60 hover:opacity-100"}`}
+            style={{ color: BRAND }}
+            aria-label={gifPickerOpen ? "Close GIF picker" : "Send a GIF"}
+            aria-expanded={gifPickerOpen}
+          >
             <Smile className="w-5 h-5" />
           </button>
           <input
