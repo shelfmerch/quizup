@@ -5,6 +5,7 @@ const registerMatchmaking = require("./matchmaking");
 const registerBattle = require("./battle");
 const registerChat = require("./chat");
 const registerChallenge = require("./challenge");
+const onlinePresence = require("../state/onlinePresence");
 
 /**
  * Initialize Socket.io on the HTTP server.
@@ -75,6 +76,19 @@ const initSockets = (httpServer) => {
 
     socket.join(`user:${socket.userId}`);
 
+    // ── Presence tracking ─────────────────────────────────────────────────
+    const justCameOnline = onlinePresence.incrOnline(socket.userId);
+    if (justCameOnline) {
+      // Broadcast to all connected clients that this user is now online
+      socket.broadcast.emit("presence:online", { userId: socket.userId });
+    }
+
+    // Let clients query bulk presence status
+    socket.on("presence:check", (payload) => {
+      const userIds = Array.isArray(payload?.userIds) ? payload.userIds.slice(0, 200) : [];
+      socket.emit("presence:status", onlinePresence.checkMany(userIds));
+    });
+
     // Register feature-specific handlers
     registerMatchmaking(socket, io);
     registerBattle(socket, io);
@@ -83,6 +97,10 @@ const initSockets = (httpServer) => {
 
     socket.on("disconnect", (reason) => {
       console.log(`[Socket] Disconnected: ${socket.username} — ${reason}`);
+      const wentOffline = onlinePresence.decrOnline(socket.userId);
+      if (wentOffline) {
+        io.emit("presence:offline", { userId: socket.userId });
+      }
     });
   });
 
@@ -90,3 +108,4 @@ const initSockets = (httpServer) => {
 };
 
 module.exports = initSockets;
+

@@ -1,8 +1,11 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useMemo } from "react";
 import { leaderboardService } from "@/services/leaderboardService";
 import { LeaderboardEntry } from "@/types";
 import { useNavigate, useLocation } from "react-router-dom";
 import { Settings, Search, MessageCircle, Globe, Tag, ArrowLeft } from "lucide-react";
+import { useOnlineStatus } from "@/hooks/useOnlineStatus";
+import { OnlineIndicator } from "@/components/ui/OnlineIndicator";
+
 
 // ─── League helpers ────────────────────────────────────────────────────────────
 type LeagueKey = "unranked" | "bronze" | "silver" | "gold" | "crystal" | "master" | "champion" | "titan" | "legend";
@@ -82,6 +85,9 @@ const Leaderboard: React.FC = () => {
 
   const entries = activeTab === "global" ? globalEntries : categoryEntries;
   const loading  = activeTab === "global" ? loadingGlobal  : loadingCategory;
+
+  const userIds = useMemo(() => entries.map((entry) => entry.userId), [entries]);
+  const { isOnline } = useOnlineStatus(userIds);
 
   // ── Render ──────────────────────────────────────────────────────────────────
   return (
@@ -186,6 +192,10 @@ const Leaderboard: React.FC = () => {
                   <div className="relative p-[3px] rounded-full bg-gradient-to-tr from-cyan-400 to-blue-500 shadow-lg">
                     <img src={entries[1].avatarUrl} alt="" className="w-16 h-16 sm:w-20 sm:h-20 rounded-full border-[3px] border-white object-cover" />
                     <div className="absolute -bottom-2.5 left-1/2 -translate-x-1/2 w-6 h-6 sm:w-7 sm:h-7 rounded-full bg-cyan-400 text-white font-bold text-xs flex items-center justify-center border-2 border-white shadow-sm">2</div>
+                    <OnlineIndicator
+                      isOnline={isOnline(entries[1].userId)}
+                      className="absolute top-1 right-1 border-2 border-white rounded-full"
+                    />
                   </div>
                   <p className="mt-4 text-xs sm:text-sm font-bold text-slate-900 truncate w-full text-center px-1">{entries[1].username}</p>
                   <p className="text-[10px] font-semibold text-cyan-600 mt-0.5">{entries[1].score.toLocaleString()}</p>
@@ -199,6 +209,10 @@ const Leaderboard: React.FC = () => {
                   <div className="relative p-[4px] rounded-full bg-gradient-to-tr from-yellow-300 to-orange-500 shadow-xl">
                     <img src={entries[0].avatarUrl} alt="" className="w-24 h-24 sm:w-28 sm:h-28 rounded-full border-4 border-white object-cover" />
                     <div className="absolute -bottom-3 left-1/2 -translate-x-1/2 w-8 h-8 rounded-full bg-yellow-400 text-white font-black text-sm flex items-center justify-center border-2 border-white shadow-md">1</div>
+                    <OnlineIndicator
+                      isOnline={isOnline(entries[0].userId)}
+                      className="absolute top-2 right-2 border-2 border-white rounded-full"
+                    />
                   </div>
                   <p className="mt-5 text-sm sm:text-base font-bold text-slate-900 truncate w-full text-center px-1">{entries[0].username}</p>
                   <p className="text-xs font-semibold text-yellow-600 mt-0.5">{entries[0].score.toLocaleString()}</p>
@@ -212,6 +226,10 @@ const Leaderboard: React.FC = () => {
                   <div className="relative p-[3px] rounded-full bg-gradient-to-tr from-pink-400 to-purple-500 shadow-lg">
                     <img src={entries[2].avatarUrl} alt="" className="w-16 h-16 sm:w-20 sm:h-20 rounded-full border-[3px] border-white object-cover" />
                     <div className="absolute -bottom-2.5 left-1/2 -translate-x-1/2 w-6 h-6 sm:w-7 sm:h-7 rounded-full bg-pink-400 text-white font-bold text-xs flex items-center justify-center border-2 border-white shadow-sm">3</div>
+                    <OnlineIndicator
+                      isOnline={isOnline(entries[2].userId)}
+                      className="absolute top-1 right-1 border-2 border-white rounded-full"
+                    />
                   </div>
                   <p className="mt-4 text-xs sm:text-sm font-bold text-slate-900 truncate w-full text-center px-1">{entries[2].username}</p>
                   <p className="text-[10px] font-semibold text-pink-600 mt-0.5">{entries[2].score.toLocaleString()}</p>
@@ -231,7 +249,13 @@ const Leaderboard: React.FC = () => {
                 }`}
               >
                 <span className="text-slate-400 font-bold text-sm w-6 text-center shrink-0">#{idx + 4}</span>
-                <img src={entry.avatarUrl} alt="" className="w-10 h-10 rounded-full object-cover border border-slate-200 group-hover:border-slate-300 transition-colors" />
+                <div className="relative shrink-0">
+                  <img src={entry.avatarUrl} alt="" className="w-10 h-10 rounded-full object-cover border border-slate-200 group-hover:border-slate-300 transition-colors" />
+                  <OnlineIndicator
+                    isOnline={isOnline(entry.userId)}
+                    className="absolute bottom-0 right-0 border-2 border-white rounded-full"
+                  />
+                </div>
                 <div className="flex-1 text-left min-w-0">
                   <p className="text-[13px] font-bold text-slate-900 truncate">{entry.username}</p>
                   <p className="text-[9px] font-semibold text-slate-500 mt-0.5 truncate">

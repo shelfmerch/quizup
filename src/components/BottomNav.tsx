@@ -33,7 +33,7 @@ const BottomNav: React.FC = () => {
             return (
               <button
                 key={label}
-                onClick={() => navigate(path)}
+                onClick={() => navigate('/all-categories')}
                 className="flex items-center justify-center -mt-5 flex-1"
                 aria-label="Browse topics"
               >

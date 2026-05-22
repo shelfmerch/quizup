@@ -5,6 +5,9 @@ import { fetchChatConversations, type ChatConversation } from "@/services/chatAp
 import { useChatUnread } from "@/hooks/useChatUnread";
 import { subscribeChatInbox } from "@/services/chatService";
 import { resolveMediaUrl } from "@/config/env";
+import { useOnlineStatus } from "@/hooks/useOnlineStatus";
+import { OnlineIndicator } from "@/components/ui/OnlineIndicator";
+
 
 const BRAND = "#128c7e";
 
@@ -37,10 +40,11 @@ const RowSkeleton: React.FC = () => (
 
 interface ConversationRowProps {
   conv: ChatConversation;
+  isOnline: boolean;
   onOpen: () => void;
 }
 
-const ConversationRow: React.FC<ConversationRowProps> = ({ conv, onOpen }) => {
+const ConversationRow: React.FC<ConversationRowProps> = ({ conv, isOnline, onOpen }) => {
   const name = conv.displayName || conv.username;
   const avatar =
     resolveMediaUrl(conv.avatarUrl) ||
@@ -58,14 +62,20 @@ const ConversationRow: React.FC<ConversationRowProps> = ({ conv, onOpen }) => {
       onClick={onOpen}
       className="w-full flex items-center gap-3 px-4 py-3 border-b border-[#e9edef] hover:bg-[#f5f6f6] active:bg-[#ebebeb] transition-colors text-left"
     >
-      <img
-        src={avatar}
-        alt=""
-        className="w-[49px] h-[49px] rounded-full object-cover shrink-0"
-        onError={(e) => {
-          (e.target as HTMLImageElement).src = `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(conv.username)}`;
-        }}
-      />
+      <div className="relative shrink-0">
+        <img
+          src={avatar}
+          alt=""
+          className="w-[49px] h-[49px] rounded-full object-cover"
+          onError={(e) => {
+            (e.target as HTMLImageElement).src = `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(conv.username)}`;
+          }}
+        />
+        <OnlineIndicator
+          isOnline={isOnline}
+          className="absolute top-0 right-0 border-2 border-white rounded-full"
+        />
+      </div>
 
       <div className="flex-1 min-w-0">
         <div className="flex items-baseline justify-between gap-2">
@@ -109,6 +119,9 @@ const Social: React.FC = () => {
   const [conversations, setConversations] = useState<ChatConversation[]>([]);
   const [loading, setLoading] = useState(true);
   const [query, setQuery] = useState("");
+
+  const peerIds = useMemo(() => conversations.map((c) => c.peerId), [conversations]);
+  const { isOnline } = useOnlineStatus(peerIds);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -221,6 +234,7 @@ const Social: React.FC = () => {
             <ConversationRow
               key={conv.peerId}
               conv={conv}
+              isOnline={isOnline(conv.peerId)}
               onOpen={() => navigate(`/chat/${conv.peerId}`)}
             />
           ))

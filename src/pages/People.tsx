@@ -1,10 +1,13 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { profileService } from "@/services/profileService";
 import { ProfileFollowUser } from "@/types";
 import { resolveMediaUrl } from "@/config/env";
 import { toast } from "sonner";
+import { useOnlineStatus } from "@/hooks/useOnlineStatus";
+import { OnlineIndicator } from "@/components/ui/OnlineIndicator";
+
 import {
   Users,
   UserCheck,
@@ -39,6 +42,7 @@ const countryFlag = (code: string) => {
 // ─── User Card ─────────────────────────────────────────────────────────────────
 interface UserCardProps {
   user: ProfileFollowUser;
+  isOnline: boolean;
   index: number;
   mode: "follower" | "following";
   onFollow: (id: string) => Promise<void>;
@@ -48,6 +52,7 @@ interface UserCardProps {
 
 const UserCard: React.FC<UserCardProps> = ({
   user,
+  isOnline,
   index,
   mode,
   onFollow,
@@ -80,7 +85,7 @@ const UserCard: React.FC<UserCardProps> = ({
       {/* Avatar */}
       <button
         onClick={() => navigate(`/profile/${user.id}`)}
-        className="flex-shrink-0 focus:outline-none"
+        className="flex-shrink-0 focus:outline-none relative"
       >
         <img
           src={avatar}
@@ -89,6 +94,10 @@ const UserCard: React.FC<UserCardProps> = ({
           onError={(e) => {
             (e.target as HTMLImageElement).src = `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(user.username)}`;
           }}
+        />
+        <OnlineIndicator
+          isOnline={isOnline}
+          className="absolute bottom-0 right-0 border-2 border-quizup-card rounded-full"
         />
       </button>
 
@@ -162,6 +171,16 @@ const People: React.FC = () => {
   const [activeTab, setActiveTab] = useState<Tab>("followers");
   const [followers, setFollowers] = useState<ProfileFollowUser[]>([]);
   const [following, setFollowing] = useState<ProfileFollowUser[]>([]);
+
+  // We can merge all user IDs to track online status
+  const userIds = useMemo(() => {
+    const ids = new Set<string>();
+    followers.forEach((u) => ids.add(u.id));
+    following.forEach((u) => ids.add(u.id));
+    return Array.from(ids);
+  }, [followers, following]);
+
+  const { isOnline } = useOnlineStatus(userIds);
   const [followingSet, setFollowingSet] = useState<Set<string>>(new Set());
   const [loadingFollowers, setLoadingFollowers] = useState(true);
   const [loadingFollowing, setLoadingFollowing] = useState(true);
@@ -337,6 +356,7 @@ const People: React.FC = () => {
             <UserCard
               key={u.id}
               user={u}
+              isOnline={isOnline(u.id)}
               index={i}
               mode={activeTab === "followers" ? "follower" : "following"}
               onFollow={handleFollow}

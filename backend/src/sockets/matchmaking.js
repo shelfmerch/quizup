@@ -4,18 +4,23 @@ const {
   leaveAllQueues,
   getActiveMatch,
 } = require("../services/matchmakingService");
+const MatchQueue = require("../models/MatchQueue");
+const User = require("../models/User");
+const Category = require("../models/Category");
 
 /**
  * Matchmaking socket event handlers.
  *
  * Events received:
- *   join_queue   { categoryId }
- *   leave_queue  { categoryId }
+ *   join_queue          { categoryId }
+ *   leave_queue         { categoryId }
+ *   queue:get_searching  (no payload)
  *
  * Events emitted:
- *   queued        { categoryId }              — confirmed in queue
- *   match_found   { matchId, opponent, categoryId, categoryName, totalRounds, questions (display only, no correctIndex) }
- *   queue_error   { message }
+ *   queued               { categoryId }              — confirmed in queue
+ *   match_found          { matchId, opponent, categoryId, categoryName, totalRounds, questions }
+ *   queue_error          { message }
+ *   queue:searching_users { users: [...] }
  */
 const registerMatchmaking = (socket, io) => {
   // ── join_queue ────────────────────────────────────────────────────────────
@@ -95,6 +100,55 @@ const registerMatchmaking = (socket, io) => {
     } catch (err) {
       console.error("[Matchmaking] join_queue error:", err);
       socket.emit("queue_error", { message: "Matchmaking error, please try again" });
+    }
+  });
+
+  // ── queue:get_searching — return real players in the matchmaking queue ───
+  socket.on("queue:get_searching", async () => {
+    try {
+      // Fetch all queue entries except the requesting user, newest first
+      const queueEntries = await MatchQueue.find({ userId: { $ne: socket.userId } })
+        .sort({ createdAt: -1 })
+        .limit(20)
+        .lean();
+
+      if (queueEntries.length === 0) {
+        return socket.emit("queue:searching_users", { users: [] });
+      }
+
+      // Populate user info
+      const userIds = queueEntries.map((q) => q.userId);
+      const users = await User.find({ _id: { $in: userIds } }).lean();
+      const userMap = {};
+      users.forEach((u) => { userMap[u._id.toString()] = u; });
+
+      // Populate category names
+      const catSlugs = [...new Set(queueEntries.map((q) => q.categoryId))];
+      const categories = await Category.find({ slug: { $in: catSlugs } }).lean();
+      const catMap = {};
+      categories.forEach((c) => { catMap[c.slug] = c.name; });
+
+      const result = queueEntries
+        .map((q) => {
+          const u = userMap[q.userId.toString()];
+          if (!u) return null;
+          return {
+            odoc: String(q.userId),
+            userId: u._id.toString(),
+            username: u.username,
+            avatarUrl: u.avatarUrl || "",
+            level: u.level || 1,
+            categoryId: q.categoryId,
+            categoryName: catMap[q.categoryId] || q.categoryId,
+            queuedAt: q.createdAt,
+          };
+        })
+        .filter(Boolean);
+
+      socket.emit("queue:searching_users", { users: result });
+    } catch (err) {
+      console.error("[Matchmaking] queue:get_searching error:", err);
+      socket.emit("queue:searching_users", { users: [] });
     }
   });
 

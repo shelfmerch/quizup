@@ -3,6 +3,7 @@ const User = require("../models/User");
 const Category = require("../models/Category");
 const { createDirectMatch, getActiveMatch } = require("../services/matchmakingService");
 const battlePresence = require("../state/battlePresence");
+const onlinePresence = require("../state/onlinePresence");
 
 /**
  * In-memory pending challenges (clears on server restart).
@@ -11,7 +12,6 @@ const battlePresence = require("../state/battlePresence");
 const challengesById = new Map();
 const incomingIdsByUser = new Map(); // userId -> Set(challengeId)
 const outgoingIdsByUser = new Map(); // userId -> Set(challengeId)
-const onlineCountByUser = new Map(); // userId -> number of active sockets
 
 function _getSet(map, key) {
   let s = map.get(key);
@@ -22,19 +22,10 @@ function _getSet(map, key) {
   return s;
 }
 
-function _incrOnline(userId) {
-  onlineCountByUser.set(userId, (onlineCountByUser.get(userId) || 0) + 1);
-}
-
-function _decrOnline(userId) {
-  const next = (onlineCountByUser.get(userId) || 0) - 1;
-  if (next <= 0) onlineCountByUser.delete(userId);
-  else onlineCountByUser.set(userId, next);
-}
-
-function _isOnline(userId) {
-  return (onlineCountByUser.get(userId) || 0) > 0;
-}
+// Delegate to shared presence module
+const _incrOnline = (userId) => onlinePresence.incrOnline(userId);
+const _decrOnline = (userId) => onlinePresence.decrOnline(userId);
+const _isOnline = (userId) => onlinePresence.isOnline(userId);
 
 function _removeChallenge(challengeId) {
   const ch = challengesById.get(challengeId);
@@ -211,6 +202,26 @@ module.exports = function registerChallenge(socket, io) {
     } catch (err) {
       console.error("[Challenge] accept error:", err);
       socket.emit("challenge:error", { message: "Failed to start match" });
+    }
+  });
+
+  // Instant start challenge from searching queue suggestions
+  socket.on("challenge:instant_start", async ({ opponentId, categoryId } = {}) => {
+    try {
+      const oppId = String(opponentId || "").trim();
+      const catId = String(categoryId || "").trim() || "science";
+      if (!oppId) return socket.emit("challenge:error", { message: "opponentId is required" });
+
+      const { matchId } = await createDirectMatch(socket.userId, oppId, catId);
+      const stateMatch = await getActiveMatch(matchId);
+      if (!stateMatch) throw new Error("Match missing after creation");
+
+      // Notify both players to join the match room if they are active
+      io.to(`user:${socket.userId}`).emit("match_found", _matchFoundPayload(matchId, stateMatch, socket.userId));
+      io.to(`user:${oppId}`).emit("match_found", _matchFoundPayload(matchId, stateMatch, oppId));
+    } catch (err) {
+      console.error("[Challenge] instant_start error:", err);
+      socket.emit("challenge:error", { message: "Failed to start instant match" });
     }
   });
 };

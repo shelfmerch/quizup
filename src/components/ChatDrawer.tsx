@@ -3,6 +3,9 @@ import { X, Send } from "lucide-react";
 import { ChatMessage } from "@/types";
 import { chatService, chatRoomId } from "@/services/chatService";
 import { useAuth } from "@/hooks/useAuth";
+import { useOnlineStatus } from "@/hooks/useOnlineStatus";
+import { OnlineIndicator } from "@/components/ui/OnlineIndicator";
+
 
 interface ChatDrawerProps {
   /** The other player's userId */
@@ -24,6 +27,8 @@ const ChatDrawer: React.FC<ChatDrawerProps> = ({
   const [visible, setVisible] = useState(false);
   const bottomRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+
+  const { isOnline } = useOnlineStatus(peerId);
 
   const roomId = user ? chatRoomId(user.id, peerId) : "";
 
@@ -96,11 +101,18 @@ const ChatDrawer: React.FC<ChatDrawerProps> = ({
 
         {/* Header */}
         <div className="flex items-center gap-3 px-4 py-3 border-b border-white/10">
-          <img
-            src={peerAvatar}
-            alt={peerName}
-            className="w-8 h-8 rounded-full object-cover"
-          />
+          <div className="relative shrink-0">
+            <img
+              src={peerAvatar}
+              alt={peerName}
+              className="w-8 h-8 rounded-full object-cover"
+            />
+            <OnlineIndicator
+              isOnline={isOnline(peerId)}
+              size="sm"
+              className="absolute bottom-0 right-0 border border-zinc-950 rounded-full"
+            />
+          </div>
           <div className="flex-1 min-w-0">
             <p className="text-sm font-semibold text-white truncate">{peerName}</p>
             <p className="text-[10px] text-white/40">Direct Message</p>

@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useRef, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState, useMemo } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import {
   ArrowLeft,
@@ -15,8 +15,6 @@ import {
   UserCheck,
   UserPlus,
   Lock,
-  Calendar,
-  Share2,
   Sparkles,
   Award,
 } from "lucide-react";
@@ -26,11 +24,20 @@ import BottomNav from "@/components/BottomNav";
 import { useAuth } from "@/hooks/useAuth";
 import { MOCK_ACHIEVEMENTS, MOCK_CATEGORIES, MOCK_MATCH_HISTORY } from "@/data/mock-data";
 import { resolveMediaUrl } from "@/config/env";
+import { useOnlineStatus } from "@/hooks/useOnlineStatus";
+import { OnlineIndicator } from "@/components/ui/OnlineIndicator";
+
 import { fetchFollowedCategories, fetchPublicCategories } from "@/services/categoryService";
 import { getSocket } from "@/services/socketService";
 import { profileService } from "@/services/profileService";
 import { Category, MatchFoundPayload, MatchHistoryEntry, Profile, ProfileFollowUser } from "@/types";
 import { LeagueModal } from "@/components/LeagueModal";
+import {
+  AchievementModal,
+  AchievementBadge,
+  ACHIEVEMENT_TIERS,
+  ACHIEVEMENT_RARITY_MAP,
+} from "@/components/AchievementModal";
 
 type LeagueKey =
   | "unranked"
@@ -72,62 +79,6 @@ function playerRankLabel(level: number) {
   return "Veteran";
 }
 
-interface RarityTier {
-  name: string;
-  color: string;
-  bgGradient: string;
-  glowClass: string;
-  textClass: string;
-  bgSolid: string;
-}
-
-const ACHIEVEMENT_TIERS: Record<string, RarityTier> = {
-  legendary: {
-    name: "Legendary",
-    color: "#eab308",
-    bgGradient: "from-amber-400 via-yellow-500 to-amber-600",
-    glowClass: "shadow-[0_0_15px_rgba(234,179,8,0.45)] border-amber-400/80 hover:shadow-[0_0_25px_rgba(234,179,8,0.7)]",
-    textClass: "text-amber-500 font-extrabold tracking-widest uppercase",
-    bgSolid: "bg-amber-500",
-  },
-  epic: {
-    name: "Epic",
-    color: "#a855f7",
-    bgGradient: "from-fuchsia-500 via-purple-600 to-indigo-600",
-    glowClass: "shadow-[0_0_15px_rgba(168,85,247,0.45)] border-purple-400/80 hover:shadow-[0_0_25px_rgba(168,85,247,0.7)]",
-    textClass: "text-purple-500 font-extrabold tracking-widest uppercase",
-    bgSolid: "bg-purple-500",
-  },
-  rare: {
-    name: "Rare",
-    color: "#3b82f6",
-    bgGradient: "from-blue-400 via-indigo-500 to-cyan-500",
-    glowClass: "shadow-[0_0_12px_rgba(59,130,246,0.35)] border-blue-400/80 hover:shadow-[0_0_20px_rgba(59,130,246,0.6)]",
-    textClass: "text-blue-500 font-extrabold tracking-widest uppercase",
-    bgSolid: "bg-blue-500",
-  },
-  common: {
-    name: "Common",
-    color: "#14b8a6",
-    bgGradient: "from-teal-400 to-emerald-500",
-    glowClass: "shadow-[0_0_10px_rgba(20,184,166,0.25)] border-teal-400/80 hover:shadow-[0_0_18px_rgba(20,184,166,0.5)]",
-    textClass: "text-teal-600 font-extrabold tracking-widest uppercase",
-    bgSolid: "bg-teal-500",
-  },
-};
-
-const ACHIEVEMENT_RARITY_MAP: Record<string, keyof typeof ACHIEVEMENT_TIERS> = {
-  a1: "common",
-  a2: "rare",
-  a3: "epic",
-  a4: "legendary",
-  a5: "rare",
-  a6: "common",
-  a7: "epic",
-  a8: "legendary",
-  a9: "legendary",
-};
-
 const TopicTile: React.FC<{ category: Category; index: number; onClick: () => void }> = ({ category, index, onClick }) => {
   return (
     <button type="button" onClick={onClick} className="w-[74px] shrink-0 text-center">
@@ -141,21 +92,6 @@ const TopicTile: React.FC<{ category: Category; index: number; onClick: () => vo
         {category.name}
       </span>
     </button>
-  );
-};
-
-const AchievementBadge: React.FC<{ src: string; icon: string; alt: string; className?: string; isUnlocked?: boolean }> = ({ src, icon, alt, className = "h-24 w-24", isUnlocked = true }) => {
-  const [errored, setErrored] = useState(false);
-  if (errored || !src) {
-    return <span className="text-2xl leading-none filter drop-shadow-sm" aria-label={alt}>{icon}</span>;
-  }
-  return (
-    <img
-      src={src}
-      alt={alt}
-      className={`${className} object-contain transition-transform duration-300 filter drop-shadow-sm ${isUnlocked ? "" : "grayscale opacity-70"}`}
-      onError={() => setErrored(true)}
-    />
   );
 };
 
@@ -201,18 +137,24 @@ const HistoryBubble: React.FC<{ match: MatchHistoryEntry; index: number }> = ({ 
   );
 };
 
-const FollowerTile: React.FC<{ person: ProfileFollowUser; onSelect: (id: string) => void }> = ({ person, onSelect }) => {
+const FollowerTile: React.FC<{ person: ProfileFollowUser; isOnline: boolean; onSelect: (id: string) => void }> = ({ person, isOnline, onSelect }) => {
   const src = resolveMediaUrl(
     person.avatarUrl,
     `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(person.username)}`
   );
   const label = person.displayName || person.username;
   return (
-    <button type="button" onClick={() => onSelect(person.id)} className="w-[76px] shrink-0 text-center">
-      <span className="mx-auto flex h-12 w-12 items-center justify-center overflow-hidden rounded-full border-[3px] border-[#dddddd] bg-white shadow-md">
-        <img src={src} alt="" className="h-full w-full object-cover" />
-      </span>
-      <p className="mt-1 truncate text-[9px] font-black text-[#444]">{label}</p>
+    <button type="button" onClick={() => onSelect(person.id)} className="w-[76px] shrink-0 text-center relative flex flex-col items-center">
+      <div className="relative">
+        <span className="mx-auto flex h-12 w-12 items-center justify-center overflow-hidden rounded-full border-[3px] border-[#dddddd] bg-white shadow-md">
+          <img src={src} alt="" className="h-full w-full object-cover" />
+        </span>
+        <OnlineIndicator
+          isOnline={isOnline}
+          className="absolute bottom-0 right-0 border-2 border-white rounded-full"
+        />
+      </div>
+      <p className="mt-1 truncate text-[9px] font-black text-[#444] w-full">{label}</p>
     </button>
   );
 };
@@ -242,6 +184,17 @@ const ProfilePage: React.FC = () => {
   const [leagueModalOpen, setLeagueModalOpen] = useState(false);
   const [selectedAchievement, setSelectedAchievement] = useState<typeof MOCK_ACHIEVEMENTS[number] | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // We can merge all user IDs to track online status
+  const userIds = useMemo(() => {
+    const ids = new Set<string>();
+    if (!isOwnProfile && targetId) ids.add(targetId);
+    followers.forEach((f) => ids.add(f.id));
+    return Array.from(ids);
+  }, [isOwnProfile, targetId, followers]);
+
+  const { isOnline } = useOnlineStatus(userIds);
+
 
   const loadProfile = useCallback(async () => {
     if (!targetId && !user) return;
@@ -536,7 +489,13 @@ const ProfilePage: React.FC = () => {
                 <h2 className="truncate font-display text-2xl font-black leading-tight drop-shadow">
                   {p.displayName || p.username}
                 </h2>
-                <span className="h-2 w-2 rounded-full bg-[#20c997]" />
+                {isOwnProfile ? (
+                  <span className="h-2.5 w-2.5 rounded-full bg-green-500 shrink-0" title="Online (You)" />
+                ) : (
+                  targetId && isOnline(targetId) && (
+                    <OnlineIndicator isOnline={true} size="sm" />
+                  )
+                )}
                 {/* <span className="ml-auto font-display text-2xl font-light text-white/85">{p.level}</span> */}
               </div>
               {/* <p className="mt-0.5 text-sm font-semibold text-white/75">{playerRankLabel(p.level)}</p>
@@ -736,150 +695,16 @@ const ProfilePage: React.FC = () => {
           })}
         </div>
 
-        {/* Premium Interactive Modal */}
-        {selectedAchievement && (() => {
-          const a = selectedAchievement;
-          const unlocked = p.achievements?.find((x) => x.id === a.id);
-          const isUnlocked = !!unlocked;
-          const unlockedAt = unlocked?.unlockedAt;
-          const rarityKey = ACHIEVEMENT_RARITY_MAP[a.id] || "common";
-          const tier = ACHIEVEMENT_TIERS[rarityKey];
-
-          return (
-            <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/60 sm:items-center backdrop-blur-md transition-all">
-              {/* Modal Box */}
-              <div className="w-full max-w-md bg-white rounded-t-[32px] sm:rounded-[32px] overflow-hidden shadow-2xl border border-slate-100 flex flex-col relative animate-slide-up">
-                {/* Accent Banner */}
-                <div className={`h-3 w-full bg-gradient-to-r ${tier.bgGradient}`} />
-                
-                {/* Close x */}
-                <button
-                  type="button"
-                  className="absolute top-4 right-4 w-8 h-8 flex items-center justify-center rounded-full bg-slate-100 hover:bg-slate-200 text-slate-500 hover:text-slate-800 transition-colors z-10 shadow-sm"
-                  onClick={() => setSelectedAchievement(null)}
-                >
-                  ✕
-                </button>
-
-                <div className="px-6 pt-8 pb-6 flex flex-col items-center text-center">
-                  {/* Glowing Frame */}
-                  <div className={`relative h-28 w-28 flex items-center justify-center rounded-3xl bg-white border-[3px] p-2.5 shadow-xl transition-transform ${
-                    isUnlocked 
-                      ? `bg-gradient-to-br ${tier.bgGradient} ${tier.glowClass} animate-float-gentle`
-                      : 'border-slate-200'
-                  }`}>
-                    <div className="h-full w-full rounded-[20px] bg-white flex items-center justify-center overflow-hidden relative shadow-inner">
-                      <AchievementBadge src={a.src} icon={a.icon} alt={a.name} className="h-16 w-16" isUnlocked={isUnlocked} />
-                      {isUnlocked && (
-                        <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-white/20 to-transparent pointer-events-none animate-shimmer-sweep" />
-                      )}
-                    </div>
-                    
-                    {/* Status Badge */}
-                    <div className={`absolute -bottom-2 -right-2 flex h-8 w-8 items-center justify-center rounded-full border-2 border-white shadow-md ${
-                      isUnlocked ? 'bg-emerald-500 text-white' : 'bg-slate-400 text-white'
-                    }`}>
-                      {isUnlocked ? <Sparkles className="h-4 w-4" /> : <Lock className="h-3.5 w-3.5" />}
-                    </div>
-                  </div>
-
-                  {/* Title & Rarity */}
-                  <div className="mt-6">
-                    <span className={`inline-block px-3 py-1 rounded-full text-[9px] font-black tracking-widest ${
-                      isUnlocked 
-                        ? `${tier.bgSolid} text-white`
-                        : 'bg-slate-100 text-slate-500'
-                    } uppercase mb-2 shadow-sm`}>
-                      {tier.name} Achievement
-                    </span>
-                    <h3 className="text-xl font-black text-slate-900 leading-tight">
-                      {a.name}
-                    </h3>
-                  </div>
-
-                  {/* Description */}
-                  <p className="mt-3 text-slate-600 font-semibold text-sm max-w-xs leading-relaxed">
-                    {a.description}
-                  </p>
-
-                  <div className="w-full border-t border-slate-100 my-5" />
-
-                  {/* Earned Status Info */}
-                  <div className="w-full flex flex-col items-center">
-                    {isUnlocked ? (
-                      <div className="flex flex-col items-center gap-1.5">
-                        <div className="flex items-center gap-1.5 text-emerald-600 font-bold text-sm bg-emerald-50 px-4 py-1.5 rounded-full border border-emerald-100">
-                          <CheckCircle2 className="h-4 w-4" />
-                          Unlocked!
-                        </div>
-                        {unlockedAt && (
-                          <p className="text-xs text-slate-400 font-semibold mt-1 flex items-center gap-1">
-                            <Calendar className="h-3 w-3" />
-                            Earned on {new Date(unlockedAt).toLocaleDateString(undefined, { dateStyle: 'medium' })}
-                          </p>
-                        )}
-                      </div>
-                    ) : (
-                      <div className="flex flex-col items-center gap-1.5 w-full">
-                        <div className="flex items-center gap-1.5 text-slate-500 font-bold text-sm bg-slate-50 px-4 py-1.5 rounded-full border border-slate-200">
-                          <Lock className="h-4 w-4" />
-                          Locked
-                        </div>
-                        <p className="text-xs text-slate-400 font-semibold mt-1 max-w-[240px]">
-                          Challenge yourself in battles to satisfy this requirement and claim this reward!
-                        </p>
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Actions */}
-                  <div className="w-full mt-6 grid grid-cols-2 gap-3">
-                    <button
-                      type="button"
-                      onClick={() => setSelectedAchievement(null)}
-                      className="h-11 rounded-xl border border-slate-200 text-slate-700 bg-white font-bold text-sm hover:bg-slate-50 transition active:scale-[0.98] shadow-sm"
-                    >
-                      Close
-                    </button>
-                    {isUnlocked ? (
-                      <button
-                        type="button"
-                        onClick={() => {
-                          if (navigator.share) {
-                            navigator.share({
-                              title: `Unlocked Achievement: ${a.name}!`,
-                              text: `I just unlocked the "${a.name}" achievement in Quiz Blitz Arena! Can you beat my score?`,
-                              url: window.location.href,
-                            }).catch(console.error);
-                          } else {
-                            navigator.clipboard.writeText(`I just unlocked the "${a.name}" achievement in Quiz Blitz Arena!`);
-                            toast.success("Copied share message to clipboard!");
-                          }
-                        }}
-                        className="h-11 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white font-extrabold text-sm flex items-center justify-center gap-2 transition active:scale-[0.98] shadow-md shadow-indigo-600/10"
-                      >
-                        <Share2 className="h-4 w-4" />
-                        Share
-                      </button>
-                    ) : (
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setSelectedAchievement(null);
-                          navigate("/categories");
-                        }}
-                        className="h-11 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-extrabold text-sm flex items-center justify-center gap-2 transition active:scale-[0.98] shadow-md shadow-slate-950/10"
-                      >
-                        <Swords className="h-4 w-4" />
-                        Play Now
-                      </button>
-                    )}
-                  </div>
-                </div>
-              </div>
-            </div>
-          );
-        })()}
+        <AchievementModal
+          isOpen={!!selectedAchievement}
+          onClose={() => setSelectedAchievement(null)}
+          achievements={displayAchievements}
+          focusId={selectedAchievement?.id ?? null}
+          onPlayNow={() => {
+            setSelectedAchievement(null);
+            navigate("/categories");
+          }}
+        />
       </section>
 
       <section className="quizup-section mt-2 px-4 py-2">
@@ -904,7 +729,12 @@ const ProfilePage: React.FC = () => {
         {!followersLoading && !followersError && followers.length > 0 && (
           <div className="flex overflow-x-auto pb-1">
             {followers.slice(0, 5).map((person) => (
-              <FollowerTile key={person.id} person={person} onSelect={(id) => navigate(`/profile/${id}`)} />
+              <FollowerTile
+                key={person.id}
+                person={person}
+                isOnline={isOnline(person.id)}
+                onSelect={(id) => navigate(`/profile/${id}`)}
+              />
             ))}
           </div>
         )}
