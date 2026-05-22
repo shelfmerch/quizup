@@ -22,18 +22,20 @@ const BETWEEN_QUESTION_DELAY_MS = 3_000; // 3s between round_end and next questi
 /**
  * Calculate points for a correct answer.
  * Server is the ONLY place that does this.
+ *
+ * Scoring (smooth, predictable — no cliffs):
+ *   - 100 base for a correct answer
+ *   - linear time bonus: floor(remaining / total * 100)  (0 – 100)
+ *   - total per question (no multiplier): 100 – 200
+ *   - bonus rounds apply `pointsMultiplier` to the whole result
  */
 const calcPoints = (isCorrect, timeRemainingMs, timeLimitSec, pointsMultiplier = 1) => {
   if (!isCorrect) return 0;
   const mult = Number(pointsMultiplier) > 0 ? Number(pointsMultiplier) : 1;
 
-  const elapsedMs = (timeLimitSec * 1000) - timeRemainingMs;
-  let timeBonus = 0;
-  if (elapsedMs <= 2000) {
-    timeBonus = 100;
-  } else {
-    timeBonus = Math.floor((timeRemainingMs / (timeLimitSec * 1000)) * 100);
-  }
+  const timeLimitMs = Math.max(1, Number(timeLimitSec) * 1000);
+  const remaining = Math.max(0, Math.min(Number(timeRemainingMs) || 0, timeLimitMs));
+  const timeBonus = Math.floor((remaining / timeLimitMs) * 100);
 
   return Math.round((100 + timeBonus) * mult);
 };
@@ -92,19 +94,33 @@ const sendNextQuestion = async (matchId, io) => {
 
 /**
  * Handle a player's answer submission.
- * Idempotent — duplicate submissions for same player are ignored.
+ * Idempotent — duplicate submissions for same player/round are ignored.
+ * Stale submissions (questionIndex mismatch, timer already expired) are rejected.
  */
-const handleAnswer = async (matchId, userId, selectedIndex, io) => {
+const handleAnswer = async (matchId, userId, selectedIndex, io, clientQuestionIndex) => {
   const state = await getActiveMatch(matchId);
   if (!state || state.status !== "in_progress") return;
   if (state.currentQuestionIndex < 0) return;
 
+  // Reject answers tagged for a previous round (network lag / stale click)
+  if (
+    typeof clientQuestionIndex === "number" &&
+    clientQuestionIndex !== state.currentQuestionIndex
+  ) {
+    return;
+  }
+
   // Ignore if this player already answered this round
-  if (state.roundAnswers[userId]) return;
+  if (state.roundAnswers && state.roundAnswers[userId]) return;
 
   const question = state.questions[state.currentQuestionIndex];
   const now = Date.now();
-  const timeRemainingMs = Math.max(0, state.timerEndsAt - now);
+  const timerEnd = state.timerEndsAt ? new Date(state.timerEndsAt).getTime() : 0;
+  const timeRemainingMs = Math.max(0, timerEnd - now);
+
+  // If the round timer has already expired server-side, treat as timeout (0 pts)
+  if (timerEnd && now > timerEnd + 250) return;
+
   const isCorrect = selectedIndex === question.correctIndex;
   const mult = question.pointsMultiplier != null ? question.pointsMultiplier : question.isBonusRound ? 2 : 1;
   const points = calcPoints(isCorrect, timeRemainingMs, question.timeLimit, mult);
@@ -211,7 +227,7 @@ const endRound = async (matchId, io, state) => {
 /**
  * Finalize a match: persist to MongoDB, update user stats, emit match_end.
  */
-const finalizeMatch = async (matchId, io, endReason = "completed") => {
+const finalizeMatch = async (matchId, io, endReason = "completed", leaverId = null) => {
   // Clear any lingering timer
   const timer = questionTimers.get(matchId);
   if (timer) {
@@ -221,13 +237,17 @@ const finalizeMatch = async (matchId, io, endReason = "completed") => {
 
   const state = await getActiveMatch(matchId);
   if (!state) return; // Already finalized
+  if (state.status === "finalizing" || state.status === "completed") return;
 
   // Mark as finalizing to prevent double-calls
   await updateActiveMatch(matchId, { status: "finalizing" });
 
+  // Use ACTUAL current scores — never inflate or override
   const p1Score = state.player1.score;
   const p2Score = state.player2.score;
 
+  // Winner is decided purely by current score. If the match was abandoned
+  // and scores are tied, the player who quit forfeits the draw.
   let winnerId = null;
   let result1, result2;
   if (p1Score > p2Score) {
@@ -236,6 +256,17 @@ const finalizeMatch = async (matchId, io, endReason = "completed") => {
   } else if (p2Score > p1Score) {
     winnerId = state.player2.userId;
     result1 = "loss"; result2 = "win";
+  } else if (endReason === "abandoned" && leaverId) {
+    // Tie + someone quit → the non-leaver wins
+    if (leaverId === state.player1.userId) {
+      winnerId = state.player2.userId;
+      result1 = "loss"; result2 = "win";
+    } else if (leaverId === state.player2.userId) {
+      winnerId = state.player1.userId;
+      result1 = "win"; result2 = "loss";
+    } else {
+      result1 = result2 = "draw";
+    }
   } else {
     result1 = result2 = "draw";
   }
@@ -423,7 +454,7 @@ const handlePlayerDisconnect = async (matchId, userId, io) => {
       if (live?.connected) return;
     }
 
-    await finalizeMatch(matchId, io, "abandoned");
+    await finalizeMatch(matchId, io, "abandoned", userId);
   }, GRACE_PERIOD_MS);
 
   disconnectTimers.set(timerKey, graceTimer);

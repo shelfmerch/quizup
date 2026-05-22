@@ -89,6 +89,8 @@ export function useBattleController(config: BattleControllerConfig | null) {
   const betweenRoundsRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const opponentTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const timeoutHandledRef = useRef(false);
+  /** Question index the player has already submitted an answer for. */
+  const submittedForRoundRef = useRef<number>(-1);
 
   const clearTimers = useCallback(() => {
     if (revealTimerRef.current) clearTimeout(revealTimerRef.current);
@@ -149,6 +151,7 @@ export function useBattleController(config: BattleControllerConfig | null) {
       }
       const roundEndTimestamp = Date.now() + nextQ.timeLimit * 1000;
       timeoutHandledRef.current = false;
+      submittedForRoundRef.current = -1;
       dispatch({
         type: "START_ROUND",
         questionIndex: s.currentQuestionIndex + 1,
@@ -217,6 +220,7 @@ export function useBattleController(config: BattleControllerConfig | null) {
 
     const onQuestionStart = (payload: QuestionStartPayload) => {
       timeoutHandledRef.current = false;
+      submittedForRoundRef.current = -1;
       dispatch(mapQuestionStartToEvent(payload));
     };
 
@@ -370,6 +374,7 @@ export function useBattleController(config: BattleControllerConfig | null) {
     const questionIndex =
       state.currentQuestionIndex < 0 ? 0 : state.currentQuestionIndex + 1;
     timeoutHandledRef.current = false;
+    submittedForRoundRef.current = -1;
     dispatch({
       type: "START_ROUND",
       questionIndex,
@@ -383,12 +388,19 @@ export function useBattleController(config: BattleControllerConfig | null) {
     const state = coreRef.current;
     const cfg = configRef.current;
     if (!state || state.phase !== "question" || state.answerSubmitted) return;
+    if (!Number.isInteger(selectedIndex) || selectedIndex < 0 || selectedIndex > 3) return;
+
+    // Ref-based lock — survives the gap between two rapid clicks before React
+    // re-reads `state.answerSubmitted`.
+    if (submittedForRoundRef.current === state.currentQuestionIndex) return;
+    submittedForRoundRef.current = state.currentQuestionIndex;
 
     if (cfg?.mode === "online") {
       dispatch({ type: "SUBMIT_ANSWER", selectedIndex });
       getSocket().emit(BATTLE_CLIENT_EVENTS.SUBMIT_ANSWER, {
         matchId: cfg.session.matchId,
         selectedIndex,
+        questionIndex: state.currentQuestionIndex,
       });
       return;
     }

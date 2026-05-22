@@ -249,6 +249,10 @@ const BattlePage: React.FC = () => {
   const battlePhaseRef = useRef(state?.phase);
   battlePhaseRef.current = state?.phase;
 
+  const [showExitConfirm, setShowExitConfirm] = useState(false);
+  const [isLeavingMatch, setIsLeavingMatch] = useState(false);
+  const leaveFallbackRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
   // Result breakdown from the server (online only; null until match_end received)
   const { myMatchResult } = isOnline ? onlineBattle : { myMatchResult: null };
 
@@ -420,6 +424,65 @@ const BattlePage: React.FC = () => {
 
   const match = state?.match;
   const showManualNext = !isOnline;
+
+  // Stop the fallback timer once the server confirms match_end.
+  useEffect(() => {
+    if (state?.phase === "match_end") {
+      if (leaveFallbackRef.current) {
+        clearTimeout(leaveFallbackRef.current);
+        leaveFallbackRef.current = null;
+      }
+      setIsLeavingMatch(false);
+      setShowExitConfirm(false);
+    }
+  }, [state?.phase]);
+
+  useEffect(() => {
+    return () => {
+      if (leaveFallbackRef.current) clearTimeout(leaveFallbackRef.current);
+    };
+  }, []);
+
+  const requestExitMatch = () => {
+    if (!state) return;
+    if (state.phase === "match_end") {
+      navigate(categoryDetailPath(match?.categoryId));
+      return;
+    }
+    setShowExitConfirm(true);
+  };
+
+  const confirmExitMatch = () => {
+    if (!state || isLeavingMatch) return;
+
+    if (state.phase === "match_end") {
+      setShowExitConfirm(false);
+      navigate(categoryDetailPath(match?.categoryId));
+      return;
+    }
+
+    if (!isOnline) {
+      setShowExitConfirm(false);
+      navigate(categoryDetailPath(match?.categoryId));
+      return;
+    }
+
+    if (!onlineInit) return;
+
+    setIsLeavingMatch(true);
+    try {
+      getSocket().emit("leave_match", { matchId: onlineInit.matchId });
+    } catch {
+      // socket may be gone — fall through to navigate
+    }
+
+    // Safety: if match_end doesn't arrive (e.g. socket lost), still leave gracefully.
+    leaveFallbackRef.current = setTimeout(() => {
+      setIsLeavingMatch(false);
+      setShowExitConfirm(false);
+      navigate(categoryDetailPath(match?.categoryId));
+    }, 4000);
+  };
 
   if (!state || !match) return null;
 
@@ -658,6 +721,50 @@ const BattlePage: React.FC = () => {
   if (state.phase === "intro") {
     return (
       <div className="h-[100dvh] overflow-hidden flex flex-col max-w-md mx-auto relative bg-black font-sans">
+        <button
+          type="button"
+          onClick={requestExitMatch}
+          aria-label="Exit match"
+          className="absolute left-3 top-3 z-40 w-9 h-9 rounded-full bg-white/95 hover:bg-white shadow-md flex items-center justify-center text-slate-700 border border-slate-200 transition-colors"
+        >
+          <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
+          </svg>
+        </button>
+
+        {showExitConfirm && (
+          <div className="absolute inset-0 z-50 flex items-end sm:items-center justify-center bg-black/60 backdrop-blur-sm px-4 pb-6">
+            <div className="w-full max-w-sm rounded-3xl bg-white shadow-2xl p-6 border border-slate-100">
+              <h2 className="text-lg font-black text-slate-900 tracking-tight">Leave this match?</h2>
+              <p className="text-sm text-slate-500 mt-2 leading-snug">
+                The match will end with the current score
+                {" "}
+                (<span className="font-bold text-slate-700 tabular-nums">{state.match.player1.score}</span>
+                {" "}–{" "}
+                <span className="font-bold text-slate-700 tabular-nums">{state.match.player2.score}</span>).
+              </p>
+              <div className="grid grid-cols-2 gap-2 mt-5">
+                <button
+                  type="button"
+                  onClick={() => setShowExitConfirm(false)}
+                  disabled={isLeavingMatch}
+                  className="h-11 rounded-xl bg-slate-100 text-slate-700 font-bold text-sm hover:bg-slate-200 active:scale-[0.98] transition disabled:opacity-50"
+                >
+                  Keep playing
+                </button>
+                <button
+                  type="button"
+                  onClick={confirmExitMatch}
+                  disabled={isLeavingMatch}
+                  className="h-11 rounded-xl bg-red-500 text-white font-bold text-sm hover:bg-red-600 active:scale-[0.98] transition disabled:opacity-60"
+                >
+                  {isLeavingMatch ? "Ending…" : "End match"}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Top Half */}
         <motion.div 
           initial={{ y: "-100%" }} 
@@ -749,10 +856,56 @@ const BattlePage: React.FC = () => {
   const p2 = state.match.player2;
 
   return (
-    <div className="h-[100dvh] overflow-hidden flex flex-col max-w-md mx-auto font-sans">
+    <div className="h-[100dvh] overflow-hidden flex flex-col max-w-md mx-auto font-sans relative">
+      {/* Exit / forfeit button */}
+      <button
+        type="button"
+        onClick={requestExitMatch}
+        aria-label="Exit match"
+        className="absolute left-3 top-3 z-30 w-9 h-9 rounded-full bg-white/95 hover:bg-white shadow-md flex items-center justify-center text-slate-700 border border-slate-200 transition-colors"
+      >
+        <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
+        </svg>
+      </button>
+
+      {showExitConfirm && (
+        <div className="absolute inset-0 z-40 flex items-end sm:items-center justify-center bg-black/60 backdrop-blur-sm px-4 pb-6">
+          <div className="w-full max-w-sm rounded-3xl bg-white shadow-2xl p-6 border border-slate-100">
+            <h2 className="text-lg font-black text-slate-900 tracking-tight">Leave this match?</h2>
+            <p className="text-sm text-slate-500 mt-2 leading-snug">
+              The match will end immediately with the current score
+              {" "}
+              (<span className="font-bold text-slate-700 tabular-nums">{p1.score}</span>
+              {" "}–{" "}
+              <span className="font-bold text-slate-700 tabular-nums">{p2.score}</span>).
+              If you're tied, you'll forfeit the match.
+            </p>
+            <div className="grid grid-cols-2 gap-2 mt-5">
+              <button
+                type="button"
+                onClick={() => setShowExitConfirm(false)}
+                disabled={isLeavingMatch}
+                className="h-11 rounded-xl bg-slate-100 text-slate-700 font-bold text-sm hover:bg-slate-200 active:scale-[0.98] transition disabled:opacity-50"
+              >
+                Keep playing
+              </button>
+              <button
+                type="button"
+                onClick={confirmExitMatch}
+                disabled={isLeavingMatch}
+                className="h-11 rounded-xl bg-red-500 text-white font-bold text-sm hover:bg-red-600 active:scale-[0.98] transition disabled:opacity-60"
+              >
+                {isLeavingMatch ? "Ending…" : "End match"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* 1v1 header — names, taglines, colored scores */}
       <header className="flex px-4 pt-4 pb-3 gap-3 border-b border-slate-100 bg-white/80 backdrop-blur-md">
-        <div className="flex-1 flex gap-3 items-start min-w-0">
+        <div className="flex-1 flex gap-3 items-start min-w-0 pl-10">
           <img src={p1.avatarUrl} alt="" className="w-14 h-14 rounded-full shrink-0 border-2 border-white shadow-md object-cover" />
           <div className="min-w-0 flex-1">
             <p className="font-black text-[15px] leading-tight truncate text-slate-900">{p1.username}</p>

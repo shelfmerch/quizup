@@ -121,7 +121,7 @@ const registerBattle = (socket, io) => {
   });
 
   // ── submit_answer ─────────────────────────────────────────────────────────
-  socket.on("submit_answer", async ({ matchId, selectedIndex } = {}) => {
+  socket.on("submit_answer", async ({ matchId, selectedIndex, questionIndex } = {}) => {
     if (!matchId || selectedIndex === undefined || selectedIndex === null) {
       return socket.emit("battle_error", { message: "matchId and selectedIndex are required" });
     }
@@ -130,7 +130,7 @@ const registerBattle = (socket, io) => {
     }
 
     try {
-      await handleAnswer(matchId, socket.userId, selectedIndex, io);
+      await handleAnswer(matchId, socket.userId, selectedIndex, io, questionIndex);
     } catch (err) {
       console.error("[Battle] submit_answer error:", err);
       socket.emit("battle_error", { message: "Failed to process answer" });
@@ -139,7 +139,8 @@ const registerBattle = (socket, io) => {
 
   // ── leave_match ───────────────────────────────────────────────────────────
   // Emitted by the client when the user intentionally exits the battle screen.
-  // Unlike a socket disconnect (which has a 15s grace), this ends immediately.
+  // Ends the match immediately using the ACTUAL current scores (no inflation).
+  // Both players receive `match_end` so the leaver still sees the result screen.
   socket.on("leave_match", async ({ matchId } = {}) => {
     const mid = matchId || socket.currentMatchId;
     if (!mid) return;
@@ -151,19 +152,13 @@ const registerBattle = (socket, io) => {
       // Cancel any existing grace timer (prevents double-finalization)
       cancelDisconnectTimer(mid, socket.userId);
 
-      console.log(`[Battle] ${socket.username} voluntarily left match ${mid} — ending immediately`);
+      console.log(
+        `[Battle] ${socket.username} voluntarily left match ${mid} — finalizing with current scores`
+      );
 
-      // Override scores so the leaver loses: give opponent a guaranteed score advantage
-      const isP1 = state.player1.userId === socket.userId;
-      await updateActiveMatch(mid, (s) => {
-        if (isP1) {
-          return { ...s, player2: { ...s.player2, score: Math.max(s.player2.score, s.player1.score + 1) } };
-        } else {
-          return { ...s, player1: { ...s.player1, score: Math.max(s.player1.score, s.player2.score + 1) } };
-        }
-      });
-
-      await finalizeMatch(mid, io, "abandoned");
+      // Stop any in-flight question timer so we don't race round_end → match_end
+      // Cancel by finalizing; finalizeMatch clears questionTimers internally.
+      await finalizeMatch(mid, io, "abandoned", socket.userId);
     } catch (err) {
       console.error("[Battle] leave_match error:", err);
     }
