@@ -77,7 +77,9 @@ function localPathToS3Key(localPath) {
   if (!p.startsWith("uploads/")) return null;
   const rel = p.slice("uploads/".length);
   if (!rel || rel.includes("..")) return null;
-  return rel.startsWith("avatars/") ? rel : `uploads/${rel}`;
+  if (rel.startsWith("avatars/")) return rel;
+  if (rel.startsWith("community_posts/")) return rel;
+  return `uploads/${rel}`;
 }
 
 /** Resolve stored refs (legacy `/uploads/...` or https) to a browser-loadable URL. */

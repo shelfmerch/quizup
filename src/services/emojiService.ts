@@ -1,4 +1,7 @@
-const BASE = "https://www.emoji.family/api/emojis";
+import { API_URL } from "@/config/env";
+
+/** Proxied via our API to avoid browser CORS blocks on emoji.family */
+const BASE = `${API_URL}/emojis`;
 
 export interface EmojiFamilyItem {
   emoji: string;
@@ -43,11 +46,20 @@ export async function fetchEmojis(options?: {
   if (tag) qs.set("tag", tag);
 
   const url = qs.toString() ? `${BASE}?${qs}` : `${BASE}?group=${DEFAULT_GROUP}`;
-  const res = await fetch(url);
-  if (!res.ok) {
-    throw new Error("Could not load emojis");
+  let res: Response;
+  try {
+    res = await fetch(url);
+  } catch {
+    throw new Error("Could not reach emoji service. Check your connection.");
   }
-  const data = (await res.json()) as EmojiFamilyItem[];
+  const data = (await res.json().catch(() => null)) as EmojiFamilyItem[] | { error?: string } | null;
+  if (!res.ok) {
+    const msg =
+      data && typeof data === "object" && "error" in data && data.error
+        ? String(data.error)
+        : "Could not load emojis";
+    throw new Error(msg);
+  }
   return Array.isArray(data) ? data : [];
 }
 

@@ -26,6 +26,8 @@ import {
 } from "@/services/communityService";
 import { resolveMediaUrl, resolveQuestionImageUrl } from "@/lib/mediaUrl";
 
+const MAX_VIDEO_BYTES = 50 * 1024 * 1024;
+
 const CATEGORY_THEMES: Record<
   string,
   { header: string; accent: string; glow: string }
@@ -184,7 +186,18 @@ const CommunityFeed: React.FC<CommunityFeedProps> = ({
 
   const handleVideoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file) setMediaAttachment(file, "video");
+    if (!file) return;
+    if (file.size > MAX_VIDEO_BYTES) {
+      toast.error("Video must be 50 MB or smaller", { position: "top-center" });
+      e.target.value = "";
+      return;
+    }
+    if (!file.type.startsWith("video/") && !/\.(mp4|mov|webm|mkv|m4v|3gp)$/i.test(file.name)) {
+      toast.error("Use MP4, MOV, or WebM video", { position: "top-center" });
+      e.target.value = "";
+      return;
+    }
+    setMediaAttachment(file, "video");
     e.target.value = "";
   };
 
@@ -218,7 +231,10 @@ const CommunityFeed: React.FC<CommunityFeedProps> = ({
       toast.success("Posted to the community!", { position: "top-center" });
     } catch (err: unknown) {
       const e = err as { response?: { data?: { error?: string } }; message?: string };
-      const msg = e.response?.data?.error || e.message || "Failed to post";
+      const msg =
+        e.response?.data?.error ||
+        (err instanceof Error ? err.message : e.message) ||
+        "Failed to post";
       toast.error(msg, { position: "top-center" });
     } finally {
       setIsPosting(false);
@@ -608,7 +624,7 @@ const CommunityFeed: React.FC<CommunityFeedProps> = ({
                     {post.videoUrl && (
                       <div className="mt-3 overflow-hidden rounded-lg border border-[#e5e7eb] bg-black">
                         <video
-                          src={resolveQuestionImageUrl(post.videoUrl)!}
+                          src={resolveMediaUrl(post.videoUrl)}
                           controls
                           playsInline
                           className="max-h-[360px] w-full"

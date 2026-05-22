@@ -1,6 +1,7 @@
 const uploadPostImage = require("../middleware/uploadPostImage");
 const uploadPostVideo = require("../middleware/uploadPostVideo");
 const { resolveUploadedImageUrl } = require("../middleware/createS3Upload");
+const { resolveUploadedVideoUrl } = require("../middleware/uploadPostVideo");
 
 function sendUploadedImage(req, res) {
   try {
@@ -26,7 +27,7 @@ function sendUploadedVideo(req, res) {
       return res.status(400).json({ error: "No video file provided" });
     }
 
-    const videoUrl = resolveUploadedImageUrl(req.file);
+    const videoUrl = resolveUploadedVideoUrl(req.file);
     if (!videoUrl) {
       return res.status(500).json({ error: "Upload did not return a file URL" });
     }

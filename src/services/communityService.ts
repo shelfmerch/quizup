@@ -117,21 +117,31 @@ export const communityService = {
   },
 
   uploadVideo: async (file: File): Promise<string> => {
+    const maxBytes = 50 * 1024 * 1024;
+    if (file.size > maxBytes) {
+      throw new Error("Video must be 50 MB or smaller");
+    }
+
     const formData = new FormData();
-    formData.append("video", file);
+    formData.append("video", file, file.name || "video.mp4");
 
     const token = localStorage.getItem("quizup_token");
-    const headers = token ? { Authorization: `Bearer ${token}` } : {};
+    if (!token) {
+      throw new Error("Sign in to upload videos");
+    }
 
     const res = await fetch(`${API_URL}/community/upload-video`, {
       method: "POST",
-      headers,
+      headers: { Authorization: `Bearer ${token}` },
       body: formData,
     });
-    const data = await res.json().catch(() => ({}));
+    const data = (await res.json().catch(() => ({}))) as { videoUrl?: string; error?: string };
     if (!res.ok) {
-      throw { response: { data }, message: (data as { error?: string }).error || "Failed to upload video" };
+      throw new Error(data.error || `Video upload failed (${res.status})`);
     }
-    return (data as { videoUrl: string }).videoUrl;
+    if (!data.videoUrl) {
+      throw new Error("Video upload did not return a URL");
+    }
+    return data.videoUrl;
   },
 };

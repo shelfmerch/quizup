@@ -14,6 +14,7 @@ const adminRoutes = require("./routes/admin");
 const followRoutes = require("./routes/follow");
 const chatRoutes = require("./routes/chat");
 const communityRoutes = require("./routes/communityRoutes");
+const emojiRoutes = require("./routes/emojis");
 const mediaRoutes = require("./routes/media");
 const { BUCKET, getMediaProxyPath, localPathToS3Key } = require("./config/s3");
 
@@ -77,6 +78,7 @@ app.get("/health", (_req, res) => {
 
 // ─── API Routes ───────────────────────────────────────────────────────────────
 app.use("/api/media", mediaRoutes);
+app.use("/api/emojis", emojiRoutes);
 app.use("/api/auth", authRoutes);
 app.use("/api/profile", profileRoutes);
 app.use("/api/categories", categoryRoutes);
