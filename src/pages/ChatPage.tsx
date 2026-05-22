@@ -11,7 +11,7 @@ import { Category, ChatMessage, MatchFoundPayload, Profile } from "@/types";
 import { fetchPublicCategories } from "@/services/categoryService";
 import { getSocket } from "@/services/socketService";
 import { toast } from "sonner";
-import { generateE2eKeypair, deriveSharedKey, encryptMessage, decryptMessage } from "@/utils/crypto";
+import { generateE2eKeypair, deriveSharedKey, encryptMessage, decryptMessage, parsePublicKeyJwk, e2eStorageKeys } from "@/utils/crypto";
 import { useOnlineStatus } from "@/hooks/useOnlineStatus";
 import { OnlineIndicator } from "@/components/ui/OnlineIndicator";
 import { CategoryIcon } from "@/components/CategoryIcon";
@@ -281,11 +281,26 @@ const ChatPage: React.FC = () => {
     didInitialScrollRef.current = false;
   }, [roomId]);
 
-  // Load peer profile
-  useEffect(() => {
+  // Load / refresh peer profile (keys can change — always fetch latest before E2E)
+  const loadPeer = useCallback(async () => {
     if (!peerId) return;
-    profileService.getProfile(peerId).then(setPeer).catch(() => setPeer(null));
+    try {
+      const p = await profileService.getProfile(peerId);
+      setPeer(p);
+    } catch {
+      setPeer(null);
+    }
   }, [peerId]);
+
+  useEffect(() => {
+    loadPeer();
+  }, [loadPeer]);
+
+  useEffect(() => {
+    const onFocus = () => loadPeer();
+    window.addEventListener("focus", onFocus);
+    return () => window.removeEventListener("focus", onFocus);
+  }, [loadPeer]);
 
   // Mark read on mount
   useEffect(() => {
@@ -300,16 +315,28 @@ const ChatPage: React.FC = () => {
     async function initE2e() {
       if (!user?.id || !peer?.id) return;
 
-      let privateKeyJwkStr = localStorage.getItem(`quizup_e2e_private_${user.id}`);
-      let publicKeyJwkStr = localStorage.getItem(`quizup_e2e_public_${user.id}`);
+      const storage = e2eStorageKeys(user.id);
+      let privateKeyJwkStr = localStorage.getItem(storage.private);
+      let publicKeyJwkStr = localStorage.getItem(storage.public);
+
+      // Never rotate keys when local storage is empty but the account already has a server key —
+      // that would desync peers and make all encrypted messages undecryptable on this device.
+      if ((!privateKeyJwkStr || !publicKeyJwkStr) && user.publicKeyE2e?.trim()) {
+        setCryptoError(
+          "Chat encryption keys are missing on this device. Use the browser where you first opened chat, or sign out and back in after clearing keys in Settings."
+        );
+        setSharedKey(null);
+        setIsE2eActive(false);
+        return;
+      }
 
       if (!privateKeyJwkStr || !publicKeyJwkStr) {
         try {
           const { publicKeyJwk, privateKeyJwk } = await generateE2eKeypair();
           privateKeyJwkStr = JSON.stringify(privateKeyJwk);
           publicKeyJwkStr = JSON.stringify(publicKeyJwk);
-          localStorage.setItem(`quizup_e2e_private_${user.id}`, privateKeyJwkStr);
-          localStorage.setItem(`quizup_e2e_public_${user.id}`, publicKeyJwkStr);
+          localStorage.setItem(storage.private, privateKeyJwkStr);
+          localStorage.setItem(storage.public, publicKeyJwkStr);
 
           await profileService.updateProfile({ publicKeyE2e: publicKeyJwkStr });
           refreshUser().catch(console.error);
@@ -320,7 +347,7 @@ const ChatPage: React.FC = () => {
           setIsE2eActive(false);
           return;
         }
-      } else if (!user.publicKeyE2e || user.publicKeyE2e !== publicKeyJwkStr) {
+      } else if (!user.publicKeyE2e?.trim() || user.publicKeyE2e.trim() !== publicKeyJwkStr.trim()) {
         try {
           await profileService.updateProfile({ publicKeyE2e: publicKeyJwkStr });
           refreshUser().catch(console.error);
@@ -329,10 +356,10 @@ const ChatPage: React.FC = () => {
         }
       }
 
-      if (peer.publicKeyE2e) {
+      if (peer.publicKeyE2e?.trim()) {
         try {
-          const myPrivateJwk = JSON.parse(privateKeyJwkStr);
-          const peerPublicJwk = JSON.parse(peer.publicKeyE2e);
+          const myPrivateJwk = JSON.parse(privateKeyJwkStr) as JsonWebKey;
+          const peerPublicJwk = parsePublicKeyJwk(peer.publicKeyE2e);
           const key = await deriveSharedKey(myPrivateJwk, peerPublicJwk);
           setSharedKey(key);
           setIsE2eActive(true);
@@ -364,14 +391,18 @@ const ChatPage: React.FC = () => {
             if (!sharedKey) {
               return {
                 ...msg,
-                text: "🔑 [Encrypted Message - Key not exchangeable]",
+                text: "🔒 Encrypted message…",
                 mediaUrl: undefined,
                 mediaType: undefined,
               };
             }
             try {
               const decryptedText = await decryptMessage(sharedKey, msg.text);
-              const payload = JSON.parse(decryptedText);
+              const payload = JSON.parse(decryptedText) as {
+                text?: string;
+                mediaUrl?: string;
+                mediaType?: string;
+              };
               return {
                 ...msg,
                 text: payload.text || "",
@@ -382,7 +413,7 @@ const ChatPage: React.FC = () => {
               console.error("Failed to decrypt message:", err);
               return {
                 ...msg,
-                text: "🚨 [Decryption Failed]",
+                text: "⚠️ Couldn't decrypt this message. Ask the sender to resend, or refresh the chat.",
                 mediaUrl: undefined,
                 mediaType: undefined,
               };

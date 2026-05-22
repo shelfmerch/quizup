@@ -6,7 +6,7 @@ const chatMessageSchema = new mongoose.Schema(
     senderId: { type: String, required: true },
     senderName: { type: String, required: true },
     senderAvatar: { type: String, default: "" },
-    text: { type: String, default: "", maxlength: 1000 },
+    text: { type: String, default: "", maxlength: 16384 },
     mediaUrl: { type: String, default: "" },
     mediaType: { type: String, default: "" }, // e.g. "image/jpeg", "video/mp4"
   },

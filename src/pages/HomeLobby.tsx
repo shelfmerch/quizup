@@ -144,7 +144,7 @@ const HomeLobby: React.FC = () => {
 
   // Real matchmaking queue (players on Find Match waiting for opponents)
   const [searchingUsers, setSearchingUsers] = useState<SearchingQueueUser[]>([]);
-  const [searchingIndex, setSearchingIndex] = useState(0);
+  const [skippedQueueIds, setSkippedQueueIds] = useState<Set<string>>(() => new Set());
   const [queueRefreshing, setQueueRefreshing] = useState(true);
   const [queueLoading, setQueueLoading] = useState(false);
   const [isQueueTransitioning, setIsQueueTransitioning] = useState(false);
@@ -154,8 +154,13 @@ const HomeLobby: React.FC = () => {
   const dailyChallenges = useMemo(() => allTopics.slice(5, 9), [allTopics]);
   const followed = followedTopics.length ? followedTopics.slice(0, 5) : allTopics.slice(9, 14);
 
+  const visibleQueueUsers = useMemo(
+    () => searchingUsers.filter((u) => !skippedQueueIds.has(u.userId)),
+    [searchingUsers, skippedQueueIds]
+  );
+
   const queueOpponent = useMemo(() => {
-    const u = searchingUsers[searchingIndex];
+    const u = visibleQueueUsers[0];
     if (!u) return null;
     const category =
       allTopics.find((t) => t.id === u.categoryId) ||
@@ -176,7 +181,19 @@ const HomeLobby: React.FC = () => {
       },
       category,
     };
-  }, [searchingUsers, searchingIndex, allTopics]);
+  }, [visibleQueueUsers, allTopics]);
+
+  // Drop skip marks for players who left the queue; keep marks for players still waiting
+  useEffect(() => {
+    const activeIds = new Set(searchingUsers.map((u) => u.userId));
+    setSkippedQueueIds((prev) => {
+      const next = new Set<string>();
+      for (const id of prev) {
+        if (activeIds.has(id)) next.add(id);
+      }
+      return next.size === prev.size ? prev : next;
+    });
+  }, [searchingUsers]);
 
   const refreshSearchingQueue = useCallback(() => {
     try {
@@ -200,7 +217,6 @@ const HomeLobby: React.FC = () => {
     const onSearchingUsers = ({ users }: { users?: SearchingQueueUser[] }) => {
       const list = Array.isArray(users) ? users : [];
       setSearchingUsers(list);
-      setSearchingIndex((idx) => (list.length === 0 ? 0 : Math.min(idx, list.length - 1)));
       setQueueRefreshing(false);
       setIsQueueTransitioning(false);
     };
@@ -217,9 +233,9 @@ const HomeLobby: React.FC = () => {
   }, [user?.id, incomingChallenge, refreshSearchingQueue]);
 
   const skipQueueOpponent = () => {
-    if (searchingUsers.length <= 1) return;
+    if (!queueOpponent) return;
     setIsQueueTransitioning(true);
-    setSearchingIndex((i) => (i + 1) % searchingUsers.length);
+    setSkippedQueueIds((prev) => new Set(prev).add(queueOpponent.user.userId));
     setTimeout(() => setIsQueueTransitioning(false), 250);
   };
 
@@ -649,7 +665,7 @@ const HomeLobby: React.FC = () => {
                       <div className="flex shrink-0 flex-row items-center gap-2">
                         <button
                           type="button"
-                          disabled={queueLoading || searchingUsers.length <= 1}
+                          disabled={queueLoading}
                           onClick={skipQueueOpponent}
                           className="relative rounded-md px-3 py-2 text-center text-[10px] font-black tracking-wide text-white transition-all duration-75 active:translate-y-[2px] disabled:opacity-50 whitespace-nowrap"
                           style={{

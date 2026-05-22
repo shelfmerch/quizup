@@ -65,7 +65,7 @@ const updateProfile = [
   body("bio").optional().trim().isLength({ max: 200 }),
   body("country").optional().trim().isLength({ max: 60 }),
   body("avatarPrivacy").optional().isIn(["public", "followers_only"]),
-  body("publicKeyE2e").optional().trim().isString(),
+  body("publicKeyE2e").optional().isString(),
 
   async (req, res) => {
     const errors = validationResult(req);
