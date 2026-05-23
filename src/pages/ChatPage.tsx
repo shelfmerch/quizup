@@ -768,6 +768,7 @@ const ChatPage: React.FC = () => {
 
   const handleEmojiSelect = (emoji: string) => {
     setText((prev) => prev + emoji);
+    setEmojiPickerOpen(false);
     inputRef.current?.focus();
   };
 
@@ -1112,6 +1113,10 @@ const ChatPage: React.FC = () => {
             type="text"
             value={text}
             onChange={(e) => setText(e.target.value)}
+            onFocus={() => {
+              setEmojiPickerOpen(false);
+              setGifPickerOpen(false);
+            }}
             onKeyDown={(e) => e.key === "Enter" && handleSend()}
             placeholder="Message"
             className="flex-1 text-[14px] text-[#111] placeholder:text-[#aaa] bg-transparent outline-none py-2"

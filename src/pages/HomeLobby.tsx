@@ -11,7 +11,7 @@ import { resolveMediaUrl } from "@/config/env";
 import { CategoryIcon } from "@/components/CategoryIcon";
 import { getSocket } from "@/services/socketService";
 import { LeagueModal } from "@/components/LeagueModal";
-import { computeTotalXp, getLeagueFromXp, leagueBadgeSrc } from "@/lib/progression";
+import { getLeagueFromXp, leagueBadgeSrc } from "@/lib/progression";
 import { useChatUnread } from "@/hooks/useChatUnread";
 import { toast } from "sonner";
 
@@ -343,8 +343,7 @@ const HomeLobby: React.FC = () => {
     };
   }, []);
 
-  const totalXp = user?.totalXp ?? computeTotalXp(user?.level, user?.xp);
-  const league = getLeagueFromXp(totalXp);
+  const league = getLeagueFromXp(user?.xp);
   const avatarSrc = resolveMediaUrl(
     user?.avatarUrl,
     `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(user?.username || "player")}`
@@ -767,7 +766,7 @@ const HomeLobby: React.FC = () => {
       <LeagueModal
         isOpen={leagueModalOpen}
         onClose={() => setLeagueModalOpen(false)}
-        currentXp={totalXp}
+        currentXp={user?.xp ?? 0}
       />
     </div>
   );

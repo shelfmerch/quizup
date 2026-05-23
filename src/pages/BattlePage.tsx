@@ -12,7 +12,6 @@ import Icons8Icon from "@/components/Icons8Icon";
 import { useAuth } from "@/hooks/useAuth";
 import { authService } from "@/services/authService";
 import {
-  computeTotalXp,
   getLeagueFromXp,
   levelProgressPercent,
   xpRemainingToNextLevel,
@@ -243,7 +242,7 @@ const BattlePage: React.FC = () => {
   const [showDedicatedAchievements, setShowDedicatedAchievements] = useState(false);
   const achievementsScreenShownRef = useRef(false);
 
-  const progressionBeforeRef = useRef<{ totalXp: number; level: number } | null>(null);
+  const progressionBeforeRef = useRef<{ xp: number; level: number } | null>(null);
   const [leaguePromotion, setLeaguePromotion] = useState<{
     from: ReturnType<typeof getLeagueFromXp>;
     to: ReturnType<typeof getLeagueFromXp>;
@@ -254,7 +253,7 @@ const BattlePage: React.FC = () => {
     if (progressionBeforeRef.current !== null) return;
     if (user?.level == null || user?.xp == null) return;
     progressionBeforeRef.current = {
-      totalXp: computeTotalXp(user.level, user.xp),
+      xp: user.xp,
       level: user.level,
     };
   }, [user?.level, user?.xp]);
@@ -272,12 +271,12 @@ const BattlePage: React.FC = () => {
         const fresh = authService.getCurrentUser();
         if (!fresh) return;
 
-        const afterTotalXp = computeTotalXp(fresh.level, fresh.xp);
+        const afterXp = fresh.xp ?? 0;
         const afterLevel = fresh.level ?? 1;
         const before = progressionBeforeRef.current!;
 
-        const fromLeague = getLeagueFromXp(before.totalXp);
-        const toLeague = getLeagueFromXp(afterTotalXp);
+        const fromLeague = getLeagueFromXp(before.xp);
+        const toLeague = getLeagueFromXp(afterXp);
         if (fromLeague.key !== toLeague.key) {
           setLeaguePromotion({ from: fromLeague, to: toLeague });
         }
@@ -505,12 +504,28 @@ const BattlePage: React.FC = () => {
               </div>
             )}
             {leaguePromotion && (
-              <div className="glass-card rounded-3xl p-5 border-emerald-200 flex items-center gap-4 shadow-xl shadow-emerald-500/10 animate-in slide-in-from-bottom-8 duration-700">
+              <div
+                className={`glass-card rounded-3xl p-5 flex items-center gap-4 shadow-xl animate-in slide-in-from-bottom-8 duration-700 ${
+                  leaguePromotion.to.minXpInclusive > leaguePromotion.from.minXpInclusive
+                    ? "border-emerald-200 shadow-emerald-500/10"
+                    : "border-rose-200 shadow-rose-500/10"
+                }`}
+              >
                 <img src={leaguePromotion.to.badgeUrl} alt="" className="w-14 h-14 object-contain shrink-0 drop-shadow-md" />
                 <div className="min-w-0">
-                  <p className="text-[11px] font-bold text-emerald-600 uppercase tracking-widest">League promoted</p>
+                  <p
+                    className={`text-[11px] font-bold uppercase tracking-widest ${
+                      leaguePromotion.to.minXpInclusive > leaguePromotion.from.minXpInclusive
+                        ? "text-emerald-600"
+                        : "text-rose-600"
+                    }`}
+                  >
+                    {leaguePromotion.to.minXpInclusive > leaguePromotion.from.minXpInclusive
+                      ? "League promoted"
+                      : "League dropped"}
+                  </p>
                   <p className="font-extrabold text-xl text-slate-900 truncate">
-                    {leaguePromotion.to.name}
+                    {leaguePromotion.from.name} → {leaguePromotion.to.name}
                   </p>
                 </div>
               </div>
@@ -537,9 +552,9 @@ const BattlePage: React.FC = () => {
     // Loser's netXp is always negative (0 gained − penalty); winner's is +xpGained
     const netXp      = myMatchResult?.netXp ?? (winner === 'opponent' ? -xpPenalty : xpGained);
     const displayLevel = user?.level ?? state.match.player1.level ?? 1;
-    const totalXp = computeTotalXp(displayLevel, user?.xp ?? 0);
-    const xpToNext = xpRemainingToNextLevel(user?.xp, user?.xpToNextLevel);
-    const ringProgress = levelProgressPercent(user?.xp, user?.xpToNextLevel);
+    const displayXp = user?.xp ?? 0;
+    const xpToNext = xpRemainingToNextLevel(displayXp, displayLevel);
+    const ringProgress = levelProgressPercent(displayXp, displayLevel);
     const p1Color = winner === 'player' ? 'border-[#1dd15d]' : winner === 'opponent' ? 'border-[#f24242]' : 'border-slate-500';
     const p2Color = winner === 'opponent' ? 'border-[#1dd15d]' : winner === 'player' ? 'border-[#f24242]' : 'border-slate-500';
 
@@ -643,13 +658,13 @@ const BattlePage: React.FC = () => {
               </div>
             )}
 
-            {/* TOTAL XP (lifetime) */}
+            {/* XP */}
             <div className="flex flex-col items-center min-w-[72px] sm:min-w-[84px]">
               <span className="text-[10px] sm:text-xs font-bold text-slate-100 uppercase tracking-widest text-center h-8 flex items-end justify-center mb-1.5 leading-tight">
                 Total<br/>XP
               </span>
               <div className="w-full h-12 sm:h-14 px-2 rounded-xl border-2 flex items-center justify-center font-display font-black text-xl sm:text-2xl tabular-nums bg-[#1f1f1f] border-[#b392ff] text-[#b392ff] shadow-[0_4px_12px_rgba(179,146,255,0.15)]">
-                {totalXp.toLocaleString()}
+                {displayXp.toLocaleString()}
               </div>
             </div>
 

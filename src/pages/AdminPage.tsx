@@ -4,7 +4,7 @@ import {
   ArrowLeft, Sparkles, FileText, PlusCircle, 
   Database, Layers, UploadCloud, Clock, 
   Image as ImageIcon, CheckCircle2, ChevronDown, ListPlus,
-  Trash2, ImageOff, Link2, Upload
+  Trash2, ImageOff, Link2, Upload, X
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -18,6 +18,20 @@ const AdminPage: React.FC = () => {
   const [selectedSlug, setSelectedSlug] = useState<string>("");
   const [questions, setQuestions] = useState<AdminQuestion[]>([]);
   const [loading, setLoading] = useState(true);
+
+  const [editingQuestion, setEditingQuestion] = useState<AdminQuestion | null>(null);
+  const [modalImageUrl, setModalImageUrl] = useState("");
+  const [modalUploading, setModalUploading] = useState(false);
+  const [modalActiveTab, setModalActiveTab] = useState<"link" | "upload">("link");
+
+  useEffect(() => {
+    if (editingQuestion) {
+      setModalImageUrl(editingQuestion.imageUrl || "");
+      setModalActiveTab("link");
+    } else {
+      setModalImageUrl("");
+    }
+  }, [editingQuestion]);
 
   const [activeTab, setActiveTab] = useState<"manual" | "bulk" | "ai">("manual");
 
@@ -751,15 +765,24 @@ const AdminPage: React.FC = () => {
                             <div key={q.id} className="group bg-white border border-slate-200 hover:border-slate-300 hover:shadow-md p-3 rounded-xl flex gap-3 transition-all hover:-translate-y-0.5">
                               {thumb ? (
                                 <div 
-                                  className="w-32 h-32 rounded-lg bg-slate-100 border border-slate-200 overflow-hidden shrink-0 cursor-pointer"
-                                  onClick={() => window.open(thumb, '_blank')}
-                                  title="View Full Image"
+                                  className="w-32 h-32 rounded-lg bg-slate-100 border border-slate-200 overflow-hidden shrink-0 cursor-pointer relative group/thumb"
+                                  onClick={() => setEditingQuestion(q)}
+                                  title="Change Image"
                                 >
                                   <img src={thumb} alt="" className="w-full h-full object-cover transition-transform group-hover:scale-110" loading="lazy" />
+                                  <div className="absolute inset-0 bg-black/45 opacity-0 group-hover/thumb:opacity-100 transition-opacity flex flex-col items-center justify-center text-white text-[10px] font-bold gap-1 backdrop-blur-xs">
+                                    <Upload className="w-4 h-4" />
+                                    <span>CHANGE IMAGE</span>
+                                  </div>
                                 </div>
                               ) : (
-                                <div className="w-32 h-32 rounded-lg bg-slate-50 border border-slate-100 flex items-center justify-center shrink-0 text-slate-300">
-                                  <ImageIcon className="w-8 h-8" />
+                                <div 
+                                  className="w-32 h-32 rounded-lg bg-slate-50 border border-slate-100 flex flex-col items-center justify-center shrink-0 text-slate-400 cursor-pointer hover:bg-slate-100 hover:border-slate-200 transition-all group/placeholder"
+                                  onClick={() => setEditingQuestion(q)}
+                                  title="Add Image"
+                                >
+                                  <ImageIcon className="w-7 h-7 mb-1 text-slate-300 group-hover/placeholder:text-slate-400 transition-colors" />
+                                  <span className="text-[9px] font-bold text-slate-400 group-hover/placeholder:text-slate-500 transition-colors uppercase tracking-wider">ADD IMAGE</span>
                                 </div>
                               )}
                               <div className="min-w-0 flex-1 flex flex-col justify-center">
@@ -776,35 +799,12 @@ const AdminPage: React.FC = () => {
                                   <div className="flex items-center gap-1 ml-auto shrink-0">
                                     <button
                                       type="button"
-                                      onClick={() => handleUpdateImageUrl(q.id)}
+                                      onClick={() => setEditingQuestion(q)}
                                       className="p-1.5 text-slate-400 hover:text-blue-500 hover:bg-blue-50 rounded-md transition-colors"
-                                      title="Update Image URL"
+                                      title="Update / Upload Image"
                                     >
-                                      <Link2 className="w-3.5 h-3.5" />
+                                      <ImageIcon className="w-3.5 h-3.5" />
                                     </button>
-                                    <label className="p-1.5 text-slate-400 hover:text-quizup-green hover:bg-green-50 rounded-md transition-colors cursor-pointer" title="Upload Image File">
-                                      <Upload className="w-3.5 h-3.5" />
-                                      <input
-                                        type="file"
-                                        accept="image/jpeg,image/png,image/gif,image/webp"
-                                        className="hidden"
-                                        onChange={(e) => {
-                                          const file = e.target.files?.[0];
-                                          e.target.value = "";
-                                          if (file) handleUpdateImageFile(q.id, file);
-                                        }}
-                                      />
-                                    </label>
-                                    {q.imageUrl && (
-                                      <button
-                                        type="button"
-                                        onClick={() => handleRemoveImage(q.id)}
-                                        className="p-1.5 text-slate-400 hover:text-amber-500 hover:bg-amber-50 rounded-md transition-colors"
-                                        title="Remove Image"
-                                      >
-                                        <ImageOff className="w-3.5 h-3.5" />
-                                      </button>
-                                    )}
                                     <button
                                       type="button"
                                       onClick={() => handleDeleteQuestion(q.id)}
@@ -829,6 +829,185 @@ const AdminPage: React.FC = () => {
           </div>
         )}
       </div>
+
+      {/* Edit Image Modal */}
+      {editingQuestion && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="bg-white rounded-3xl border border-slate-200 shadow-2xl p-6 w-full max-w-md animate-in zoom-in-95 duration-200 relative overflow-hidden">
+            {/* Background Accent */}
+            <div className="absolute top-0 right-0 w-32 h-32 bg-blue-50 rounded-full blur-3xl -mr-8 -mt-8 pointer-events-none" />
+            
+            {/* Close Button */}
+            <button
+              type="button"
+              onClick={() => setEditingQuestion(null)}
+              className="absolute right-5 top-5 p-2 rounded-full hover:bg-slate-100 transition-colors text-slate-400 hover:text-slate-700"
+            >
+              <X className="w-5 h-5" />
+            </button>
+
+            {/* Header */}
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center">
+                <ImageIcon className="w-5 h-5 text-blue-500" />
+              </div>
+              <div className="min-w-0 flex-1">
+                <h3 className="font-display font-bold text-lg text-slate-900 leading-tight">Update Question Image</h3>
+                <p className="text-xs text-slate-500 truncate mt-0.5">
+                  {editingQuestion.text}
+                </p>
+              </div>
+            </div>
+
+            {/* Tab Selection */}
+            <div className="flex bg-slate-50 rounded-xl p-1 mb-5 border border-slate-100">
+              <button
+                type="button"
+                onClick={() => setModalActiveTab("link")}
+                className={`flex-1 py-2 px-3 rounded-lg font-display font-bold text-xs transition-all flex items-center justify-center gap-2 ${modalActiveTab === "link" ? "bg-white text-blue-600 shadow-sm" : "text-slate-500 hover:text-slate-800"}`}
+              >
+                <Link2 className="w-3.5 h-3.5" />
+                Image Link
+              </button>
+              <button
+                type="button"
+                onClick={() => setModalActiveTab("upload")}
+                className={`flex-1 py-2 px-3 rounded-lg font-display font-bold text-xs transition-all flex items-center justify-center gap-2 ${modalActiveTab === "upload" ? "bg-white text-quizup-green shadow-sm" : "text-slate-500 hover:text-slate-800"}`}
+              >
+                <Upload className="w-3.5 h-3.5" />
+                Upload File
+              </button>
+            </div>
+
+            {/* Content Area */}
+            <div className="space-y-4 min-h-[140px] flex flex-col justify-center">
+              {modalActiveTab === "link" ? (
+                <div className="space-y-2">
+                  <Label className="text-xs font-bold text-slate-700 uppercase tracking-wider">Image URL</Label>
+                  <div className="relative">
+                    <Input
+                      value={modalImageUrl}
+                      onChange={(e) => setModalImageUrl(e.target.value)}
+                      className="bg-slate-50 border-slate-200 text-slate-900 pl-9 focus-visible:ring-blue-500 shadow-sm"
+                      placeholder="Paste image link here..."
+                    />
+                    <Link2 className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                  </div>
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  <Label className="text-xs font-bold text-slate-700 uppercase tracking-wider">Upload Local Image</Label>
+                  <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-slate-300 hover:border-quizup-green bg-slate-50 hover:bg-slate-100 rounded-2xl cursor-pointer transition-all duration-300 group">
+                    {modalUploading ? (
+                      <div className="flex flex-col items-center gap-2">
+                        <div className="w-8 h-8 border-3 border-quizup-green border-t-transparent rounded-full animate-spin" />
+                        <span className="text-xs font-semibold text-slate-600">Uploading to cloud...</span>
+                      </div>
+                    ) : (
+                      <div className="flex flex-col items-center gap-1">
+                        <UploadCloud className="w-8 h-8 text-slate-400 group-hover:text-quizup-green transition-colors" />
+                        <span className="text-xs font-bold text-slate-700">Click to upload file</span>
+                        <span className="text-[10px] text-slate-400">PNG, JPG, GIF or WEBP</span>
+                      </div>
+                    )}
+                    <input
+                      type="file"
+                      accept="image/jpeg,image/png,image/gif,image/webp"
+                      className="hidden"
+                      disabled={modalUploading}
+                      onChange={async (e) => {
+                        const file = e.target.files?.[0];
+                        e.target.value = "";
+                        if (!file) return;
+                        setModalUploading(true);
+                        try {
+                          const url = await adminService.uploadQuestionImage(file);
+                          setModalImageUrl(url);
+                          toast.success("Image uploaded successfully!");
+                        } catch (err) {
+                          toast.error(err instanceof Error ? err.message : "Upload failed");
+                        } finally {
+                          setModalUploading(false);
+                        }
+                      }}
+                    />
+                  </label>
+                </div>
+              )}
+
+              {/* Preview Area */}
+              {resolveQuestionImageUrl(modalImageUrl) && (
+                <div className="mt-2 space-y-1.5">
+                  <Label className="text-xs font-bold text-slate-700 uppercase tracking-wider">Preview</Label>
+                  <div className="relative rounded-2xl overflow-hidden border border-slate-200 bg-slate-50 w-full h-36 flex items-center justify-center group shadow-inner">
+                    <img src={resolveQuestionImageUrl(modalImageUrl)!} alt="Preview" className="max-w-full max-h-full object-contain" />
+                    <button
+                      type="button"
+                      onClick={() => setModalImageUrl("")}
+                      className="absolute inset-0 bg-red-600/90 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white font-bold text-sm gap-2 backdrop-blur-xs"
+                    >
+                      <ImageOff className="w-4 h-4" /> Remove Selected Image
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Actions Footer */}
+            <div className="flex gap-3 mt-6 pt-4 border-t border-slate-100 relative z-10">
+              {editingQuestion.imageUrl && (
+                <button
+                  type="button"
+                  onClick={async () => {
+                    if (!window.confirm("Are you sure you want to remove the image from this question?")) return;
+                    try {
+                      await adminService.removeQuestionImage(editingQuestion.id);
+                      toast.success("Image removed");
+                      const qs = await adminService.listQuestions(selectedSlug);
+                      setQuestions(qs);
+                      setEditingQuestion(null);
+                    } catch (err) {
+                      toast.error(err instanceof Error ? err.message : "Failed to remove image");
+                    }
+                  }}
+                  className="px-4 h-11 rounded-xl bg-red-50 hover:bg-red-100 border border-red-200 text-red-600 font-display font-bold text-xs transition-all flex items-center justify-center gap-1.5 shrink-0"
+                >
+                  <ImageOff className="w-3.5 h-3.5" />
+                  Remove
+                </button>
+              )}
+              
+              <button
+                type="button"
+                onClick={() => setEditingQuestion(null)}
+                className="flex-1 h-11 rounded-xl bg-slate-100 hover:bg-slate-200 border border-slate-200 text-slate-700 font-display font-bold text-xs transition-all"
+              >
+                Cancel
+              </button>
+              
+              <button
+                type="button"
+                disabled={modalUploading}
+                onClick={async () => {
+                  try {
+                    const finalUrl = modalImageUrl.trim() || null;
+                    await adminService.updateQuestionImage(editingQuestion.id, finalUrl);
+                    toast.success("Image updated successfully!");
+                    const qs = await adminService.listQuestions(selectedSlug);
+                    setQuestions(qs);
+                    setEditingQuestion(null);
+                  } catch (err) {
+                    toast.error(err instanceof Error ? err.message : "Failed to update image");
+                  }
+                }}
+                className="flex-1 h-11 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-display font-bold text-xs shadow-lg shadow-blue-500/20 transition-all flex items-center justify-center gap-1.5 disabled:opacity-50"
+              >
+                Save Changes
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

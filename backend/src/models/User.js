@@ -1,6 +1,6 @@
 const mongoose = require("mongoose");
 const bcrypt = require("bcryptjs");
-const { computeTotalXp } = require("../utils/progression");
+const { cumulativeXpForLevel, xpRemainingToNextLevel } = require("../utils/progression");
 
 const userSchema = new mongoose.Schema(
   {
@@ -112,20 +112,21 @@ userSchema.methods.comparePassword = async function (plain) {
   return bcrypt.compare(plain, this.passwordHash);
 };
 
-/**
- * Level-up logic: called after XP is added.
- */
+/** Add XP; level only increases, never decreases. */
 userSchema.methods.addXP = function (amount) {
-  this.xp += amount;
-  while (this.xp >= this.xpToNextLevel) {
-    this.xp -= this.xpToNextLevel;
+  if (!amount || amount <= 0) return;
+  this.xp = Math.max(0, (this.xp || 0) + amount);
+  while (this.xp >= cumulativeXpForLevel(this.level + 1)) {
     this.level += 1;
-    this.xpToNextLevel = Math.floor(this.xpToNextLevel * 1.4);
   }
+  this.xpToNextLevel = xpRemainingToNextLevel(this.xp, this.level);
 };
 
-userSchema.methods.getTotalXp = function () {
-  return computeTotalXp(this.level, this.xp);
+/** Deduct XP on loss; league may drop, level stays the same. */
+userSchema.methods.deductXP = function (amount) {
+  if (!amount || amount <= 0) return;
+  this.xp = Math.max(0, (this.xp || 0) - amount);
+  this.xpToNextLevel = xpRemainingToNextLevel(this.xp, this.level);
 };
 
 userSchema.methods.getAvatarPrivacy = function () {
@@ -162,7 +163,6 @@ userSchema.methods.toProfile = function (viewerId = null) {
     level: this.level,
     xp: this.xp,
     xpToNextLevel: this.xpToNextLevel,
-    totalXp: this.getTotalXp(),
     totalMatches: this.totalMatches,
     wins: this.wins,
     losses: this.losses,

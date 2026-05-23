@@ -32,7 +32,7 @@ import { getSocket } from "@/services/socketService";
 import { profileService } from "@/services/profileService";
 import { Category, MatchFoundPayload, MatchHistoryEntry, Profile, ProfileFollowUser } from "@/types";
 import { LeagueModal } from "@/components/LeagueModal";
-import { computeTotalXp, getLeagueFromXp } from "@/lib/progression";
+import { getLeagueFromXp } from "@/lib/progression";
 import {
   AchievementModal,
   AchievementBadge,
@@ -399,8 +399,7 @@ const ProfilePage: React.FC = () => {
     );
   }
 
-  const totalXp = p.totalXp ?? computeTotalXp(p.level, p.xp);
-  const league = getLeagueFromXp(totalXp);
+  const league = getLeagueFromXp(p.xp);
   const avatarSrc = resolveMediaUrl(
     p.avatarUrl,
     `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(p.username)}`
@@ -812,7 +811,7 @@ const ProfilePage: React.FC = () => {
         </div>
       )}
       
-      <LeagueModal isOpen={leagueModalOpen} onClose={() => setLeagueModalOpen(false)} currentXp={totalXp} />
+      <LeagueModal isOpen={leagueModalOpen} onClose={() => setLeagueModalOpen(false)} currentXp={p.xp ?? 0} />
 
       <BottomNav />
     </div>

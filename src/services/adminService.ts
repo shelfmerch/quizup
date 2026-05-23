@@ -197,4 +197,8 @@ export const adminService = {
       throw new Error(data.error || "Failed to update image");
     }
   },
+
+  async removeQuestionImage(id: string): Promise<void> {
+    return this.updateQuestionImage(id, null);
+  },
 };

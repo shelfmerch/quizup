@@ -393,12 +393,12 @@ const updateUserStats = async (userId, result, score, categoryId, xpGained = 0, 
       user.winStreak = 0;
     }
 
-    // Step 1: credit the XP earned this match (10% of finalPoints for everyone)
-    user.addXP(xpGained);
+    if (xpGained > 0) {
+      user.addXP(xpGained);
+    }
 
-    // Step 2: for losers, deduct the defeat penalty from accumulated XP
     if (result === "loss" && penalty > 0) {
-      user.xp = Math.max(0, user.xp - penalty);
+      user.deductXP(penalty);
     }
 
     if (!user.favoriteCategory) user.favoriteCategory = categoryId;

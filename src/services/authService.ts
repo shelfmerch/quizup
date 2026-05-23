@@ -94,6 +94,9 @@ export const authService = {
       }
 
       const data = await response.json();
+      if (data.token) {
+        localStorage.setItem("quizup_token", data.token);
+      }
       currentUser = data.user;
       isAuthenticated = true;
       return { user: currentUser, isAuthenticated: true };

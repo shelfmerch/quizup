@@ -1,7 +1,6 @@
 const User = require("../models/User");
-const { computeTotalXp } = require("../utils/progression");
 
-// GET /api/leaderboard  — global top 50 by lifetime total XP
+// GET /api/leaderboard  — global top 50 by users.xp
 const getGlobalLeaderboard = async (req, res) => {
   try {
     const users = await User.find({ totalMatches: { $gt: 0 } }).lean();
@@ -11,7 +10,7 @@ const getGlobalLeaderboard = async (req, res) => {
         userId: u._id.toString(),
         username: u.username,
         avatarUrl: u.avatarUrl,
-        score: computeTotalXp(u.level, u.xp),
+        score: u.xp ?? 0,
         wins: u.wins,
         level: u.level,
         country: u.country || "🌍",

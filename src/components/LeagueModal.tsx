@@ -1,32 +1,21 @@
 import React, { useEffect, useRef } from "react";
 import { X } from "lucide-react";
-import { computeTotalXp, getLeagueFromXp, LEAGUES, leagueBadgeSrc } from "@/lib/progression";
+import { getLeagueFromXp, LEAGUES, leagueBadgeSrc } from "@/lib/progression";
 
 export type { LeagueKey, League } from "@/lib/progression";
-export { LEAGUES, getLeagueFromXp, leagueBadgeSrc, computeTotalXp } from "@/lib/progression";
+export { LEAGUES, getLeagueFromXp, leagueBadgeSrc } from "@/lib/progression";
 
 interface LeagueModalProps {
   isOpen: boolean;
   onClose: () => void;
-  /** Lifetime total XP (pass level + bar XP if you only have profile fields). */
+  /** Current `users.xp` */
   currentXp?: number;
-  level?: number;
-  barXp?: number;
 }
 
-export const LeagueModal: React.FC<LeagueModalProps> = ({
-  isOpen,
-  onClose,
-  currentXp,
-  level,
-  barXp,
-}) => {
+export const LeagueModal: React.FC<LeagueModalProps> = ({ isOpen, onClose, currentXp = 0 }) => {
   const scrollRef = useRef<HTMLDivElement>(null);
-  const totalXp =
-    typeof currentXp === "number" && Number.isFinite(currentXp)
-      ? Math.max(0, Math.floor(currentXp))
-      : computeTotalXp(level, barXp);
-  const currentLeague = getLeagueFromXp(totalXp);
+  const xp = typeof currentXp === "number" && Number.isFinite(currentXp) ? Math.max(0, Math.floor(currentXp)) : 0;
+  const currentLeague = getLeagueFromXp(xp);
 
   useEffect(() => {
     if (isOpen && scrollRef.current) {
@@ -71,8 +60,8 @@ export const LeagueModal: React.FC<LeagueModalProps> = ({
         >
           {LEAGUES.map((league) => {
             const isCurrent = league.key === currentLeague.key;
-            const isLocked = totalXp < league.minXpInclusive;
-            const isCompleted = totalXp >= league.minXpInclusive && !isCurrent;
+            const isLocked = xp < league.minXpInclusive;
+            const isCompleted = xp >= league.minXpInclusive && !isCurrent;
 
             return (
               <div
