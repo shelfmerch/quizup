@@ -16,7 +16,13 @@ const getCategories = async (req, res) => {
     const countMap = new Map();
     counts.forEach(c => countMap.set(c._id, c.count));
 
-    // Shape to match frontend Category type
+    const followerCounts = await User.aggregate([
+      { $unwind: "$followedCategories" },
+      { $group: { _id: "$followedCategories", count: { $sum: 1 } } },
+    ]);
+    const followerMap = new Map();
+    followerCounts.forEach((f) => followerMap.set(f._id, f.count));
+
     const shaped = categories.map((c) => ({
       id: c.slug,
       name: c.name,
@@ -24,6 +30,7 @@ const getCategories = async (req, res) => {
       color: c.color,
       questionCount: countMap.get(c.slug) || 0,
       description: c.description,
+      followerCount: followerMap.get(c.slug) || 0,
     }));
 
     return res.json({ categories: shaped });
@@ -50,6 +57,14 @@ const getFollowedCategories = async (req, res) => {
     const countMap = new Map();
     counts.forEach(c => countMap.set(c._id, c.count));
 
+    const followerCounts = await User.aggregate([
+      { $unwind: "$followedCategories" },
+      { $match: { followedCategories: { $in: slugs } } },
+      { $group: { _id: "$followedCategories", count: { $sum: 1 } } },
+    ]);
+    const followerMap = new Map();
+    followerCounts.forEach((f) => followerMap.set(f._id, f.count));
+
     // preserve user order
     const shaped = slugs
       .map((slug) => bySlug.get(slug))
@@ -61,6 +76,7 @@ const getFollowedCategories = async (req, res) => {
         color: c.color,
         questionCount: countMap.get(c.slug) || 0,
         description: c.description,
+        followerCount: followerMap.get(c.slug) || 0,
       }));
 
     return res.json({ categories: shaped });
@@ -77,15 +93,14 @@ const followCategory = async (req, res) => {
     const cat = await Category.findOne({ slug, isActive: true }).select("slug").lean();
     if (!cat) return res.status(404).json({ error: "Topic not found" });
 
-    // Keep "most recent followed" ordering:
-    // remove if already present, then insert at the front.
     await User.findByIdAndUpdate(req.user._id, {
       $pull: { followedCategories: slug },
     });
     await User.findByIdAndUpdate(req.user._id, {
       $push: { followedCategories: { $each: [slug], $position: 0 } },
     });
-    return res.json({ ok: true });
+    const followerCount = await User.countDocuments({ followedCategories: slug });
+    return res.json({ ok: true, followerCount });
   } catch (err) {
     console.error("[Category] followCategory error:", err);
     return res.status(500).json({ error: "Server error" });
@@ -97,7 +112,8 @@ const unfollowCategory = async (req, res) => {
   try {
     const { slug } = req.params;
     await User.findByIdAndUpdate(req.user._id, { $pull: { followedCategories: slug } });
-    return res.json({ ok: true });
+    const followerCount = await User.countDocuments({ followedCategories: slug });
+    return res.json({ ok: true, followerCount });
   } catch (err) {
     console.error("[Category] unfollowCategory error:", err);
     return res.status(500).json({ error: "Server error" });

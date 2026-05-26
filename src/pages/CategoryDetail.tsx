@@ -132,12 +132,11 @@ const CategoryDetail: React.FC = () => {
     };
   }, [isAuthenticated, categoryId]);
 
-  // Mock stats for visual richness
-  const mockFollowers = useMemo(() => {
-    if (!categoryId) return 0;
-    const seed = categoryId.split("").reduce((s, c) => s + c.charCodeAt(0), 0);
-    return 1000 + (seed * 137) % 49000;
-  }, [categoryId]);
+  const [followerCount, setFollowerCount] = useState(0);
+
+  useEffect(() => {
+    if (category) setFollowerCount(category.followerCount ?? 0);
+  }, [category]);
 
   if (!category) {
     return (
@@ -222,11 +221,13 @@ const CategoryDetail: React.FC = () => {
                   setFollowBusy(true);
                   try {
                     if (isFollowed) {
-                      await unfollowCategory(categoryId);
+                      const res = await unfollowCategory(categoryId);
                       setIsFollowed(false);
+                      if (res.followerCount != null) setFollowerCount(res.followerCount);
                     } else {
-                      await followCategory(categoryId);
+                      const res = await followCategory(categoryId);
                       setIsFollowed(true);
+                      if (res.followerCount != null) setFollowerCount(res.followerCount);
                     }
                   } finally {
                     setFollowBusy(false);
@@ -276,7 +277,7 @@ const CategoryDetail: React.FC = () => {
         </div>
         <div className="flex-1 text-center border-r border-white/10">
           <p className="text-[10px] text-slate-400 uppercase tracking-widest mb-1 font-bold">Followers</p>
-          <p className="text-[2.5rem] font-display font-extrabold text-white leading-none tracking-tight">{mockFollowers}</p>
+          <p className="text-[2.5rem] font-display font-extrabold text-white leading-none tracking-tight">{followerCount}</p>
         </div>
         <div className="flex-1 text-center">
           <p className="text-[10px] text-slate-400 uppercase tracking-widest mb-1 font-bold">Question Count</p>

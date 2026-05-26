@@ -31,7 +31,7 @@ export async function fetchFollowedCategories(): Promise<Category[]> {
   return (data.categories ?? []) as Category[];
 }
 
-export async function followCategory(slug: string): Promise<void> {
+export async function followCategory(slug: string): Promise<{ followerCount?: number }> {
   const res = await fetch(`${API_URL}/categories/${encodeURIComponent(slug)}/follow`, {
     method: "POST",
     headers: getAuthHeaders(),
@@ -40,9 +40,11 @@ export async function followCategory(slug: string): Promise<void> {
     const data = await res.json().catch(() => ({}));
     throw new Error(data.error || "Failed to follow topic");
   }
+  const data = await res.json().catch(() => ({}));
+  return { followerCount: data.followerCount };
 }
 
-export async function unfollowCategory(slug: string): Promise<void> {
+export async function unfollowCategory(slug: string): Promise<{ followerCount?: number }> {
   const res = await fetch(`${API_URL}/categories/${encodeURIComponent(slug)}/follow`, {
     method: "DELETE",
     headers: getAuthHeaders(),
@@ -51,4 +53,6 @@ export async function unfollowCategory(slug: string): Promise<void> {
     const data = await res.json().catch(() => ({}));
     throw new Error(data.error || "Failed to unfollow topic");
   }
+  const data = await res.json().catch(() => ({}));
+  return { followerCount: data.followerCount };
 }

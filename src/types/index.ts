@@ -63,6 +63,7 @@ export interface Category {
   questionCount: number;
   description: string;
   imageUrl?: string;
+  followerCount?: number;
 }
 
 export interface Question {
