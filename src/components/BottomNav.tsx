@@ -60,7 +60,7 @@ const BottomNav: React.FC = () => {
                 active ? "opacity-100" : "opacity-45 hover:opacity-80"
               }`}
             >
-              <TabIcon className={`w-7 h-7 ${active ? "text-[#f65357]" : "text-zinc-300"}`} />
+              <TabIcon className={`w-7 h-7 ${active ? "text-[#f65357]" : "text-zinc-100"}`} />
               <span className={`text-[10px] font-semibold ${active ? "text-[#f65357]" : "text-zinc-400"}`}>
                 {label}
               </span>
