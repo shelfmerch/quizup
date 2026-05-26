@@ -93,8 +93,8 @@ const EditProfileModal: React.FC<{ onClose: () => void }> = ({ onClose }) => {
       });
       await refreshUser();
       onClose();
-    } catch (err: any) {
-      setError(err?.message || "Failed to save changes");
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : "Failed to save changes");
     } finally {
       setSaving(false);
     }

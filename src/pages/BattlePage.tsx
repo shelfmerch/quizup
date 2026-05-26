@@ -307,7 +307,7 @@ const BattlePage: React.FC = () => {
     if (!isOnline) return;
     try {
       const socket = getSocket();
-      const onNotif = (notif: any) => {
+      const onNotif = (notif: { type: string; achievementId?: string }) => {
         if (notif.type === "achievement") {
           const mockMatch = MOCK_ACHIEVEMENTS.find(a => a.id === notif.achievementId);
           if (mockMatch) {
