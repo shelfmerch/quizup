@@ -57,7 +57,7 @@ function parseBattleNav(state: unknown): { online: OnlineBattleInit | null; loca
 
 /** Subtitle under display name (screenshot-style; we only have level in match state). */
 function categoryDetailPath(categoryId: string | undefined): string {
-  return categoryId ? `/category/${categoryId}` : "/home";
+  return categoryId ? `/category/${categoryId}` : "/";
 }
 
 function playerTagline(p: MatchPlayer): string {
@@ -330,7 +330,7 @@ const BattlePage: React.FC = () => {
   useEffect(() => {
     if (isOnline) return;
     if (!localMatch) {
-      navigate("/home");
+      navigate("/");
       return;
     }
     const t = setTimeout(() => startNextRound(), 1500);
@@ -698,7 +698,7 @@ const BattlePage: React.FC = () => {
           <button onClick={() => {
               stopVictorySfx();
               stopDefeatSfx();
-              navigate("/home");
+              navigate("/");
             }} 
             className="h-14 rounded-2xl font-black text-sm sm:text-base text-white active:translate-y-[4px] active:shadow-[0_0px_0_#a23900] transition-all duration-75 flex items-center justify-between px-4"
             style={{

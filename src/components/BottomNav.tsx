@@ -12,7 +12,7 @@ type NavTab = {
 };
 
 const tabs: NavTab[] = [
-  { path: "/home", label: "Feed", Icon: Newspaper },
+  { path: "/", label: "Feed", Icon: Newspaper },
   { path: "/people", label: "People", Icon: Users },
   { path: "/categories", label: "Quiz", isCenter: true },
   { path: "/categories", label: "Topics", Icon: Grid3X3 },

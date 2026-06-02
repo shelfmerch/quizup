@@ -299,7 +299,7 @@ const MatchHistory: React.FC = () => {
             </p>
             <button
               type="button"
-              onClick={() => navigate("/home")}
+              onClick={() => navigate("/")}
               className="mt-5 flex h-10 items-center gap-2 rounded-xl bg-[#f65357] px-5 text-xs font-black uppercase tracking-wide text-white shadow-md transition active:scale-[0.98]"
             >
               <Swords className="h-4 w-4" />

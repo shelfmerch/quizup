@@ -18,7 +18,7 @@ const Login: React.FC = () => {
     setLoading(true);
     try {
       const user = await login(email, password);
-      navigate(user.role === "admin" ? "/admin" : "/home");
+      navigate(user.role === "admin" ? "/admin" : "/");
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "Login failed. Please try again.";
       toast.error(msg);
@@ -87,7 +87,7 @@ const Login: React.FC = () => {
                   setLoading(true);
                   try {
                     const user = await googleLogin(res.credential);
-                    navigate(user.role === "admin" ? "/admin" : "/home");
+                    navigate(user.role === "admin" ? "/admin" : "/");
                   } catch (err: unknown) {
                     const msg = err instanceof Error ? err.message : "Google sign-in failed.";
                     toast.error(msg);

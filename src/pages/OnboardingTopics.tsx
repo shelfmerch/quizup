@@ -86,16 +86,16 @@ const OnboardingTopics: React.FC = () => {
     try {
       const chosen = categories.filter((c) => selected.has(c.id));
       await Promise.allSettled(chosen.map((c) => followCategory(c.id)));
-      navigate("/home");
+      navigate("/");
     } catch {
       toast.error("Something went wrong, but you can always change topics later.");
-      navigate("/home");
+      navigate("/");
     } finally {
       setSaving(false);
     }
   };
 
-  const handleSkip = () => navigate("/home");
+  const handleSkip = () => navigate("/");
 
   return (
     <div className="quizup-app bg-white min-h-[100dvh] flex flex-col">

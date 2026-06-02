@@ -557,7 +557,7 @@ const AdminPage: React.FC = () => {
         <div className="max-w-6xl mx-auto px-4 h-16 flex items-center gap-4">
           <button 
             type="button" 
-            onClick={() => navigate("/home")} 
+            onClick={() => navigate("/")} 
             className="p-2 rounded-full hover:bg-slate-100 transition-colors text-slate-600 hover:text-slate-900"
           >
             <ArrowLeft className="w-5 h-5" />

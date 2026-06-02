@@ -178,7 +178,7 @@ const Social: React.FC = () => {
         <div className="flex items-center gap-2 px-2 py-2 text-white">
           <button
             type="button"
-            onClick={() => navigate("/home")}
+            onClick={() => navigate("/")}
             className="p-2 rounded-full active:bg-white/10"
             aria-label="Back"
           >

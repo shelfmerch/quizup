@@ -1,11 +1,12 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Route, Routes } from "react-router-dom";
+import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
 import { GoogleOAuthProvider } from "@react-oauth/google";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { AuthProvider } from "@/hooks/useAuth";
 import { ChatUnreadProvider } from "@/hooks/useChatUnread";
 import ProtectedRoute from "@/components/ProtectedRoute";
+import PublicRoute from "@/components/PublicRoute";
 import AppLayout from "@/layouts/AppLayout";
 
 import Landing from "./pages/Landing";
@@ -42,9 +43,10 @@ const Shell: React.FC<{ children: React.ReactNode }> = ({ children }) => (
       <BrowserRouter>
         <Routes>
           {/* Public auth routes */}
-          <Route path="/landing" element={<Landing />} />
-          <Route path="/login" element={<Login />} />
-          <Route path="/signup" element={<Signup />} />
+          <Route path="/landing" element={<PublicRoute><Landing /></PublicRoute>} />
+          <Route path="/login" element={<PublicRoute><Login /></PublicRoute>} />
+          <Route path="/signup" element={<PublicRoute><Signup /></PublicRoute>} />
+          <Route path="/home" element={<Navigate to="/" replace />} />
 
           {/* Protected app routes with bottom nav */}
           <Route element={<ProtectedRoute><AppLayout /></ProtectedRoute>}>
