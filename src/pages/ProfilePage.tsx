@@ -66,6 +66,7 @@ const TopicTile: React.FC<{ category: Category; index: number; onClick: () => vo
 };
 
 const HistoryBubble: React.FC<{ match: MatchHistoryEntry; index: number }> = ({ match, index }) => {
+  const navigate = useNavigate();
   const isVictory = match.result === "win";
   const isDefeat = match.result === "loss";
   const resultColor = isVictory ? "#15b78f" : isDefeat ? "#f65357" : "#8d8d8d";
@@ -74,17 +75,18 @@ const HistoryBubble: React.FC<{ match: MatchHistoryEntry; index: number }> = ({ 
   const badgeBg = isVictory ? "#15b78f" : isDefeat ? "#f65357" : "#8d8d8d";
 
   return (
-    <div className="relative w-[76px] shrink-0 text-center">
-      <span
+     <div className="relative w-[76px] shrink-0 text-center">
+      <button
         className="mx-auto flex h-14 w-14 items-center justify-center rounded-full border-[1px] bg-white shadow-md"
         // style={{ borderColor: resultColor }}
+        onClick={() => match.opponentId && navigate(`/profile/${match.opponentId}`)}
       >
         <img
           src={resolveMediaUrl(match.opponentAvatar, `https://api.dicebear.com/7.x/avataaars/svg?seed=${match.opponentName}`)}
           alt=""
           className="h-12 w-12 rounded-full object-cover"
         />
-      </span>
+      </button>
       {/* <span
         className="absolute right-1 top-8 flex h-6 w-6 items-center justify-center rounded-md text-white shadow"
         style={{ backgroundColor: badgeBg }}

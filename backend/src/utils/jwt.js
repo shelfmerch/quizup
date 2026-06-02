@@ -5,7 +5,7 @@ const JWT_SECRET = () => {
   return process.env.JWT_SECRET;
 };
 
-const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || "7d";
+const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || "30d";
 
 /**
  * Issue a signed JWT for a user.

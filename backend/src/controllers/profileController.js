@@ -150,6 +150,7 @@ const getMatchHistory = async (req, res) => {
 
       return {
         matchId: m._id.toString(),
+        opponentId: opp.userId.toString(),
         opponentName: opp.username,
         opponentAvatar: opp.avatarUrl,
         categoryName: m.categoryName,

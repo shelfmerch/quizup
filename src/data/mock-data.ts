@@ -540,11 +540,11 @@ export const MOCK_LEADERBOARD: LeaderboardEntry[] = [
 ];
 
 export const MOCK_MATCH_HISTORY: MatchHistoryEntry[] = [
-  { matchId: "m1", opponentName: "QuizMaster99", opponentAvatar: MOCK_AVATARS[1], categoryName: "Science", playerScore: 5, opponentScore: 3, result: "win", playedAt: "2026-04-12T10:00:00Z" },
-  { matchId: "m2", opponentName: "BrainStorm", opponentAvatar: MOCK_AVATARS[2], categoryName: "Geography", playerScore: 4, opponentScore: 6, result: "loss", playedAt: "2026-04-11T15:30:00Z" },
-  { matchId: "m3", opponentName: "TriviaKing", opponentAvatar: MOCK_AVATARS[3], categoryName: "History", playerScore: 5, opponentScore: 5, result: "draw", playedAt: "2026-04-11T09:00:00Z" },
-  { matchId: "m4", opponentName: "SmartCookie", opponentAvatar: MOCK_AVATARS[4], categoryName: "Movies", playerScore: 6, opponentScore: 2, result: "win", playedAt: "2026-04-10T20:00:00Z" },
-  { matchId: "m5", opponentName: "NerdAlert", opponentAvatar: MOCK_AVATARS[5], categoryName: "Music", playerScore: 7, opponentScore: 4, result: "win", playedAt: "2026-04-10T14:00:00Z" },
+  { matchId: "m1", opponentId: "mock-opp-1", opponentName: "QuizMaster99", opponentAvatar: MOCK_AVATARS[1], categoryName: "Science", playerScore: 5, opponentScore: 3, result: "win", playedAt: "2026-04-12T10:00:00Z" },
+  { matchId: "m2", opponentId: "mock-opp-2", opponentName: "BrainStorm", opponentAvatar: MOCK_AVATARS[2], categoryName: "Geography", playerScore: 4, opponentScore: 6, result: "loss", playedAt: "2026-04-11T15:30:00Z" },
+  { matchId: "m3", opponentId: "mock-opp-3", opponentName: "TriviaKing", opponentAvatar: MOCK_AVATARS[3], categoryName: "History", playerScore: 5, opponentScore: 5, result: "draw", playedAt: "2026-04-11T09:00:00Z" },
+  { matchId: "m4", opponentId: "mock-opp-4", opponentName: "SmartCookie", opponentAvatar: MOCK_AVATARS[4], categoryName: "Movies", playerScore: 6, opponentScore: 2, result: "win", playedAt: "2026-04-10T20:00:00Z" },
+  { matchId: "m5", opponentId: "mock-opp-5", opponentName: "NerdAlert", opponentAvatar: MOCK_AVATARS[5], categoryName: "Music", playerScore: 7, opponentScore: 4, result: "win", playedAt: "2026-04-10T14:00:00Z" },
 ];
 
 export const MOCK_ACHIEVEMENTS: Achievement[] = [

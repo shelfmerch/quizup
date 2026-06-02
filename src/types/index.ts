@@ -148,6 +148,7 @@ export interface LeaderboardEntry {
 
 export interface MatchHistoryEntry {
   matchId: string;
+  opponentId: string;
   opponentName: string;
   opponentAvatar: string;
   categoryName: string;
