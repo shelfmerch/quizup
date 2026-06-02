@@ -42,14 +42,14 @@ const Shell: React.FC<{ children: React.ReactNode }> = ({ children }) => (
       <BrowserRouter>
         <Routes>
           {/* Public auth routes */}
-          <Route path="/" element={<Landing />} />
+          <Route path="/landing" element={<Landing />} />
           <Route path="/login" element={<Login />} />
           <Route path="/signup" element={<Signup />} />
 
           {/* Protected app routes with bottom nav */}
           <Route element={<ProtectedRoute><AppLayout /></ProtectedRoute>}>
             <Route path="/all-categories" element={<ProtectedRoute><AllCategories /></ProtectedRoute>} />
-            <Route path="/home" element={<HomeLobby />} />
+            <Route path="/" element={<HomeLobby />} />
             <Route path="/categories" element={<Categories />} />
             <Route path="/leaderboard" element={<Leaderboard />} />
             <Route path="/history" element={<MatchHistory />} />
