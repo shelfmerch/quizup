@@ -682,7 +682,7 @@ const ProfilePage: React.FC = () => {
       <section className="quizup-section mt-2 px-4 py-2">
         <div className="mb-3 flex items-center justify-between">
           <h3 className="quizup-section-title">Followers</h3>
-          <button className="quizup-see-all" onClick={() => navigate("/people")}>More</button>
+          <button className="quizup-see-all" onClick={() => navigate("/friends")}>More</button>
           {/* <span className="text-[10px] font-black uppercase text-zinc-400">
             {followersLoading ? "…" : `${followers.length}`}
           </span> */}

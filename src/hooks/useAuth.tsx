@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useCallback, useEffect } from "react";
 import { Profile } from "@/types";
 import { authService } from "@/services/authService";
+import { useAppLifecycle } from "@/hooks/useAppLifecycle";
 
 interface AuthContextType {
   user: Profile | null;
@@ -20,6 +21,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [user, setUser] = useState<Profile | null>(null);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+
+  // Hook app lifecycle / network monitor to socket reconnection
+  useAppLifecycle();
 
   useEffect(() => {
     authService.getSession().then(({ user, isAuthenticated }) => {

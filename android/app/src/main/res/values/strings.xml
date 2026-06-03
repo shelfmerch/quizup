@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">QuizUp</string>
+    <string name="title_activity_main">QuizUp</string>
+    <string name="package_name">com.quizup.app</string>
+    <string name="custom_url_scheme">com.quizup.app</string>
+</resources>

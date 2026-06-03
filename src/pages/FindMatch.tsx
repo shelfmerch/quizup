@@ -102,6 +102,13 @@ const FindMatch: React.FC = () => {
       setError(err.message || "Could not reach game server");
     };
 
+    const onConnect = () => {
+      if (!cancelled) {
+        socket.emit("join_queue", { categoryId: cat });
+      }
+    };
+
+    socket.on("connect", onConnect);
     socket.on("queued", onQueued);
     socket.on("match_found", onMatchFound);
     socket.on("queue_error", onQueueError);
@@ -112,6 +119,7 @@ const FindMatch: React.FC = () => {
     return () => {
       cancelled = true;
       socket.emit("leave_queue", { categoryId: cat });
+      socket.off("connect", onConnect);
       socket.off("queued", onQueued);
       socket.off("match_found", onMatchFound);
       socket.off("queue_error", onQueueError);

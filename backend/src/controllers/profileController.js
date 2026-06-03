@@ -199,4 +199,35 @@ const getFollowers = async (req, res) => {
   }
 };
 
-module.exports = { getProfile, updateProfile, getMatchHistory, getFollowers };
+// GET /api/profile/all  (protected)
+const getAllProfiles = async (req, res) => {
+  try {
+    const viewerId = req.user?._id?.toString() || null;
+    const query = viewerId ? { _id: { $ne: viewerId } } : {};
+    
+    // Sort by level/xp (descending) to show active/high-ranked users first
+    const users = await User.find(query).sort({ level: -1, xp: -1 });
+    
+    let followingIds = new Set();
+    if (viewerId) {
+      const viewer = await User.findById(viewerId).select("following").lean();
+      if (viewer && viewer.following) {
+        followingIds = new Set(viewer.following.map((id) => id.toString()));
+      }
+    }
+
+    const profiles = users.map((user) => {
+      const p = user.toProfile(viewerId);
+      p.isFollowing = followingIds.has(user._id.toString());
+      return p;
+    });
+
+    return res.json({ users: profiles });
+  } catch (err) {
+    console.error("[Profile] getAllProfiles error:", err);
+    return res.status(500).json({ error: "Server error" });
+  }
+};
+
+module.exports = { getProfile, updateProfile, getMatchHistory, getFollowers, getAllProfiles };
+

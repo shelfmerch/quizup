@@ -81,6 +81,16 @@ export const profileService = {
     return Array.isArray(data.following) ? data.following : [];
   },
 
+  async getAllUsers(): Promise<ProfileFollowUser[]> {
+    const response = await fetch(`${API_URL}/profile/all`, {
+      headers: getAuthHeaders(),
+    });
+    if (!response.ok) throw new Error("Failed to fetch all users");
+    const data = await response.json();
+    return Array.isArray(data.users) ? data.users : [];
+  },
+
+
   async checkIsFollowing(userId: string): Promise<boolean> {
     const response = await fetch(`${API_URL}/follow/${userId}/status`, {
       headers: getAuthHeaders(),

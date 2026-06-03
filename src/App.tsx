@@ -1,5 +1,7 @@
+import React from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
+import { HashRouter, Navigate, Route, Routes } from "react-router-dom";
+import useAndroidBackButton from "@/hooks/useAndroidBackButton";
 import { GoogleOAuthProvider } from "@react-oauth/google";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -27,6 +29,7 @@ import CategoryDetail from "./pages/CategoryDetail";
 import AdminRoute from "@/components/AdminRoute";
 import AdminPage from "./pages/AdminPage";
 import People from "./pages/People";
+import Friends from "./pages/Friends";
 import Social from "./pages/Social";
 import AllCategories from "./pages/AllCategories";
 import OnboardingProfile from "./pages/OnboardingProfile";
@@ -35,12 +38,26 @@ import AchievementsPage from "./pages/AchievementsPage";
 
 const queryClient = new QueryClient();
 
+/**
+ * Registers the Android hardware back button inside the Router context.
+ * Must be rendered inside <HashRouter> so it has access to useNavigate/useLocation.
+ */
+const AndroidBackButtonHandler: React.FC = () => {
+  useAndroidBackButton();
+  return null;
+};
+
 const Shell: React.FC<{ children: React.ReactNode }> = ({ children }) => (
   <AuthProvider>
     <ChatUnreadProvider>
     <TooltipProvider>
       <Sonner />
-      <BrowserRouter>
+      {/* HashRouter is required for Capacitor — the Android WebView loads files
+          via file:// protocol which has no HTTP server to handle pushState routes.
+          HashRouter uses URL fragments (#/route) which always work. */}
+      <HashRouter>
+        {/* Handles Android hardware back button globally */}
+        <AndroidBackButtonHandler />
         <Routes>
           {/* Public auth routes */}
           <Route path="/landing" element={<PublicRoute><Landing /></PublicRoute>} />
@@ -61,6 +78,7 @@ const Shell: React.FC<{ children: React.ReactNode }> = ({ children }) => (
             <Route path="/notifications" element={<Notifications />} />
             <Route path="/category/:categoryId" element={<CategoryDetail />} />
             <Route path="/people" element={<People />} />
+            <Route path="/friends" element={<Friends />} />
             <Route path="/social" element={<Social />} />
           </Route>
 
@@ -77,7 +95,7 @@ const Shell: React.FC<{ children: React.ReactNode }> = ({ children }) => (
 
           <Route path="*" element={<NotFound />} />
         </Routes>
-      </BrowserRouter>
+      </HashRouter>
     </TooltipProvider>
     </ChatUnreadProvider>
   </AuthProvider>

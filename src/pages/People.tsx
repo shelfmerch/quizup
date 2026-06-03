@@ -7,6 +7,7 @@ import { resolveMediaUrl } from "@/config/env";
 import { toast } from "sonner";
 import { useOnlineStatus } from "@/hooks/useOnlineStatus";
 import { OnlineIndicator } from "@/components/ui/OnlineIndicator";
+import BottomNav from "@/components/BottomNav";
 
 import {
   Users,
@@ -15,7 +16,6 @@ import {
   UserPlus,
   UserMinus,
   MessageCircle,
-  ChevronRight,
 } from "lucide-react";
 
 // ─── Skeleton ──────────────────────────────────────────────────────────────────
@@ -43,25 +43,20 @@ const countryFlag = (code: string) => {
 interface UserCardProps {
   user: ProfileFollowUser;
   isOnline: boolean;
-  index: number;
-  mode: "follower" | "following";
   onFollow: (id: string) => Promise<void>;
   onUnfollow: (id: string) => Promise<void>;
-  followingSet: Set<string>; // IDs the current user already follows
+  isFollowing: boolean;
 }
 
 const UserCard: React.FC<UserCardProps> = ({
   user,
   isOnline,
-  index,
-  mode,
   onFollow,
   onUnfollow,
-  followingSet,
+  isFollowing,
 }) => {
   const navigate = useNavigate();
   const [busy, setBusy] = useState(false);
-  const isFollowing = followingSet.has(user.id);
 
   const handleToggle = async () => {
     setBusy(true);
@@ -152,71 +147,51 @@ const UserCard: React.FC<UserCardProps> = ({
             </>
           )}
         </button>
-
-        {/* Number circle */}
-        {/* <span className="ml-1 flex items-center justify-center w-6 h-6 rounded-full bg-white/8 border border-white/10 text-[10px] font-bold text-muted-foreground shrink-0">
-          {index + 1}
-        </span> */}
-
       </div>
     </div>
   );
 };
 
 // ─── Main Page ─────────────────────────────────────────────────────────────────
-type Tab = "followers" | "following";
-
 const People: React.FC = () => {
-  const { user } = useAuth();
-  const [activeTab, setActiveTab] = useState<Tab>("followers");
-  const [followers, setFollowers] = useState<ProfileFollowUser[]>([]);
-  const [following, setFollowing] = useState<ProfileFollowUser[]>([]);
+  const navigate = useNavigate();
+  const [users, setUsers] = useState<ProfileFollowUser[]>([]);
+  const [followingSet, setFollowingSet] = useState<Set<string>>(new Set());
+  const [loading, setLoading] = useState(true);
+  const [query, setQuery] = useState("");
 
   // We can merge all user IDs to track online status
   const userIds = useMemo(() => {
-    const ids = new Set<string>();
-    followers.forEach((u) => ids.add(u.id));
-    following.forEach((u) => ids.add(u.id));
-    return Array.from(ids);
-  }, [followers, following]);
+    return users.map((u) => u.id);
+  }, [users]);
 
   const { isOnline } = useOnlineStatus(userIds);
-  const [followingSet, setFollowingSet] = useState<Set<string>>(new Set());
-  const [loadingFollowers, setLoadingFollowers] = useState(true);
-  const [loadingFollowing, setLoadingFollowing] = useState(true);
-  const [query, setQuery] = useState("");
 
-  // ── Fetch both lists ──────────────────────────────────────────────────────────
-  const fetchFollowers = useCallback(async () => {
-    if (!user?.id) return;
-    setLoadingFollowers(true);
+  // ── Fetch all users ──────────────────────────────────────────────────────────
+  const fetchAllUsers = useCallback(async () => {
+    setLoading(true);
     try {
-      const data = await profileService.getFollowers(user.id);
-      setFollowers(data);
+      const allUsers = await profileService.getAllUsers();
+      setUsers(allUsers);
+      
+      // Extract following status from user properties returned by custom API
+      const followingIds = new Set<string>();
+      allUsers.forEach((u: any) => {
+        if (u.isFollowing) {
+          followingIds.add(u.id);
+        }
+      });
+      setFollowingSet(followingIds);
     } catch {
-      toast.error("Could not load followers");
+      toast.error("Could not load users");
     } finally {
-      setLoadingFollowers(false);
-    }
-  }, [user?.id]);
-
-  const fetchFollowing = useCallback(async () => {
-    setLoadingFollowing(true);
-    try {
-      const data = await profileService.getFollowingUsers();
-      setFollowing(data);
-      setFollowingSet(new Set(data.map((u) => u.id)));
-    } catch {
-      toast.error("Could not load following");
-    } finally {
-      setLoadingFollowing(false);
+      setLoading(false);
     }
   }, []);
 
   useEffect(() => {
-    fetchFollowers();
-    fetchFollowing();
-  }, [fetchFollowers, fetchFollowing]);
+    fetchAllUsers();
+  }, [fetchAllUsers]);
 
   // ── Follow / Unfollow ─────────────────────────────────────────────────────────
   const handleFollow = async (targetId: string) => {
@@ -237,8 +212,6 @@ const People: React.FC = () => {
         next.delete(targetId);
         return next;
       });
-      // Remove from following list if on that tab
-      setFollowing((prev) => prev.filter((u) => u.id !== targetId));
       toast.success("Unfollowed");
     } catch {
       toast.error("Could not unfollow user");
@@ -247,68 +220,33 @@ const People: React.FC = () => {
 
   // ── Filter ────────────────────────────────────────────────────────────────────
   const q = query.trim().toLowerCase();
-  const filteredFollowers = q
-    ? followers.filter(
+  const filteredUsers = q
+    ? users.filter(
         (u) =>
           u.username.toLowerCase().includes(q) ||
-          u.displayName.toLowerCase().includes(q)
+          (u.displayName && u.displayName.toLowerCase().includes(q))
       )
-    : followers;
-
-  const filteredFollowing = q
-    ? following.filter(
-        (u) =>
-          u.username.toLowerCase().includes(q) ||
-          u.displayName.toLowerCase().includes(q)
-      )
-    : following;
-
-  const list = activeTab === "followers" ? filteredFollowers : filteredFollowing;
-  const loading =
-    activeTab === "followers" ? loadingFollowers : loadingFollowing;
+    : users;
 
   return (
-    <div className="flex flex-col min-h-screen">
+    <div className="flex flex-col min-h-screen quizup-app">
       <div className="sticky top-0 z-20 flex flex-col">
         {/* Header */}
-        <div className="quizup-header-teal px-4 py-3 shadow-sm">
-          <h1 className="font-display font-bold text-white text-base">People</h1>
-          <p className="text-xs text-white/70 mt-0.5">
-            {followers.length} follower{followers.length !== 1 ? "s" : ""} · {following.length} following
-          </p>
+        <div className="quizup-header-teal px-4 py-3 shadow-sm flex items-center justify-between">
+          <div>
+            <h1 className="font-display font-bold text-white text-base">People</h1>
+            <p className="text-xs text-white/70 mt-0.5">
+              Discover other players in the QuizUp Arena
+            </p>
+          </div>
+          <button
+            onClick={() => navigate("/friends")}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/15 hover:bg-white/25 text-white text-xs font-bold transition-all shadow-sm"
+          >
+            <UserCheck className="w-3.5 h-3.5" />
+            My Friends
+          </button>
         </div>
-
-        {/* Tab Bar */}
-        <div className="flex bg-quizup-card border-b border-border">
-        {(["followers", "following"] as Tab[]).map((tab) => {
-          const count = tab === "followers" ? followers.length : following.length;
-          const Icon = tab === "followers" ? Users : UserCheck;
-          const isActive = activeTab === tab;
-          return (
-            <button
-              key={tab}
-              onClick={() => { setActiveTab(tab); setQuery(""); }}
-              className={`flex-1 flex items-center justify-center gap-2 py-3.5 text-sm font-semibold transition-colors border-b-2 ${
-                isActive
-                  ? "border-quizup-teal text-quizup-teal"
-                  : "border-transparent text-muted-foreground hover:text-foreground"
-              }`}
-            >
-              <Icon className="w-4 h-4" />
-              <span className="capitalize">{tab}</span>
-              <span
-                className={`text-xs px-1.5 py-0.5 rounded-full font-bold ${
-                  isActive
-                    ? "bg-quizup-teal/20 text-quizup-teal"
-                    : "bg-white/8 text-muted-foreground"
-                }`}
-              >
-                {count}
-              </span>
-            </button>
-          );
-        })}
-      </div>
       </div>
 
       {/* Search */}
@@ -319,7 +257,7 @@ const People: React.FC = () => {
             type="text"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder={`Search ${activeTab}…`}
+            placeholder="Search players by name or username…"
             className="w-full h-10 pl-9 pr-4 rounded-lg bg-quizup-card border border-border text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-quizup-teal/60 transition-colors"
           />
         </div>
@@ -328,44 +266,33 @@ const People: React.FC = () => {
       {/* List */}
       <div className="px-4 pt-3 pb-24 space-y-2">
         {loading ? (
-          Array.from({ length: 5 }).map((_, i) => <UserCardSkeleton key={i} />)
-        ) : list.length === 0 ? (
+          Array.from({ length: 6 }).map((_, i) => <UserCardSkeleton key={i} />)
+        ) : filteredUsers.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-16 text-center">
-            {activeTab === "followers" ? (
-              <Users className="w-12 h-12 text-muted-foreground/40 mb-3" />
-            ) : (
-              <UserCheck className="w-12 h-12 text-muted-foreground/40 mb-3" />
-            )}
+            <Users className="w-12 h-12 text-muted-foreground/40 mb-3" />
             <p className="text-sm font-semibold text-muted-foreground">
-              {q
-                ? "No results found"
-                : activeTab === "followers"
-                ? "No followers yet"
-                : "Not following anyone yet"}
+              {q ? "No players found matching that search" : "No other players found"}
             </p>
             <p className="text-xs text-muted-foreground/60 mt-1 max-w-[200px]">
               {q
                 ? "Try a different search term"
-                : activeTab === "followers"
-                ? "Win matches and climb the leaderboard to attract followers!"
-                : "Follow players from the Leaderboard to see them here."}
+                : "Share the app with your friends to play together!"}
             </p>
           </div>
         ) : (
-          list.map((u, i) => (
+          filteredUsers.map((u) => (
             <UserCard
               key={u.id}
               user={u}
               isOnline={isOnline(u.id)}
-              index={i}
-              mode={activeTab === "followers" ? "follower" : "following"}
               onFollow={handleFollow}
               onUnfollow={handleUnfollow}
-              followingSet={followingSet}
+              isFollowing={followingSet.has(u.id)}
             />
           ))
         )}
       </div>
+      <BottomNav />
     </div>
   );
 };

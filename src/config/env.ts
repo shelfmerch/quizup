@@ -7,7 +7,8 @@ const trimSlash = (u: string) => u.replace(/\/+$/, "");
  * @example VITE_API_URL=https://api.yourdomain.com
  */
 const defaultApiBase = import.meta.env.PROD ? "" : "http://localhost:3003";
-export const API_BASE = trimSlash(import.meta.env.VITE_API_URL ?? defaultApiBase);
+const rawApiBase = import.meta.env.VITE_API_URL ?? defaultApiBase;
+export const API_BASE = trimSlash(rawApiBase).replace(/\/api$/, "");
 
 export const API_URL = API_BASE ? `${API_BASE}/api` : "/api";
 
