@@ -176,8 +176,9 @@ const People: React.FC = () => {
       
       // Extract following status from user properties returned by custom API
       const followingIds = new Set<string>();
-      allUsers.forEach((u: any) => {
-        if (u.isFollowing) {
+      allUsers.forEach((u) => {
+        const userWithFollow = u as ProfileFollowUser & { isFollowing?: boolean };
+        if (userWithFollow.isFollowing) {
           followingIds.add(u.id);
         }
       });
