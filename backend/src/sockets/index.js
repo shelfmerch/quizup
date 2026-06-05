@@ -25,6 +25,11 @@ const initSockets = (httpServer) => {
     "https://quizup.site",
     "http://www.quizup.site",
     "http://quizup.site",
+    // Capacitor Android WebView origins:
+    // - androidScheme "https" → https://localhost
+    // - androidScheme "http"  → http://localhost
+    // - iOS / older Capacitor  → capacitor://localhost
+    "https://localhost",
     "http://localhost",
     "capacitor://localhost",
     "http://localhost:3000",
