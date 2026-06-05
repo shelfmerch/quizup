@@ -157,8 +157,9 @@ const CategoryDetail: React.FC = () => {
       setPosts([post, ...posts]);
       setNewPostContent("");
       removeImage();
-    } catch (err: any) {
-      alert(err?.response?.data?.error || "Failed to post");
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : "Failed to post";
+      alert((err as { response?: { data?: { error?: string } } })?.response?.data?.error || msg);
     } finally {
       setIsPosting(false);
     }
@@ -175,7 +176,7 @@ const CategoryDetail: React.FC = () => {
         }
         return p;
       }));
-    } catch (err) { }
+    } catch (_err) { /* like count stays optimistic if request fails */ }
   };
 
   // Fetch follow state for this category (most recent follows persisted in backend)
