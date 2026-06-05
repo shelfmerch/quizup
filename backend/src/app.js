@@ -27,23 +27,41 @@ const extraOrigins = (process.env.ALLOWED_ORIGINS || "")
   .filter(Boolean);
 
 // ─── CORS ────────────────────────────────────────────────────────────────────
+const allowedOrigins = [
+  process.env.CLIENT_URL,
+  process.env.FRONTEND_URL,
+  ...extraOrigins,
+  "https://www.quizup.site",
+  "https://quizup.site",
+  "http://www.quizup.site",
+  "http://quizup.site",
+  "http://localhost",
+  "capacitor://localhost",
+  "http://localhost:3000",
+  "http://localhost:3003",
+  "http://localhost:5173",
+  "http://localhost:8080",
+  "http://localhost:8081",
+  "http://localhost:8085",
+  "http://82.29.160.45:8080",
+  "http://82.29.160.45:3003",
+  "http://127.0.0.1:5173",
+  "http://127.0.0.1:8080",
+].filter(Boolean);
+
 app.use(
   cors({
-    origin: [
-      process.env.CLIENT_URL,
-      process.env.FRONTEND_URL,
-      ...extraOrigins,
-      "http://quizup.site",
-      "https://quizup.site",
-      "http://www.quizup.site",
-      "https://www.quizup.site",
-      "http://82.29.160.45:8080",
-      "http://82.29.160.45:3003",
-      "http://localhost:5173",
-      "http://localhost:8080",
-      "http://localhost:8085",
-    ].filter(Boolean),
+    origin(origin, callback) {
+      // Allow requests with no origin (e.g. curl, Postman, server-to-server)
+      if (!origin || allowedOrigins.includes(origin)) {
+        return callback(null, true);
+      }
+      console.error("[CORS] Blocked origin:", origin);
+      return callback(new Error(`CORS blocked origin: ${origin}`));
+    },
     credentials: true,
+    methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization"],
   })
 );
 
