@@ -15,8 +15,8 @@ const config: CapacitorConfig = {
     allowMixedContent: false,
     // Capture clicks on web links inside the app instead of opening the browser.
     captureInput: true,
-    // Prevent the WebView from being destroyed when the app goes to background.
-    webContentsDebuggingEnabled: false,
+    // Enable chrome://inspect while developing (set false before Play Store release).
+    webContentsDebuggingEnabled: true,
   },
   plugins: {
     SplashScreen: {

@@ -29,9 +29,10 @@ const initSockets = (httpServer) => {
     // - androidScheme "https" → https://localhost
     // - androidScheme "http"  → http://localhost
     // - iOS / older Capacitor  → capacitor://localhost
+    "capacitor://localhost",
+    "ionic://localhost",
     "https://localhost",
     "http://localhost",
-    "capacitor://localhost",
     "http://localhost:3000",
     "http://localhost:3003",
     "http://localhost:5173",
