@@ -32,4 +32,5 @@ jobs:
             cd backend
             npm ci
             cd ..
-            pm2 restart quizup --update-env || pm2 start ecosystem.config.cjs --update-env
+            pm2 delete quizup || true
+            pm2 start ecosystem.config.cjs --update-env
