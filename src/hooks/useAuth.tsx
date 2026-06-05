@@ -35,29 +35,38 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const login = useCallback(async (email: string, password: string) => {
     setIsLoading(true);
-    const { user } = await authService.login(email, password);
-    setUser(user);
-    setIsAuthenticated(true);
-    setIsLoading(false);
-    return user;
+    try {
+      const { user } = await authService.login(email, password);
+      setUser(user);
+      setIsAuthenticated(true);
+      return user;
+    } finally {
+      setIsLoading(false);
+    }
   }, []);
 
   const googleLogin = useCallback(async (credential: string) => {
     setIsLoading(true);
-    const { user } = await authService.googleLogin(credential);
-    setUser(user);
-    setIsAuthenticated(true);
-    setIsLoading(false);
-    return user;
+    try {
+      const { user } = await authService.googleLogin(credential);
+      setUser(user);
+      setIsAuthenticated(true);
+      return user;
+    } finally {
+      setIsLoading(false);
+    }
   }, []);
 
   const signup = useCallback(async (username: string, email: string, password: string) => {
     setIsLoading(true);
-    const { user } = await authService.signup(username, email, password);
-    setUser(user);
-    setIsAuthenticated(true);
-    setIsLoading(false);
-    return user;
+    try {
+      const { user } = await authService.signup(username, email, password);
+      setUser(user);
+      setIsAuthenticated(true);
+      return user;
+    } finally {
+      setIsLoading(false);
+    }
   }, []);
 
   const logout = useCallback(async () => {

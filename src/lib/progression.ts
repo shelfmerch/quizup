@@ -11,32 +11,32 @@ export function xpThresholdToAdvance(fromLevel: number): number {
   return threshold;
 }
 
-/** Minimum cumulative `users.xp` required to be at `level`. */
-export function cumulativeXpForLevel(levelRaw: unknown): number {
+/** Lifetime XP earned (bar XP + all completed level thresholds). */
+export function computeTotalXp(levelRaw: unknown, barXpRaw: unknown): number {
   const level = typeof levelRaw === "number" && Number.isFinite(levelRaw) ? Math.max(1, Math.floor(levelRaw)) : 1;
-  let total = 0;
+  const barXp =
+    typeof barXpRaw === "number" && Number.isFinite(barXpRaw) ? Math.max(0, Math.floor(barXpRaw)) : 0;
+  let total = barXp;
   for (let l = 1; l < level; l++) {
     total += xpThresholdToAdvance(l);
   }
   return total;
 }
 
-/** XP still needed to reach the next level. */
-export function xpRemainingToNextLevel(xpRaw: unknown, levelRaw: unknown): number {
-  const xp = typeof xpRaw === "number" && Number.isFinite(xpRaw) ? Math.max(0, Math.floor(xpRaw)) : 0;
-  const level = typeof levelRaw === "number" && Number.isFinite(levelRaw) ? Math.max(1, Math.floor(levelRaw)) : 1;
-  return Math.max(0, cumulativeXpForLevel(level + 1) - xp);
+export function xpRemainingToNextLevel(barXpRaw: unknown, xpToNextRaw: unknown): number {
+  const barXp =
+    typeof barXpRaw === "number" && Number.isFinite(barXpRaw) ? Math.max(0, Math.floor(barXpRaw)) : 0;
+  const xpToNext =
+    typeof xpToNextRaw === "number" && Number.isFinite(xpToNextRaw) ? Math.max(0, Math.floor(xpToNextRaw)) : 0;
+  return Math.max(0, xpToNext - barXp);
 }
 
-/** Progress through the current level band (0–100). */
-export function levelProgressPercent(xpRaw: unknown, levelRaw: unknown): number {
-  const xp = typeof xpRaw === "number" && Number.isFinite(xpRaw) ? Math.max(0, Math.floor(xpRaw)) : 0;
-  const level = typeof levelRaw === "number" && Number.isFinite(levelRaw) ? Math.max(1, Math.floor(levelRaw)) : 1;
-  const start = cumulativeXpForLevel(level);
-  const end = cumulativeXpForLevel(level + 1);
-  const span = end - start;
-  if (span <= 0) return 100;
-  return Math.min(100, Math.max(0, ((xp - start) / span) * 100));
+export function levelProgressPercent(barXpRaw: unknown, xpToNextRaw: unknown): number {
+  const xpToNext =
+    typeof xpToNextRaw === "number" && Number.isFinite(xpToNextRaw) ? Math.max(1, Math.floor(xpToNextRaw)) : 1;
+  const barXp =
+    typeof barXpRaw === "number" && Number.isFinite(barXpRaw) ? Math.max(0, Math.floor(barXpRaw)) : 0;
+  return Math.min(100, Math.max(0, (barXp / xpToNext) * 100));
 }
 
 export type LeagueKey =
@@ -57,7 +57,7 @@ export interface League {
   badgeUrl: string;
 }
 
-/** Highest league whose XP threshold is met (`users.xp`). */
+/** Highest league whose total XP threshold is met. */
 export const LEAGUES: League[] = [
   { key: "legend", name: "Legend", minXpInclusive: 20000, badgeUrl: "/leagues/legend.svg" },
   { key: "titan", name: "Titan", minXpInclusive: 15000, badgeUrl: "/leagues/titan.png" },
@@ -70,8 +70,9 @@ export const LEAGUES: League[] = [
   { key: "unranked", name: "Unranked", minXpInclusive: 0, badgeUrl: "/leagues/unranked.png" },
 ];
 
-export function getLeagueFromXp(xpRaw: unknown): League {
-  const xp = typeof xpRaw === "number" && Number.isFinite(xpRaw) ? Math.max(0, Math.floor(xpRaw)) : 0;
+export function getLeagueFromXp(totalXpRaw: unknown): League {
+  const xp =
+    typeof totalXpRaw === "number" && Number.isFinite(totalXpRaw) ? Math.max(0, Math.floor(totalXpRaw)) : 0;
   for (const league of LEAGUES) {
     if (xp >= league.minXpInclusive) return league;
   }
