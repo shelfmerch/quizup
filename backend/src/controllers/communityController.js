@@ -36,8 +36,8 @@ const createPost = async (req, res) => {
       status: { $in: ["completed", "finalizing"] }
     });
 
-    if (count < 25) {
-      return res.status(403).json({ error: "You must play 25 matches in this category to post." });
+    if (count < 0) {
+      return res.status(403).json({ error: "You must play 0 matches in this category to post." });
     }
 
     const newPost = await CommunityPost.create({
@@ -67,7 +67,7 @@ const getStatus = async (req, res) => {
       $or: [{ "player1.userId": req.user._id }, { "player2.userId": req.user._id }],
       status: { $in: ["completed", "finalizing"] }
     });
-    res.json({ playedMatches: count, communityUnlocked: count >= 25 });
+    res.json({ playedMatches: count, communityUnlocked: count >= 0 });
   } catch (err) {
     console.error("getStatus error:", err);
     res.status(500).json({ error: "Server error" });
@@ -114,7 +114,7 @@ const addComment = async (req, res) => {
     if (!post) return res.status(404).json({ error: "Post not found" });
 
     const count = await countCategoryMatches(req.user._id, post.categoryId);
-    if (count < 25) {
+    if (count < 0) {
       return res.status(403).json({ error: "You must unlock the community to comment." });
     }
 

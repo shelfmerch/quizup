@@ -354,8 +354,8 @@ const CommunityFeed: React.FC<CommunityFeedProps> = ({
   
     const theme = CATEGORY_THEMES[themeKey] ?? CATEGORY_THEMES["quizup-header-teal"];
 
-  const matchesLeft = Math.max(0, 25 - (communityStatus?.playedMatches || 0));
-  const progressPct = Math.min(100, ((communityStatus?.playedMatches || 0) / 25) * 100);
+  const matchesLeft = Math.max(0, 0 - (communityStatus?.playedMatches || 0));
+  const progressPct = Math.min(100, ((communityStatus?.playedMatches || 0) / 0) * 100);
 
   if (!isAuthenticated) {
     return (
@@ -397,7 +397,7 @@ const CommunityFeed: React.FC<CommunityFeedProps> = ({
         <div className="relative mx-auto mt-6 max-w-[240px]">
           <div className="mb-2 flex justify-between text-[11px] font-bold uppercase tracking-wide text-[#8a8d91]">
             <span>Progress</span>
-            <span>{communityStatus?.playedMatches || 0} / 25</span>
+            <span>{communityStatus?.playedMatches || 0} / 0</span>
           </div>
           <div className="h-2.5 overflow-hidden rounded-full bg-[#e9edef]">
             <motion.div

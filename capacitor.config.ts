@@ -19,6 +19,9 @@ const config: CapacitorConfig = {
     webContentsDebuggingEnabled: true,
   },
   plugins: {
+    CapacitorHttp: {
+      enabled: true,
+    },
     SplashScreen: {
       // Hide automatically once the app is ready (we call hide() in main.tsx)
       launchAutoHide: false,
