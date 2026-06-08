@@ -18,6 +18,8 @@ import { CategoryIcon } from "@/components/CategoryIcon";
 import { EmojiPicker } from "@/components/EmojiPicker";
 import { GifPicker } from "@/components/GifPicker";
 import { GiphyGif } from "@/services/giphyService";
+import ChallengeShareSheet from "@/components/ChallengeShareSheet";
+import type { ChallengeShareInfo } from "@/lib/challengeShare";
 
 
 // ── helpers ──────────────────────────────────────────────────────────────────
@@ -34,6 +36,7 @@ interface IncomingChallenge {
   categoryName: string;
   categoryIcon?: string;
   createdAt?: string;
+  shareUrl?: string;
 }
 
 type ChallengeLogEntry = {
@@ -266,6 +269,7 @@ const ChatPage: React.FC = () => {
   const [challengeLog, setChallengeLog] = useState<ChallengeLogEntry[]>([]);
   const [emojiPickerOpen, setEmojiPickerOpen] = useState(false);
   const [gifPickerOpen, setGifPickerOpen] = useState(false);
+  const [challengeShareInfo, setChallengeShareInfo] = useState<ChallengeShareInfo | null>(null);
 
   const bottomRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -619,6 +623,13 @@ const ChatPage: React.FC = () => {
         return next;
       });
       toast.success("Challenge sent", { position: "top-center" });
+      setChallengeShareInfo({
+        challengeId: ch.id,
+        fromUsername: ch.from.username,
+        toUsername: ch.to?.username || peerNameRef.current,
+        categoryName: ch.categoryName,
+        shareUrl: ch.shareUrl,
+      });
     };
 
     const onCancelled = ({ challengeId }: { challengeId: string }) => {
@@ -1145,6 +1156,14 @@ const ChatPage: React.FC = () => {
           </button>
         )}
       </div>
+
+      {challengeShareInfo && (
+        <ChallengeShareSheet
+          info={challengeShareInfo}
+          onClose={() => setChallengeShareInfo(null)}
+          subtitle="Share on WhatsApp or other apps — the match starts when you're both online."
+        />
+      )}
 
       {/* Challenge category picker */}
       {challengeModalOpen && peerId && (

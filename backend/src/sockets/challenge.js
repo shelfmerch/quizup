@@ -22,9 +22,6 @@ function _getSet(map, key) {
   return s;
 }
 
-// Delegate to shared presence module
-const _incrOnline = (userId) => onlinePresence.incrOnline(userId);
-const _decrOnline = (userId) => onlinePresence.decrOnline(userId);
 const _isOnline = (userId) => onlinePresence.isOnline(userId);
 
 function _removeChallenge(challengeId) {
@@ -36,6 +33,16 @@ function _removeChallenge(challengeId) {
   return ch;
 }
 
+function _buildShareUrl(challengeId) {
+  const base = (
+    process.env.APP_URL ||
+    process.env.CLIENT_URL ||
+    process.env.FRONTEND_URL ||
+    "https://quizup.site"
+  ).replace(/\/+$/, "");
+  return `${base}/#/challenge/${challengeId}`;
+}
+
 function _serializeChallenge(ch) {
   return {
     id: ch.id,
@@ -45,7 +52,12 @@ function _serializeChallenge(ch) {
     categoryName: ch.categoryName,
     categoryIcon: ch.categoryIcon || "",
     createdAt: ch.createdAt,
+    shareUrl: _buildShareUrl(ch.id),
   };
+}
+
+function getChallengeById(challengeId) {
+  return challengesById.get(String(challengeId || "")) || null;
 }
 
 function _clientQuestions(match) {
@@ -72,13 +84,15 @@ function _matchFoundPayload(matchId, state, myUserId) {
   };
 }
 
-module.exports = function registerChallenge(socket, io) {
-  // Track online users (best-effort, in-memory)
-  _incrOnline(socket.userId);
-  socket.on("disconnect", () => {
-    _decrOnline(socket.userId);
-  });
+function _userInActiveMatch(userId) {
+  const roomMatchId = battlePresence.getUserMatch(userId);
+  if (!roomMatchId) return false;
+  return getActiveMatch(roomMatchId).then((m) =>
+    Boolean(m && ["waiting", "in_progress", "finalizing"].includes(m.status))
+  );
+}
 
+module.exports = function registerChallenge(socket, io) {
   // List pending challenges for the logged-in user
   socket.on("challenge:list", async () => {
     const incomingIds = Array.from(_getSet(incomingIdsByUser, socket.userId));
@@ -86,6 +100,16 @@ module.exports = function registerChallenge(socket, io) {
     const incoming = incomingIds.map((id) => challengesById.get(id)).filter(Boolean).map(_serializeChallenge);
     const outgoing = outgoingIds.map((id) => challengesById.get(id)).filter(Boolean).map(_serializeChallenge);
     socket.emit("challenge:list", { incoming, outgoing });
+  });
+
+  // Fetch a single challenge by id (for share links / deep links)
+  socket.on("challenge:get", ({ challengeId } = {}) => {
+    const id = String(challengeId || "");
+    const ch = challengesById.get(id);
+    if (!ch) return socket.emit("challenge:error", { message: "Challenge not found or expired" });
+    const isParticipant = ch.fromUserId === socket.userId || ch.toUserId === socket.userId;
+    if (!isParticipant) return socket.emit("challenge:error", { message: "Not authorized" });
+    socket.emit("challenge:detail", _serializeChallenge(ch));
   });
 
   // Send a challenge to another user by id or username
@@ -175,19 +199,25 @@ module.exports = function registerChallenge(socket, io) {
     }
 
     try {
-      // Receiver can only accept if sender is online and not already in a match
+      // Match starts only when both players are online and available
       if (!_isOnline(ch.fromUserId)) {
-        return socket.emit("challenge:error", { message: "Sender is offline. You can't accept right now." });
+        return socket.emit("challenge:error", {
+          message: "Challenger is offline. The match can only start when both players are active.",
+        });
+      }
+      if (!_isOnline(ch.toUserId)) {
+        return socket.emit("challenge:error", {
+          message: "You must be online to accept. Open the app and try again.",
+        });
       }
 
-      // Only block if sender is actually in a 1v1 room (BattlePage -> join_match_room),
-      // not merely "online" or because of a stale DB row.
-      const senderRoomMatchId = battlePresence.getUserMatch(ch.fromUserId);
-      if (senderRoomMatchId) {
-        const senderMatch = await getActiveMatch(senderRoomMatchId);
-        if (senderMatch && ["waiting", "in_progress", "finalizing"].includes(senderMatch.status)) {
-          return socket.emit("challenge:error", { message: "Sender is already in a match. You can't accept right now." });
-        }
+      const senderInMatch = await _userInActiveMatch(ch.fromUserId);
+      if (senderInMatch) {
+        return socket.emit("challenge:error", { message: "Challenger is already in a match." });
+      }
+      const receiverInMatch = await _userInActiveMatch(ch.toUserId);
+      if (receiverInMatch) {
+        return socket.emit("challenge:error", { message: "You are already in a match." });
       }
 
       _removeChallenge(id);
@@ -215,6 +245,24 @@ module.exports = function registerChallenge(socket, io) {
       const catId = String(categoryId || "").trim() || "science";
       if (!oppId) return socket.emit("challenge:error", { message: "opponentId is required" });
 
+      if (!_isOnline(oppId)) {
+        return socket.emit("challenge:error", {
+          message: "Opponent is offline. Both players must be active to start a match.",
+        });
+      }
+      if (!_isOnline(socket.userId)) {
+        return socket.emit("challenge:error", { message: "You must be online to start a match." });
+      }
+
+      const opponentInMatch = await _userInActiveMatch(oppId);
+      if (opponentInMatch) {
+        return socket.emit("challenge:error", { message: "Opponent is already in a match." });
+      }
+      const selfInMatch = await _userInActiveMatch(socket.userId);
+      if (selfInMatch) {
+        return socket.emit("challenge:error", { message: "You are already in a match." });
+      }
+
       const { matchId } = await createDirectMatch(socket.userId, oppId, catId);
       const stateMatch = await getActiveMatch(matchId);
       if (!stateMatch) throw new Error("Match missing after creation");
@@ -228,4 +276,8 @@ module.exports = function registerChallenge(socket, io) {
     }
   });
 };
+
+module.exports.getChallengeById = getChallengeById;
+module.exports.serializeChallenge = _serializeChallenge;
+module.exports.buildShareUrl = _buildShareUrl;
 

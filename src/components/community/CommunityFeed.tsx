@@ -27,6 +27,8 @@ import {
 import { resolveMediaUrl, resolveQuestionImageUrl } from "@/lib/mediaUrl";
 
 const MAX_VIDEO_BYTES = 50 * 1024 * 1024;
+/** Must match backend `communityController` unlock threshold (`count >= N`). */
+const COMMUNITY_MATCHES_REQUIRED = 0;
 
 const CATEGORY_THEMES: Record<
   string,
@@ -155,7 +157,7 @@ const CommunityFeed: React.FC<CommunityFeedProps> = ({
     communityService
       .getStatus(categoryId)
       .then(setCommunityStatus)
-      .catch(() => setCommunityStatus({ playedMatches: 0, communityUnlocked: false }));
+      .catch(() => setCommunityStatus({ playedMatches: 0, communityUnlocked: true }));
   }, [categoryId, isAuthenticated]);
 
   useEffect(() => {
@@ -354,8 +356,12 @@ const CommunityFeed: React.FC<CommunityFeedProps> = ({
   
     const theme = CATEGORY_THEMES[themeKey] ?? CATEGORY_THEMES["quizup-header-teal"];
 
-  const matchesLeft = Math.max(0, 0 - (communityStatus?.playedMatches || 0));
-  const progressPct = Math.min(100, ((communityStatus?.playedMatches || 0) / 0) * 100);
+  const playedMatches = communityStatus?.playedMatches || 0;
+  const matchesLeft = Math.max(0, COMMUNITY_MATCHES_REQUIRED - playedMatches);
+  const progressPct =
+    COMMUNITY_MATCHES_REQUIRED > 0
+      ? Math.min(100, (playedMatches / COMMUNITY_MATCHES_REQUIRED) * 100)
+      : 100;
 
   if (!isAuthenticated) {
     return (
@@ -397,7 +403,7 @@ const CommunityFeed: React.FC<CommunityFeedProps> = ({
         <div className="relative mx-auto mt-6 max-w-[240px]">
           <div className="mb-2 flex justify-between text-[11px] font-bold uppercase tracking-wide text-[#8a8d91]">
             <span>Progress</span>
-            <span>{communityStatus?.playedMatches || 0} / 0</span>
+            <span>{playedMatches} / {COMMUNITY_MATCHES_REQUIRED}</span>
           </div>
           <div className="h-2.5 overflow-hidden rounded-full bg-[#e9edef]">
             <motion.div

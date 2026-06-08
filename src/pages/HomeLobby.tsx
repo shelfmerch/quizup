@@ -14,6 +14,7 @@ import { LeagueModal } from "@/components/LeagueModal";
 import { getLeagueFromXp, leagueBadgeSrc } from "@/lib/progression";
 import { useChatUnread } from "@/hooks/useChatUnread";
 import { toast } from "sonner";
+import { shareAppInvite } from "@/lib/challengeShare";
 
 interface IncomingChallenge {
   id: string;
@@ -273,13 +274,21 @@ const HomeLobby: React.FC = () => {
       });
     };
 
+    const onChallengeError = ({ message }: { message?: string }) => {
+      setQueueLoading(false);
+      setChallengeResponding(false);
+      if (message) toast.error(message, { position: "top-center" });
+    };
+
     socket.on("challenge:received", onReceived);
     socket.on("challenge:cancelled", onCancelled);
+    socket.on("challenge:error", onChallengeError);
     socket.on("match_found", onMatchFound);
 
     return () => {
       socket.off("challenge:received", onReceived);
       socket.off("challenge:cancelled", onCancelled);
+      socket.off("challenge:error", onChallengeError);
       socket.off("match_found", onMatchFound);
     };
   }, [user?.id, user?.avatarUrl, user?.level, user?.username, navigate]);
@@ -736,7 +745,17 @@ const HomeLobby: React.FC = () => {
                   <span className="mt-1 block truncate text-[10px] font-bold text-[#444]">{entry.username}</span>
                 </button>
               ))}
-              <button onClick={() => navigate("/leaderboard")} className="w-[58px] shrink-0 text-center">
+              <button
+                type="button"
+                onClick={() => {
+                  void shareAppInvite(user?.username).then(() => {
+                    toast.success("Invite link ready to share!", { position: "top-center" });
+                  }).catch(() => {
+                    toast.error("Could not share invite", { position: "top-center" });
+                  });
+                }}
+                className="w-[58px] shrink-0 text-center"
+              >
                 <span className="mx-auto flex h-12 w-12 items-center justify-center rounded-full border-2 border-[#f65357] bg-[#ffd13b] text-2xl font-black text-[#121212]">
                   +
                 </span>

@@ -39,6 +39,8 @@ import {
   ACHIEVEMENT_TIERS,
   ACHIEVEMENT_RARITY_MAP,
 } from "@/components/AchievementModal";
+import ChallengeShareSheet from "@/components/ChallengeShareSheet";
+import type { ChallengeShareInfo } from "@/lib/challengeShare";
 
 const TILE_COLORS = ["#f65357", "#1fb7c9", "#ffca32", "#f65357", "#8d65e7", "#15b78f"];
 
@@ -145,6 +147,7 @@ const ProfilePage: React.FC = () => {
   const [challengeSending, setChallengeSending] = useState(false);
   const [challengeStatus, setChallengeStatus] = useState<string | null>(null);
   const [challengeModalOpen, setChallengeModalOpen] = useState(false);
+  const [challengeShareInfo, setChallengeShareInfo] = useState<ChallengeShareInfo | null>(null);
   const [allCategories, setAllCategories] = useState<Category[]>([]);
   const [followedTopics, setFollowedTopics] = useState<Category[]>([]);
   const [recentMatches, setRecentMatches] = useState<MatchHistoryEntry[]>([]);
@@ -375,6 +378,51 @@ const ProfilePage: React.FC = () => {
     void ensureCategoriesLoaded();
   };
 
+  useEffect(() => {
+    if (!user?.id || isOwnProfile) return;
+    let socket: ReturnType<typeof getSocket>;
+    try {
+      socket = getSocket();
+    } catch {
+      return;
+    }
+
+    const onSent = (ch: {
+      id: string;
+      from: { username: string };
+      to: { userId: string; username: string };
+      categoryName: string;
+      shareUrl?: string;
+    }) => {
+      if (ch.to?.userId !== profile?.id) return;
+      setChallengeSending(false);
+      setChallengeModalOpen(false);
+      setChallengeStatus("Challenge sent");
+      toast.success("Challenge sent", { position: "top-center" });
+      setChallengeShareInfo({
+        challengeId: ch.id,
+        fromUsername: ch.from.username,
+        toUsername: ch.to.username,
+        categoryName: ch.categoryName,
+        shareUrl: ch.shareUrl,
+      });
+    };
+
+    const onError = ({ message }: { message?: string }) => {
+      setChallengeSending(false);
+      const msg = message || "Could not send challenge";
+      setChallengeStatus(msg);
+      toast.error(msg, { position: "top-center" });
+    };
+
+    socket.on("challenge:sent", onSent);
+    socket.on("challenge:error", onError);
+    return () => {
+      socket.off("challenge:sent", onSent);
+      socket.off("challenge:error", onError);
+    };
+  }, [isOwnProfile, profile?.id, profile?.username, user?.id]);
+
   const sendChallengeForCategory = async (categoryIdRaw: string) => {
     if (!profile || !user?.id) return;
     const categoryId = (categoryIdRaw || profile.favoriteCategory || "science").toString().trim() || "science";
@@ -382,13 +430,9 @@ const ProfilePage: React.FC = () => {
     setChallengeSending(true);
     try {
       getSocket().emit("challenge:send", { toUserId: profile.id, categoryId });
-      setChallengeStatus("Challenge sent");
-      toast.success("Challenge sent", { position: "top-center" });
-      setChallengeModalOpen(false);
     } catch (err) {
-      setChallengeStatus(err instanceof Error ? err.message : "Could not send challenge");
-    } finally {
       setChallengeSending(false);
+      setChallengeStatus(err instanceof Error ? err.message : "Could not send challenge");
     }
   };
 
@@ -745,6 +789,14 @@ const ProfilePage: React.FC = () => {
             Log Out
           </button>
         </div>
+      )}
+
+      {challengeShareInfo && (
+        <ChallengeShareSheet
+          info={challengeShareInfo}
+          onClose={() => setChallengeShareInfo(null)}
+          subtitle="Send the link on WhatsApp, Instagram, or other apps so they can accept when online."
+        />
       )}
 
       {challengeModalOpen && !isOwnProfile && (

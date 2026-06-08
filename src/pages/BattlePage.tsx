@@ -878,6 +878,17 @@ const BattlePage: React.FC = () => {
              <path d="M11.3 1.046A1 1 0 0112 2v5h4a1 1 0 01.82 1.573l-7 10A1 1 0 018 18v-5H4a1 1 0 01-.82-1.573l7-10a1 1 0 011.12-.38z" />
           </svg>
         </motion.div>
+
+        {isOnline && (
+          <motion.p
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 1 }}
+            className="absolute bottom-6 left-0 right-0 z-40 text-center text-sm font-bold text-white/90 drop-shadow-md px-6"
+          >
+            Waiting for opponent to join… Match starts when both players are active.
+          </motion.p>
+        )}
       </div>
     );
   }

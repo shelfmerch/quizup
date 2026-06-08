@@ -35,6 +35,7 @@ import AllCategories from "./pages/AllCategories";
 import OnboardingProfile from "./pages/OnboardingProfile";
 import OnboardingTopics from "./pages/OnboardingTopics";
 import AchievementsPage from "./pages/AchievementsPage";
+import ChallengeInvitePage from "./pages/ChallengeInvitePage";
 
 const queryClient = new QueryClient();
 
@@ -90,6 +91,7 @@ const Shell: React.FC<{ children: React.ReactNode }> = ({ children }) => (
           <Route path="/achievements" element={<ProtectedRoute><AchievementsPage /></ProtectedRoute>} />
           <Route path="/find-match/:categoryId" element={<ProtectedRoute><FindMatch /></ProtectedRoute>} />
           <Route path="/battle" element={<ProtectedRoute><BattlePage /></ProtectedRoute>} />
+          <Route path="/challenge/:challengeId" element={<ProtectedRoute><ChallengeInvitePage /></ProtectedRoute>} />
           <Route path="/chat/:peerId" element={<ProtectedRoute><ChatPage /></ProtectedRoute>} />
           <Route path="/admin" element={<AdminRoute><AdminPage /></AdminRoute>} />
 

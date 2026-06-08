@@ -10,6 +10,7 @@ const profileRoutes = require("./routes/profile");
 const categoryRoutes = require("./routes/categories");
 const leaderboardRoutes = require("./routes/leaderboard");
 const matchRoutes = require("./routes/matches");
+const challengeRoutes = require("./routes/challenges");
 const adminRoutes = require("./routes/admin");
 const followRoutes = require("./routes/follow");
 const chatRoutes = require("./routes/chat");
@@ -53,6 +54,7 @@ const allowedOrigins = [
   "http://82.29.160.45:3003",
   "http://127.0.0.1:5173",
   "http://127.0.0.1:8080",
+  "http://192.168.1.7:8080",
 ].filter(Boolean);
 
 app.use(
@@ -108,6 +110,7 @@ app.use("/api/profile", profileRoutes);
 app.use("/api/categories", categoryRoutes);
 app.use("/api/leaderboard", leaderboardRoutes);
 app.use("/api/matches", matchRoutes);
+app.use("/api/challenges", challengeRoutes);
 app.use("/api/admin", adminRoutes);
 app.use("/api/follow", followRoutes);
 app.use("/api/chat", chatRoutes);
