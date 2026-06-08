@@ -1,16 +1,19 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { motion } from "framer-motion";
-import { ArrowLeft, Play, Trophy, Star, Users, BookOpen, Search, MessageCircle } from "lucide-react";
+import { ArrowLeft, Search, MessageCircle, Swords } from "lucide-react";
 import { fetchPublicCategories } from "@/services/categoryService";
 import { leaderboardService } from "@/services/leaderboardService";
 import { MOCK_CATEGORIES } from "@/data/mock-data";
 import { EXTRA_HOME_TOPICS } from "@/data/extraTopics";
 import { Category, LeaderboardEntry } from "@/types";
 import { useAuth } from "@/hooks/useAuth";
-import { fetchFollowedCategories, followCategory, unfollowCategory } from "@/services/categoryService";
 import { CategoryIcon } from "@/components/CategoryIcon";
 import CommunityFeed from "@/components/community/CommunityFeed";
+import { useChatUnread } from "@/hooks/useChatUnread";
+import ChallengeShareSheet from "@/components/ChallengeShareSheet";
+import { buildCategoryChallengeShareInfo } from "@/lib/challengeShare";
+import type { ChallengeShareInfo } from "@/lib/challengeShare";
 
 const CATEGORY_THEMES: Record<
   string,
@@ -52,9 +55,10 @@ const CategoryDetail: React.FC = () => {
 
   const [apiCategories, setApiCategories] = useState<Category[]>([]);
   const [topPlayers, setTopPlayers] = useState<LeaderboardEntry[]>([]);
+  const { totalUnread } = useChatUnread();
   const [playersLoading, setPlayersLoading] = useState(true);
-  const [isFollowed, setIsFollowed] = useState(false);
-  const [followBusy, setFollowBusy] = useState(false);
+  const [challengeShareOpen, setChallengeShareOpen] = useState(false);
+  const [challengeShareInfo, setChallengeShareInfo] = useState<ChallengeShareInfo | null>(null);
 
   // Fetch live categories from API
   useEffect(() => {
@@ -107,29 +111,17 @@ const CategoryDetail: React.FC = () => {
     return () => { cancelled = true; };
   }, [categoryId]);
 
-  // Fetch follow state for this category (most recent follows persisted in backend)
-  useEffect(() => {
-    let cancelled = false;
-    if (!isAuthenticated || !categoryId) {
-      setIsFollowed(false);
-      return () => {
-        cancelled = true;
-      };
+  const handleChallenge = () => {
+    if (!categoryId || !category) return;
+    if (!isAuthenticated) {
+      navigate("/login");
+      return;
     }
-
-    fetchFollowedCategories()
-      .then((list) => {
-        if (cancelled) return;
-        setIsFollowed(list.some((c) => c.id === categoryId));
-      })
-      .catch(() => {
-        if (!cancelled) setIsFollowed(false);
-      });
-
-    return () => {
-      cancelled = true;
-    };
-  }, [isAuthenticated, categoryId]);
+    setChallengeShareInfo(
+      buildCategoryChallengeShareInfo(categoryId, category.name, user?.username || "A friend")
+    );
+    setChallengeShareOpen(true);
+  };
 
   // Mock stats for visual richness
   const mockFollowers = useMemo(() => {
@@ -165,10 +157,17 @@ const CategoryDetail: React.FC = () => {
           <button className="text-white p-1 rounded-full active:bg-black/10">
             <Search className="w-6 h-6" />
           </button>
-          <button onClick={() => navigate('/social')} className="text-white p-1 rounded-full active:bg-black/10 relative">
+          <button onClick={() => navigate('/social')} aria-label={totalUnread > 0 ? `Chats, ${totalUnread} unread` : "Chats"} className="text-white p-1 rounded-full active:bg-black/10 relative">
             <MessageCircle className="w-6 h-6" />
             <div className="absolute top-0 right-0 w-3.5 h-3.5 bg-black rounded-full flex items-center justify-center text-[8px] font-bold text-white border border-[#242424]">1</div>
-
+            {totalUnread > 0 && (
+              <span
+                className="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 rounded-full bg-green-400 border-1 border-[#ffffff] flex items-center justify-center text-[10px] font-bold text-[#ffffff] leading-none"
+                aria-hidden
+              >
+                {totalUnread > 99 ? "99+" : totalUnread}
+              </span>
+            )}
           </button>
         </div>
       </div>
@@ -214,29 +213,14 @@ const CategoryDetail: React.FC = () => {
               </button>
 
               <button
-                disabled={!isAuthenticated || followBusy}
-                onClick={async () => {
-                  if (!categoryId || !isAuthenticated) return;
-                  setFollowBusy(true);
-                  try {
-                    if (isFollowed) {
-                      await unfollowCategory(categoryId);
-                      setIsFollowed(false);
-                    } else {
-                      await followCategory(categoryId);
-                      setIsFollowed(true);
-                    }
-                  } finally {
-                    setFollowBusy(false);
-                  }
-                }}
-                className={`bg-white rounded-xl flex-1 flex items-center gap-3 px-4 shadow-md font-bold active:scale-[0.98] transition-transform ${followBusy ? "opacity-70" : ""}`}
-                style={{ color: '#00c853' }}
+                onClick={handleChallenge}
+                className="bg-white rounded-xl flex-1 flex items-center gap-3 px-4 shadow-md font-bold active:scale-[0.98] transition-transform"
+                style={{ color: "#080808" }}
               >
-                <div className="w-6 h-6 rounded-full bg-[#00c853] text-white flex items-center justify-center">
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="3" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" /></svg>
+                <div className="w-6 h-6 rounded-full bg-[#080808] text-white flex items-center justify-center">
+                  <Swords className="w-3.5 h-3.5" />
                 </div>
-                <span className="text-[15px]">{isFollowed ? "Following" : "Follow"}</span>
+                <span className="text-[15px]">Challenge</span>
               </button>
 
               <button
@@ -291,6 +275,17 @@ const CategoryDetail: React.FC = () => {
           />
         )}
       </div>
+
+      {challengeShareOpen && challengeShareInfo && (
+        <ChallengeShareSheet
+          info={challengeShareInfo}
+          onClose={() => {
+            setChallengeShareOpen(false);
+            setChallengeShareInfo(null);
+          }}
+          subtitle={`Invite friends to a ${category.name} quiz via WhatsApp, Instagram, and more.`}
+        />
+      )}
     </div>
   );
 };

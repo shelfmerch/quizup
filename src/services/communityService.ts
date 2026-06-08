@@ -9,7 +9,8 @@ export interface CommunityAuthor {
 
 export interface CommunityComment {
   _id: string;
-  authorId: CommunityAuthor;
+  /** Null when the comment author account was deleted. */
+  authorId: CommunityAuthor | null;
   text: string;
   createdAt: string;
 }
@@ -17,7 +18,8 @@ export interface CommunityComment {
 export interface CommunityPost {
   _id: string;
   categoryId: string;
-  authorId: CommunityAuthor;
+  /** Null when the post author account was deleted. */
+  authorId: CommunityAuthor | null;
   content: string;
   imageUrl: string | null;
   videoUrl?: string | null;

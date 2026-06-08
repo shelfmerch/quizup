@@ -1,7 +1,7 @@
 import { APP_URL } from "@/config/env";
 
 export interface ChallengeShareInfo {
-  challengeId: string;
+  challengeId?: string;
   fromUsername: string;
   toUsername?: string;
   categoryName: string;
@@ -20,8 +20,30 @@ export function buildChallengeShareMessage(info: ChallengeShareInfo): string {
   return `Join me for a ${topic} quiz battle on QuizUp! 🎯`;
 }
 
+export function resolveChallengeShareUrl(info: ChallengeShareInfo): string {
+  if (info.shareUrl) return info.shareUrl;
+  if (info.challengeId) return buildChallengeShareUrl(info.challengeId);
+  return APP_URL;
+}
+
+export function buildCategoryChallengeShareUrl(categoryId: string): string {
+  return `${APP_URL}/#/find-match/${categoryId}`;
+}
+
+export function buildCategoryChallengeShareInfo(
+  categoryId: string,
+  categoryName: string,
+  fromUsername: string
+): ChallengeShareInfo {
+  return {
+    fromUsername,
+    categoryName,
+    shareUrl: buildCategoryChallengeShareUrl(categoryId),
+  };
+}
+
 export function buildChallengeShareText(info: ChallengeShareInfo): string {
-  const url = info.shareUrl || buildChallengeShareUrl(info.challengeId);
+  const url = resolveChallengeShareUrl(info);
   return `${buildChallengeShareMessage(info)}\n\n${url}`;
 }
 
@@ -31,7 +53,7 @@ export function shareViaWhatsApp(info: ChallengeShareInfo): void {
 }
 
 export function shareViaTelegram(info: ChallengeShareInfo): void {
-  const url = info.shareUrl || buildChallengeShareUrl(info.challengeId);
+  const url = resolveChallengeShareUrl(info);
   const text = buildChallengeShareMessage(info);
   window.open(
     `https://t.me/share/url?url=${encodeURIComponent(url)}&text=${encodeURIComponent(text)}`,
@@ -55,7 +77,7 @@ export async function copyChallengeLink(info: ChallengeShareInfo): Promise<void>
 
 export async function nativeShareChallenge(info: ChallengeShareInfo): Promise<boolean> {
   if (!navigator.share) return false;
-  const url = info.shareUrl || buildChallengeShareUrl(info.challengeId);
+  const url = resolveChallengeShareUrl(info);
   await navigator.share({
     title: "QuizUp Challenge",
     text: buildChallengeShareMessage(info),

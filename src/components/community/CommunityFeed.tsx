@@ -74,10 +74,25 @@ function formatRelativeTime(iso: string): string {
   return d.toLocaleDateString([], { month: "short", day: "numeric" });
 }
 
-function avatarUrl(author: { avatarUrl?: string; username?: string }, seed?: string): string {
+const DELETED_AUTHOR_LABEL = "Deleted user";
+
+function authorName(author: CommunityPost["authorId"]): string {
+  if (!author) return DELETED_AUTHOR_LABEL;
+  return author.displayName || author.username || DELETED_AUTHOR_LABEL;
+}
+
+function authorHandle(author: CommunityPost["authorId"]): string {
+  if (!author?.username) return "deleted";
+  return author.username;
+}
+
+function avatarUrl(
+  author: { avatarUrl?: string; username?: string } | null | undefined,
+  seed?: string
+): string {
   return (
-    resolveMediaUrl(author.avatarUrl) ||
-    `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(seed || author.username || "user")}`
+    resolveMediaUrl(author?.avatarUrl) ||
+    `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(seed || author?.username || "user")}`
   );
 }
 
@@ -312,9 +327,10 @@ const CommunityFeed: React.FC<CommunityFeedProps> = ({
 
   const handleShare = async (post: CommunityPost) => {
     const snippet = post.content.trim().slice(0, 120);
+    const name = authorName(post.authorId);
     const text = snippet
-      ? `${post.authorId.displayName || post.authorId.username} in ${categoryName}: "${snippet}${post.content.length > 120 ? "…" : ""}"`
-      : `${post.authorId.displayName || post.authorId.username} shared a post in ${categoryName} on QuizUp`;
+      ? `${name} in ${categoryName}: "${snippet}${post.content.length > 120 ? "…" : ""}"`
+      : `${name} shared a post in ${categoryName} on QuizUp`;
 
     try {
       if (navigator.share) {
@@ -586,7 +602,7 @@ const CommunityFeed: React.FC<CommunityFeedProps> = ({
             const commentCount = post.comments.length;
             const previewComments = isExpanded ? post.comments : post.comments.slice(-2);
             const showViewMore = !isExpanded && commentCount > 2;
-            const authorName = post.authorId.displayName || post.authorId.username;
+            const postAuthorName = authorName(post.authorId);
 
             return (
               <motion.article
@@ -606,10 +622,10 @@ const CommunityFeed: React.FC<CommunityFeedProps> = ({
                     <div className="mb-1.5 flex items-start justify-between gap-2">
                       <div className="min-w-0">
                         <p className="truncate font-display text-[15px] font-extrabold leading-tight text-[#242424]">
-                          {authorName}
+                          {postAuthorName}
                         </p>
                         <p className="truncate text-[12px] font-medium text-[#65676b]">
-                          @{post.authorId.username} · {formatRelativeTime(post.createdAt)}
+                          @{authorHandle(post.authorId)} · {formatRelativeTime(post.createdAt)}
                         </p>
                       </div>
                       <button
@@ -740,7 +756,7 @@ const CommunityFeed: React.FC<CommunityFeedProps> = ({
                             />
                             <div className="min-w-0 flex-1 rounded-[18px] rounded-tl-md bg-[#f0f2f5] px-3 py-2">
                               <p className="text-[13px] font-bold text-[#242424]">
-                                {c.authorId.displayName || c.authorId.username}
+                                {authorName(c.authorId)}
                                 <span className="ml-2 font-normal text-[#8a8d91]">
                                   {formatRelativeTime(c.createdAt)}
                                 </span>
@@ -773,7 +789,7 @@ const CommunityFeed: React.FC<CommunityFeedProps> = ({
                                   handleComment(post._id);
                                 }
                               }}
-                              placeholder={`Reply to ${authorName}…`}
+                              placeholder={`Reply to ${postAuthorName}…`}
                               className="min-w-0 flex-1 rounded-full border border-[#e5e7eb] bg-white px-4 py-2 text-[14px] text-[#242424] outline-none placeholder:text-[#8a8d91] focus:border-[#1877f2] focus:ring-1 focus:ring-[#1877f2]/30"
                             />
                             <button
