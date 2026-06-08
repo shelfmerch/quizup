@@ -123,13 +123,6 @@ const CategoryDetail: React.FC = () => {
     setChallengeShareOpen(true);
   };
 
-  // Mock stats for visual richness
-  const mockFollowers = useMemo(() => {
-    if (!categoryId) return 0;
-    const seed = categoryId.split("").reduce((s, c) => s + c.charCodeAt(0), 0);
-    return 1000 + (seed * 137) % 49000;
-  }, [categoryId]);
-
   if (!category) {
     return (
       <div className="min-h-screen flex items-center justify-center text-slate-400">
@@ -181,9 +174,9 @@ const CategoryDetail: React.FC = () => {
           <h2 className="text-[2.5rem] font-display font-extrabold text-white mb-1 drop-shadow-md tracking-tight leading-none text-center">
             {category.name}
           </h2>
-          {category.description && (
+          {/* {category.description && (
             <p className="text-slate-300 text-[15px] mb-6 text-center">{category.description}</p>
-          )}
+          )} */}
 
           <div className="flex w-full gap-4 max-w-[340px] mt-2">
             {/* Big icon square */}
@@ -215,9 +208,9 @@ const CategoryDetail: React.FC = () => {
               <button
                 onClick={handleChallenge}
                 className="bg-white rounded-xl flex-1 flex items-center gap-3 px-4 shadow-md font-bold active:scale-[0.98] transition-transform"
-                style={{ color: "#080808" }}
+                style={{ color: "#EA3B52" }}
               >
-                <div className="w-6 h-6 rounded-full bg-[#080808] text-white flex items-center justify-center">
+                <div className="w-6 h-6 rounded-full bg-[#EA3B52] text-white flex items-center justify-center">
                   <Swords className="w-3.5 h-3.5" />
                 </div>
                 <span className="text-[15px]">Challenge</span>
@@ -258,7 +251,9 @@ const CategoryDetail: React.FC = () => {
         </div>
         <div className="flex-1 text-center border-r border-white/10">
           <p className="text-[10px] text-slate-400 uppercase tracking-widest mb-1 font-bold">Followers</p>
-          <p className="text-[2.5rem] font-display font-extrabold text-white leading-none tracking-tight">{mockFollowers}</p>
+          <p className="text-[2.5rem] font-display font-extrabold text-white leading-none tracking-tight">
+            {(category.followerCount ?? 0).toLocaleString()}
+          </p>
         </div>
         <div className="flex-1 text-center">
           <p className="text-[10px] text-slate-400 uppercase tracking-widest mb-1 font-bold">Question Count</p>
