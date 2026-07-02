@@ -16,7 +16,7 @@ const followRoutes = require("./routes/follow");
 const chatRoutes = require("./routes/chat");
 const communityRoutes = require("./routes/communityRoutes");
 const emojiRoutes = require("./routes/emojis");
-const mediaRoutes = require("./routes/media");
+const shareRoutes = require("./routes/share");
 const { BUCKET, getMediaProxyPath, localPathToS3Key } = require("./config/s3");
 
 const app = express();
@@ -115,6 +115,9 @@ app.use("/api/admin", adminRoutes);
 app.use("/api/follow", followRoutes);
 app.use("/api/chat", chatRoutes);
 app.use("/api/community", communityRoutes);
+
+// ─── Share preview pages (OG tags for social crawlers) ───────────────────────
+app.use("/share", shareRoutes);
 
 // ─── Production: serve Vite build (same port as API + Socket.io) ────────────
 // Repo structure: /root/quizup/backend/src/app.js → frontend build lives at /root/quizup/dist

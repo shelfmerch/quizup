@@ -40,7 +40,7 @@ function _buildShareUrl(challengeId) {
     process.env.FRONTEND_URL ||
     "https://quizup.site"
   ).replace(/\/+$/, "");
-  return `${base}/#/challenge/${challengeId}`;
+  return `${base}/share/challenge/${challengeId}`;
 }
 
 function _serializeChallenge(ch) {

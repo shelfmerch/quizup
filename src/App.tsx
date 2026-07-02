@@ -36,6 +36,7 @@ import OnboardingProfile from "./pages/OnboardingProfile";
 import OnboardingTopics from "./pages/OnboardingTopics";
 import AchievementsPage from "./pages/AchievementsPage";
 import ChallengeInvitePage from "./pages/ChallengeInvitePage";
+import RouteSEO from "@/components/RouteSEO";
 
 const queryClient = new QueryClient();
 
@@ -59,6 +60,7 @@ const Shell: React.FC<{ children: React.ReactNode }> = ({ children }) => (
       <HashRouter>
         {/* Handles Android hardware back button globally */}
         <AndroidBackButtonHandler />
+        <RouteSEO />
         <Routes>
           {/* Public auth routes */}
           <Route path="/landing" element={<PublicRoute><Landing /></PublicRoute>} />

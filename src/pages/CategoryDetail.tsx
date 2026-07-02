@@ -14,6 +14,8 @@ import { useChatUnread } from "@/hooks/useChatUnread";
 import ChallengeShareSheet from "@/components/ChallengeShareSheet";
 import { buildCategoryChallengeShareInfo } from "@/lib/challengeShare";
 import type { ChallengeShareInfo } from "@/lib/challengeShare";
+import SEO from "@/components/SEO";
+import { hashCanonicalUrl } from "@/config/seo";
 
 const CATEGORY_THEMES: Record<
   string,
@@ -133,6 +135,12 @@ const CategoryDetail: React.FC = () => {
 
   return (
     <div className="min-h-[100dvh] flex flex-col max-w-md mx-auto bg-[#242424] text-white">
+      <SEO
+        title={category.name}
+        description={`Play ${category.name} trivia on QuizUp — challenge friends in live 1v1 quiz battles.`}
+        url={hashCanonicalUrl(`/category/${categoryId}`)}
+        noindex
+      />
       {/* ── Header Bar ───────────────────────────────────────────────────────── */}
       <div className={`${theme.header} px-4 h-14 flex items-center justify-between shrink-0 shadow-md sticky top-0 z-50`}>
         <button

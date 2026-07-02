@@ -9,6 +9,8 @@ import { CategoryIcon } from "@/components/CategoryIcon";
 import { MatchFoundPayload } from "@/types";
 import ChallengeShareSheet from "@/components/ChallengeShareSheet";
 import { useOnlineStatus } from "@/hooks/useOnlineStatus";
+import SEO from "@/components/SEO";
+import { hashCanonicalUrl } from "@/config/seo";
 
 interface ChallengeDetail {
   id: string;
@@ -164,6 +166,12 @@ const ChallengeInvitePage: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-slate-50 pb-8">
+      <SEO
+        title={`${challenge.from.username}'s Challenge`}
+        description={`${challenge.from.username} challenged you to a ${challenge.categoryName} quiz on QuizUp.`}
+        url={hashCanonicalUrl(`/challenge/${challenge.id}`)}
+        noindex
+      />
       <div className="quizup-topbar">
         <button type="button" onClick={() => navigate(-1)} aria-label="Back">
           <ArrowLeft className="h-5 w-5" />

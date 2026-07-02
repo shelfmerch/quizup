@@ -20,6 +20,7 @@ export default {
         sans: ["Open Sans", "sans-serif"],
         display: ["Montserrat", "sans-serif"],
         body: ["Open Sans", "sans-serif"],
+        comic: ["Bangers", "cursive"],
       },
       colors: {
         border: "hsl(var(--border))",

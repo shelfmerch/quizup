@@ -1,5 +1,7 @@
 import { APP_URL } from "@/config/env";
 
+import { shareChallengeUrl, shareCategoryUrl } from "@/config/seo";
+
 export interface ChallengeShareInfo {
   challengeId?: string;
   fromUsername: string;
@@ -9,7 +11,7 @@ export interface ChallengeShareInfo {
 }
 
 export function buildChallengeShareUrl(challengeId: string): string {
-  return `${APP_URL}/#/challenge/${challengeId}`;
+  return shareChallengeUrl(challengeId);
 }
 
 export function buildChallengeShareMessage(info: ChallengeShareInfo): string {
@@ -27,7 +29,7 @@ export function resolveChallengeShareUrl(info: ChallengeShareInfo): string {
 }
 
 export function buildCategoryChallengeShareUrl(categoryId: string): string {
-  return `${APP_URL}/#/find-match/${categoryId}`;
+  return shareCategoryUrl(categoryId);
 }
 
 export function buildCategoryChallengeShareInfo(

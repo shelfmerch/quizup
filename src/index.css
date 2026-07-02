@@ -75,7 +75,9 @@
   .font-display {
     font-family: 'Montserrat', sans-serif;
   }
-  
+  .font-comic {
+    font-family: 'Luckiest Guy', cursive;
+  }
   .font-body {
     font-family: 'Open Sans', sans-serif;
   }
@@ -145,7 +147,7 @@
   }
 
   .quizup-section-title {
-    @apply text-[19px] font-display font-extrabold text-[#242424] tracking-tight;
+    @apply text-[19px] font-comic font-extrabold text-[#242424] tracking-tight;
   }
 
   .quizup-see-all {
